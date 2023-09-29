@@ -10,12 +10,12 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "dev" ]
 
 jobs:
   build:
 
-    runs-on: self-hosted
+    runs-on: devRunner
 
     steps:
       - uses: actions/checkout@v3
