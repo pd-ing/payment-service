@@ -32,6 +32,7 @@ public class PaymentService {
                                  String paymentMethod, String currency,
                                  String description, String ipAddress) {
         try {
+            
             Wallet wallet = updateWalletForUser(userID, purchasedTrees, purchasedDate);
             createWalletHistoryEntry(wallet.getId(), userID, purchasedTrees, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);

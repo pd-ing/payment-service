@@ -76,12 +76,16 @@ public class PaymentServiceController {
         }
 
         try {
+
+            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+            }
             String charge = paymentService.chargeCustomer(paymentDetailsRequest.getUserid(), paymentDetailsRequest.getTrees(),
                     paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionID(),
                     paymentDetailsRequest.getTransactionStatus(), paymentDetailsRequest.getAmount(),
                     paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(),
                     paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
-            
+
             return ResponseEntity.ok().body(new ChargeResponse(null, charge));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ChargeResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

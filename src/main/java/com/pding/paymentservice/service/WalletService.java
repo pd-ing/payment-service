@@ -51,6 +51,12 @@ public class WalletService {
     public Optional<Wallet> fetchWalletByUserID(long userID) {
         Optional<Wallet> wallet = walletRepository.findWalletByUserID(userID);
 
+        if (!wallet.isPresent()) {
+            Wallet newWallet = new Wallet(userID, new BigDecimal(0), null);
+            walletRepository.save(newWallet);
+
+            return walletRepository.findWalletByUserID(userID);
+        }
         return wallet;
     }
 
@@ -66,7 +72,7 @@ public class WalletService {
     }
 
     public void deductFromWallet(long userID, BigDecimal treesToDeduct) {
-        Optional<Wallet> wallet = walletRepository.findWalletByUserID(userID);
+        Optional<Wallet> wallet = fetchWalletByUserID(userID);
 
         if (wallet.isPresent()) {
             Wallet walletObj = wallet.get();
