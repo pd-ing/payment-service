@@ -5,12 +5,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "wallethistory")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class WalletHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,70 +26,40 @@ public class WalletHistory {
 
     private Long walletId;
 
-
     private Long userId;
 
-    private String stripeCustomerID;
-    private BigDecimal purchasedTrees; // Store the number of custom currency units purchased
+    private BigDecimal purchasedTrees;
 
-    private LocalDateTime purchaseDate; // Date of the purchase
+    private LocalDateTime purchaseDate;
 
-    public WalletHistory() {
-    }
+    private String transactionId;
 
-    public WalletHistory(Long userId, String stripeCustomerID, Long walletId, BigDecimal purchasedTrees, LocalDateTime purchaseDate) {
-        this.userId = userId;
-        this.stripeCustomerID = stripeCustomerID;
+    private String transactionStatus;
+
+    private BigDecimal amount;
+
+    private String paymentMethod;
+
+    private String currency;
+
+    private String description;
+
+    private String ipAddress;
+
+    public WalletHistory(Long walletId, Long userId, BigDecimal purchasedTrees,
+                         LocalDateTime purchaseDate, String transactionId, String transactionStatus,
+                         BigDecimal amount, String paymentMethod, String currency, String description,
+                         String ipAddress) {
         this.walletId = walletId;
+        this.userId = userId;
         this.purchasedTrees = purchasedTrees;
         this.purchaseDate = purchaseDate;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getWalletId() {
-        return walletId;
-    }
-
-    public void setWalletId(Long walletId) {
-        this.walletId = walletId;
-    }
-
-    public BigDecimal getPurchasedTrees() {
-        return purchasedTrees;
-    }
-
-    public void setPurchasedTrees(BigDecimal purchasedTrees) {
-        this.purchasedTrees = purchasedTrees;
-    }
-
-    public LocalDateTime getPurchaseDate() {
-        return purchaseDate;
-    }
-
-    public void setPurchaseDate(LocalDateTime purchaseDate) {
-        this.purchaseDate = purchaseDate;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getStripeCustomerID() {
-        return stripeCustomerID;
-    }
-
-    public void setStripeCustomerID(String stripeCustomerID) {
-        this.stripeCustomerID = stripeCustomerID;
+        this.transactionId = transactionId;
+        this.transactionStatus = transactionStatus;
+        this.amount = amount;
+        this.paymentMethod = paymentMethod;
+        this.currency = currency;
+        this.description = description;
+        this.ipAddress = ipAddress;
     }
 }

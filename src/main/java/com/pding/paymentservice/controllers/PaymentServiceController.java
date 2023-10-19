@@ -6,6 +6,7 @@ import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.VideoTransactions;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.models.WalletHistory;
+import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ChargeResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
@@ -20,14 +21,18 @@ import com.pding.paymentservice.service.WalletService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,21 +65,23 @@ public class PaymentServiceController {
     }
 
     @PostMapping("/charge")
-    public ResponseEntity<?> chargeCard(@RequestParam(value = "userid") Long userid, HttpServletRequest request) throws Exception {
-        if (userid == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
+    public ResponseEntity<?> chargeCard(@Valid @RequestBody PaymentDetailsRequest paymentDetailsRequest, BindingResult result, HttpServletRequest request) throws Exception {
+        // Check for validation errors
+        if (result.hasErrors()) {
+            // Here, we're just grabbing the first error, but you might want to send all of them.
+            ObjectError error = result.getAllErrors().get(0);
+            return ResponseEntity.badRequest().body(
+                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
+            );
         }
-        String token = request.getHeader("token");
-        Double amount = Double.parseDouble(request.getHeader("amount"));
 
-        if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "token header is required."));
-        }
-        if (amount == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "amount header is required."));
-        }
         try {
-            String charge = paymentService.chargeCustomer(userid, token, amount);
+            String charge = paymentService.chargeCustomer(paymentDetailsRequest.getUserid(), paymentDetailsRequest.getTrees(),
+                    paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionID(),
+                    paymentDetailsRequest.getTransactionStatus(), paymentDetailsRequest.getAmount(),
+                    paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(),
+                    paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
+            
             return ResponseEntity.ok().body(new ChargeResponse(null, charge));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ChargeResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

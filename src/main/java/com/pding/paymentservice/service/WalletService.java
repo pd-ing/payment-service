@@ -23,19 +23,26 @@ public class WalletService {
     WalletRepository walletRepository;
 
     @Transactional
-    public Wallet addToWallet(long userID, String stripeCustomerId, BigDecimal trees) {
+    public Wallet addToWallet(long userID, BigDecimal trees, LocalDateTime lastPurchasedDate) {
         Optional<Wallet> optionalWallet = fetchWalletByUserID(userID);
 
         Wallet wallet;
         if (optionalWallet.isPresent()) {
             wallet = optionalWallet.get();
+
             BigDecimal updatedTree = wallet.getTrees().add(trees);
+
             wallet.setTrees(updatedTree);
             wallet.setLastPurchasedDate(LocalDateTime.now());
+            wallet.setUpdatedDate(LocalDateTime.now());
+
+            Integer updatedTotaltransactions = wallet.getTotalTransactions() + 1;
+            wallet.setTotalTransactions(updatedTotaltransactions);
+
             walletRepository.save(wallet);
 
         } else {
-            wallet = new Wallet(userID, stripeCustomerId, trees, LocalDateTime.now());
+            wallet = new Wallet(userID, trees, lastPurchasedDate);
             walletRepository.save(wallet);
         }
         return wallet;
