@@ -23,19 +23,26 @@ public class WalletService {
     WalletRepository walletRepository;
 
     @Transactional
-    public Wallet addToWallet(long userID, String stripeCustomerId, BigDecimal trees) {
+    public Wallet addToWallet(long userID, BigDecimal trees, LocalDateTime lastPurchasedDate) {
         Optional<Wallet> optionalWallet = fetchWalletByUserID(userID);
 
         Wallet wallet;
         if (optionalWallet.isPresent()) {
             wallet = optionalWallet.get();
+
             BigDecimal updatedTree = wallet.getTrees().add(trees);
+
             wallet.setTrees(updatedTree);
             wallet.setLastPurchasedDate(LocalDateTime.now());
+            wallet.setUpdatedDate(LocalDateTime.now());
+
+            Integer updatedTotaltransactions = wallet.getTotalTransactions() + 1;
+            wallet.setTotalTransactions(updatedTotaltransactions);
+
             walletRepository.save(wallet);
 
         } else {
-            wallet = new Wallet(userID, stripeCustomerId, trees, LocalDateTime.now());
+            wallet = new Wallet(userID, trees, lastPurchasedDate);
             walletRepository.save(wallet);
         }
         return wallet;
@@ -44,6 +51,12 @@ public class WalletService {
     public Optional<Wallet> fetchWalletByUserID(long userID) {
         Optional<Wallet> wallet = walletRepository.findWalletByUserID(userID);
 
+        if (!wallet.isPresent()) {
+            Wallet newWallet = new Wallet(userID, new BigDecimal(0), null);
+            walletRepository.save(newWallet);
+
+            return walletRepository.findWalletByUserID(userID);
+        }
         return wallet;
     }
 
@@ -59,7 +72,7 @@ public class WalletService {
     }
 
     public void deductFromWallet(long userID, BigDecimal treesToDeduct) {
-        Optional<Wallet> wallet = walletRepository.findWalletByUserID(userID);
+        Optional<Wallet> wallet = fetchWalletByUserID(userID);
 
         if (wallet.isPresent()) {
             Wallet walletObj = wallet.get();

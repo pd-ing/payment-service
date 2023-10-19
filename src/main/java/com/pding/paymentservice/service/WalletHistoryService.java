@@ -15,8 +15,12 @@ public class WalletHistoryService {
     @Autowired
     WalletHistoryRepository walletHistoryRepository;
 
-    public void recordPurchaseHistory(long userID, String stripeCustomerID, long walletID, BigDecimal purchasedTrees) {
-        WalletHistory walletHistory = new WalletHistory(userID, stripeCustomerID, walletID, purchasedTrees, LocalDateTime.now());
+    public void recordPurchaseHistory(long walletID, long userID, BigDecimal purchasedTrees,
+                                      LocalDateTime purchasedDate,
+                                      String transactionID, String transactionStatus, BigDecimal amount, String paymentMethod,
+                                      String currency, String description, String ipAddress) {
+        WalletHistory walletHistory = new WalletHistory(walletID, userID, purchasedTrees, purchasedDate, transactionID, transactionStatus,
+                amount, paymentMethod, currency, description, ipAddress);
         walletHistoryRepository.save(walletHistory);
     }
 
