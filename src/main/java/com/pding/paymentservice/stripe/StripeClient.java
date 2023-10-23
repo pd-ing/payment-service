@@ -3,6 +3,8 @@ package com.pding.paymentservice.stripe;
 import com.stripe.Stripe;
 import com.stripe.model.Charge;
 import com.stripe.model.Customer;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.RequestOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,5 +52,11 @@ public class StripeClient {
         chargeParams.put("source", sourceCard);
         Charge charge = Charge.create(chargeParams);
         return charge;
+    }
+
+    public boolean isTransactionIdPresentInStripe(String paymentIntentId) throws Exception {
+        Stripe.apiKey = secretKey;
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+        return paymentIntent.getStatus().equals("succeeded");
     }
 }

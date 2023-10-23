@@ -1,6 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.exception.ChargeNewCardException;
+import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.stripe.model.Charge;
@@ -32,7 +33,9 @@ public class PaymentService {
                                  String paymentMethod, String currency,
                                  String description, String ipAddress) {
         try {
-            
+            if (!stripeClient.isTransactionIdPresentInStripe(transactionID)) {
+                throw new InvalidTransactionIDException("Transaction id : " + transactionID + " , is invalid or duplicate");
+            }
             Wallet wallet = updateWalletForUser(userID, purchasedTrees, purchasedDate);
             createWalletHistoryEntry(wallet.getId(), userID, purchasedTrees, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);
@@ -59,4 +62,5 @@ public class PaymentService {
                 amount, paymentMethod, currency, description, ipAddress);
         log.info("Wallet history table updated");
     }
+
 }
