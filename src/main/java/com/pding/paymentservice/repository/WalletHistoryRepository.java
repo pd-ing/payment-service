@@ -17,6 +17,9 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, Lo
     // Find wallet history entries by walletId
     List<WalletHistory> findByWalletId(Long walletId);
 
+    // Find wallet history entries by userID
+    List<WalletHistory> findByUserId(Long walletId);
+
     // Fetches WalletHistory based on a given transactionId and userId
     Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, Long userId);
 

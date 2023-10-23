@@ -30,7 +30,7 @@ public class WalletHistoryService {
     }
 
     public List<WalletHistory> fetchWalletHistoryByUserID(long userID) {
-        return walletHistoryRepository.findByWalletId(userID);
+        return walletHistoryRepository.findByUserId(userID);
     }
 
     public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionID, long useriID) {
