@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class WalletHistoryService {
@@ -31,4 +32,9 @@ public class WalletHistoryService {
     public List<WalletHistory> fetchWalletHistoryByUserID(long userID) {
         return walletHistoryRepository.findByWalletId(userID);
     }
+
+    public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionID, long useriID) {
+        return walletHistoryRepository.findByTransactionIdAndUserId(transactionID, useriID);
+    }
+
 }

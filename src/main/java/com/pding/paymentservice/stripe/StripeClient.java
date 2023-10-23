@@ -54,7 +54,7 @@ public class StripeClient {
         return charge;
     }
 
-    public boolean isTransactionIdPresentInStripe(String paymentIntentId) throws Exception {
+    public boolean isPaymentIntentIDPresentInStripe(String paymentIntentId) throws Exception {
         Stripe.apiKey = secretKey;
         PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
         return paymentIntent.getStatus().equals("succeeded");

@@ -31,11 +31,10 @@ public class PaymentService {
                                  BigDecimal purchasedTrees, LocalDateTime purchasedDate,
                                  String transactionID, String transactionStatus, BigDecimal amount,
                                  String paymentMethod, String currency,
-                                 String description, String ipAddress) {
+                                 String description, String ipAddress) throws Exception {
         try {
-            if (!stripeClient.isTransactionIdPresentInStripe(transactionID)) {
-                throw new InvalidTransactionIDException("Transaction id : " + transactionID + " , is invalid or duplicate");
-            }
+            validatePaymentIntentID(transactionID, userID);
+
             Wallet wallet = updateWalletForUser(userID, purchasedTrees, purchasedDate);
             createWalletHistoryEntry(wallet.getId(), userID, purchasedTrees, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);
@@ -43,7 +42,7 @@ public class PaymentService {
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
-            return "Payment Details update failed with following error : " + e.getMessage();
+            throw new Exception("Payment Details update failed with following error : " + e.getMessage());
         }
     }
 
@@ -63,4 +62,16 @@ public class PaymentService {
         log.info("Wallet history table updated");
     }
 
+
+    private boolean validatePaymentIntentID(String transactionID, long userID) throws Exception {
+        if (!stripeClient.isPaymentIntentIDPresentInStripe(transactionID)) {
+            throw new InvalidTransactionIDException("paymentIntent id : " + transactionID + " , is invalid");
+        }
+
+        if (walletHistoryService.findByTransactionIdAndUserId(transactionID, userID).isPresent()) {
+            throw new InvalidTransactionIDException("paymentIntent id : " + transactionID + " , is already used for the payment");
+        }
+
+        return true;
+    }
 }

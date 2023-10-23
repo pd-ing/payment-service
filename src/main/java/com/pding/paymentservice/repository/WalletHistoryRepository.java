@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface WalletHistoryRepository extends JpaRepository<WalletHistory, Long> {
@@ -15,6 +16,9 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, Lo
 
     // Find wallet history entries by walletId
     List<WalletHistory> findByWalletId(Long walletId);
+
+    // Fetches WalletHistory based on a given transactionId and userId
+    Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, Long userId);
 
     // Find wallet history entries by purchaseDate range
     List<WalletHistory> findByPurchaseDateBetween(LocalDateTime startDate, LocalDateTime endDate);
