@@ -14,11 +14,11 @@ import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.WalletHistoryResponse;
 import com.pding.paymentservice.payload.response.WalletResponse;
+import com.pding.paymentservice.repository.TotalTreesEarnedResponse;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.VideoTransactionsService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -120,7 +120,7 @@ public class PaymentServiceController {
 
 
     @PostMapping(value = "/buyvideo")
-    public ResponseEntity<?> buyVideo(@RequestParam(value = "userid") Long userid, @RequestParam(value = "contentid") Long contentid, @RequestParam(value = "trees") BigDecimal trees, HttpServletRequest request) {
+    public ResponseEntity<?> buyVideo(@RequestParam(value = "userid") Long userid, @RequestParam(value = "contentid") Long contentid, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID, HttpServletRequest request) {
         if (userid == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
@@ -131,7 +131,7 @@ public class PaymentServiceController {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         try {
-            VideoTransactions video = videoTransactionsService.createVideoTransaction(userid, contentid, trees);
+            VideoTransactions video = videoTransactionsService.createVideoTransaction(userid, contentid, trees, videoOwnerUserID);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -154,6 +154,19 @@ public class PaymentServiceController {
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping(value = "/treesEarned")
+    public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID) {
+        if (videoOwnerUserID == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
+        }
+        try {
+            BigDecimal videoTransactions = videoTransactionsService.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
+            return ResponseEntity.ok().body(new TotalTreesEarnedResponse(null, videoTransactions));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TotalTreesEarnedResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 

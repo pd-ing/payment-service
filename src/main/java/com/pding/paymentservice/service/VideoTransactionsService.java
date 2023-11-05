@@ -23,10 +23,10 @@ public class VideoTransactionsService {
     WalletService walletService;
 
     @Transactional
-    public VideoTransactions createVideoTransaction(long userID, Long contentID, BigDecimal treesToConsume) {
-        walletService.deductFromWallet(userID, treesToConsume);
+    public VideoTransactions createVideoTransaction(Long userID, Long contentID, BigDecimal treesToConsumed, Long videoOwnerUserID) {
+        walletService.deductFromWallet(userID, treesToConsumed);
 
-        VideoTransactions transaction = new VideoTransactions(userID, contentID, treesToConsume);
+        VideoTransactions transaction = new VideoTransactions(userID, contentID, treesToConsumed, videoOwnerUserID);
         VideoTransactions video = videoTransactionsRepository.save(transaction);
 
         return video;
@@ -36,4 +36,7 @@ public class VideoTransactionsService {
         return videoTransactionsRepository.getVideoTransactionsByUserID(userID);
     }
 
+    public BigDecimal getTotalTreesEarnedByVideoOwner(Long videoOwnerUserID) {
+        return videoTransactionsRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
+    }
 }
