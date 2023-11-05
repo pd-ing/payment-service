@@ -99,9 +99,10 @@ public class PaymentServiceController {
         }
         try {
             Optional<Wallet> wallet = walletService.fetchWalletByUserID(userid);
-            return ResponseEntity.ok().body(new WalletResponse(null, wallet.get()));
+            BigDecimal treesEarned = videoTransactionsService.getTotalTreesEarnedByVideoOwner(userid);
+            return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), treesEarned));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 

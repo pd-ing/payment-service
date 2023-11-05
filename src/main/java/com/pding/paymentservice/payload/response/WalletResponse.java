@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -14,4 +16,5 @@ import lombok.NoArgsConstructor;
 public class WalletResponse {
     ErrorResponse errorResponse;
     Wallet wallet;
+    BigDecimal treesEarned;
 }
