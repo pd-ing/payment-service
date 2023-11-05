@@ -26,19 +26,22 @@ public class VideoTransactions {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private long userID;
+    private Long userID;
 
-    private long contentID;
+    private Long contentID;
 
     private BigDecimal treesConsumed;
 
     private LocalDateTime timestamp;
 
-    public VideoTransactions(long userID, long contentID, BigDecimal treesConsumed) {
+    private Long videoOwnerUserID;
+
+    public VideoTransactions(Long userID, Long contentID, BigDecimal treesConsumed, Long videoOwnerUserID) {
         this.userID = userID;
         this.contentID = contentID;
         this.treesConsumed = treesConsumed;
         this.timestamp = LocalDateTime.now();
+        this.videoOwnerUserID = videoOwnerUserID;
     }
 
 }

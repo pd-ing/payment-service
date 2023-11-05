@@ -80,7 +80,6 @@ public class WalletService {
 
             if (treesToDeduct.compareTo(BigDecimal.ZERO) >= 0) {
                 BigDecimal newTreesBalance = currentTrees.subtract(treesToDeduct);
-
                 if (newTreesBalance.compareTo(BigDecimal.ZERO) >= 0) {
                     walletObj.setTrees(newTreesBalance);
                     walletRepository.save(walletObj);
