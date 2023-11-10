@@ -173,18 +173,18 @@ public class PaymentServiceController {
     }
 
     @GetMapping(value = "/isVideoPurchased")
-    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userID") Long userID, @RequestParam(value = "videoID") Long videoID) {
-        if (userID == null) {
-            return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null));
+    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId") Long userId, @RequestParam(value = "videoId") Long videoId) {
+        if (userId == null) {
+            return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), false));
         }
-        if (videoID == null) {
-            return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), null));
+        if (videoId == null) {
+            return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), false));
         }
         try {
-            Boolean isPurchased = videoTransactionsService.isVideoPurchasedByUser(userID, videoID);
+            Boolean isPurchased = videoTransactionsService.isVideoPurchasedByUser(userId, videoId);
             return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponse(null, isPurchased));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TotalTreesEarnedResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
         }
     }
 
