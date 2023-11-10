@@ -28,7 +28,7 @@ public class VideoTransactions {
 
     private Long userID;
 
-    private Long contentID;
+    private Long videoID;
 
     private BigDecimal treesConsumed;
 
@@ -36,9 +36,9 @@ public class VideoTransactions {
 
     private Long videoOwnerUserID;
 
-    public VideoTransactions(Long userID, Long contentID, BigDecimal treesConsumed, Long videoOwnerUserID) {
+    public VideoTransactions(Long userID, Long videoID, BigDecimal treesConsumed, Long videoOwnerUserID) {
         this.userID = userID;
-        this.contentID = contentID;
+        this.videoID = videoID;
         this.treesConsumed = treesConsumed;
         this.timestamp = LocalDateTime.now();
         this.videoOwnerUserID = videoOwnerUserID;
