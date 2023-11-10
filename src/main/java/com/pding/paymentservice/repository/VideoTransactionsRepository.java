@@ -16,8 +16,10 @@ public interface VideoTransactionsRepository extends JpaRepository<VideoTransact
 
     List<VideoTransactions> getVideoTransactionsByUserID(long userID);
 
-    List<VideoTransactions> getVideoTransactionsByContentID(long contentID);
 
     @Query("SELECT SUM(vt.treesConsumed) FROM VideoTransactions vt WHERE vt.videoOwnerUserID = :videoOwnerUserID")
     BigDecimal getTotalTreesEarnedByVideoOwner(Long videoOwnerUserID);
+
+    // Query method to find records by userID and videoID
+    List<VideoTransactions> findByUserIDAndVideoID(Long userID, Long videoID);
 }

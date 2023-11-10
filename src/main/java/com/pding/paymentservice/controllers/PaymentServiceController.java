@@ -11,6 +11,7 @@ import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ChargeResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
+import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.WalletHistoryResponse;
 import com.pding.paymentservice.payload.response.WalletResponse;
@@ -121,18 +122,18 @@ public class PaymentServiceController {
 
 
     @PostMapping(value = "/buyvideo")
-    public ResponseEntity<?> buyVideo(@RequestParam(value = "userid") Long userid, @RequestParam(value = "contentid") Long contentid, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID, HttpServletRequest request) {
+    public ResponseEntity<?> buyVideo(@RequestParam(value = "userid") Long userid, @RequestParam(value = "videoid") Long videoid, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID, HttpServletRequest request) {
         if (userid == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
-        if (contentid == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "contentid parameter is required."));
+        if (videoid == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
         }
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         try {
-            VideoTransactions video = videoTransactionsService.createVideoTransaction(userid, contentid, trees, videoOwnerUserID);
+            VideoTransactions video = videoTransactionsService.createVideoTransaction(userid, videoid, trees, videoOwnerUserID);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -161,7 +162,7 @@ public class PaymentServiceController {
     @GetMapping(value = "/treesEarned")
     public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID) {
         if (videoOwnerUserID == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserID parameter is required."));
         }
         try {
             BigDecimal videoTransactions = videoTransactionsService.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
@@ -170,6 +171,23 @@ public class PaymentServiceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TotalTreesEarnedResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    @GetMapping(value = "/isVideoPurchased")
+    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userID") Long userID, @RequestParam(value = "videoID") Long videoID) {
+        if (userID == null) {
+            return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null));
+        }
+        if (videoID == null) {
+            return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), null));
+        }
+        try {
+            Boolean isPurchased = videoTransactionsService.isVideoPurchasedByUser(userID, videoID);
+            return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponse(null, isPurchased));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TotalTreesEarnedResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)

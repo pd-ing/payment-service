@@ -23,20 +23,31 @@ public class VideoTransactionsService {
     WalletService walletService;
 
     @Transactional
-    public VideoTransactions createVideoTransaction(Long userID, Long contentID, BigDecimal treesToConsumed, Long videoOwnerUserID) {
+    public VideoTransactions createVideoTransaction(Long userID, Long videoID, BigDecimal treesToConsumed, Long videoOwnerUserID) {
         walletService.deductFromWallet(userID, treesToConsumed);
 
-        VideoTransactions transaction = new VideoTransactions(userID, contentID, treesToConsumed, videoOwnerUserID);
+        VideoTransactions transaction = new VideoTransactions(userID, videoID, treesToConsumed, videoOwnerUserID);
         VideoTransactions video = videoTransactionsRepository.save(transaction);
 
         return video;
     }
 
-    public List<VideoTransactions> getAllTransactionsForUser(long userID) {
+    public List<VideoTransactions> getAllTransactionsForUser(Long userID) {
         return videoTransactionsRepository.getVideoTransactionsByUserID(userID);
     }
 
     public BigDecimal getTotalTreesEarnedByVideoOwner(Long videoOwnerUserID) {
         return videoTransactionsRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
+    }
+
+    public Boolean isVideoPurchasedByUser(Long userID, Long videoID) {
+        List<VideoTransactions> videoTransactions = videoTransactionsRepository.findByUserIDAndVideoID(userID, videoID);
+        if (videoTransactions == null)
+            return false;
+
+        if (videoTransactions.isEmpty())
+            return false;
+
+        return true;
     }
 }
