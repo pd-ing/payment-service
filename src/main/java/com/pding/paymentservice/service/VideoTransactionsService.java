@@ -23,7 +23,7 @@ public class VideoTransactionsService {
     WalletService walletService;
 
     @Transactional
-    public VideoTransactions createVideoTransaction(Long userID, Long videoID, BigDecimal treesToConsumed, Long videoOwnerUserID) {
+    public VideoTransactions createVideoTransaction(Long userID, String videoID, BigDecimal treesToConsumed, Long videoOwnerUserID) {
         walletService.deductFromWallet(userID, treesToConsumed);
 
         VideoTransactions transaction = new VideoTransactions(userID, videoID, treesToConsumed, videoOwnerUserID);
@@ -40,7 +40,7 @@ public class VideoTransactionsService {
         return videoTransactionsRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
     }
 
-    public Boolean isVideoPurchasedByUser(Long userID, Long videoID) {
+    public Boolean isVideoPurchasedByUser(Long userID, String videoID) {
         List<VideoTransactions> videoTransactions = videoTransactionsRepository.findByUserIDAndVideoID(userID, videoID);
         if (videoTransactions == null)
             return false;

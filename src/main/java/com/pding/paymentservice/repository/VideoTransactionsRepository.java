@@ -21,5 +21,5 @@ public interface VideoTransactionsRepository extends JpaRepository<VideoTransact
     BigDecimal getTotalTreesEarnedByVideoOwner(Long videoOwnerUserID);
 
     // Query method to find records by userID and videoID
-    List<VideoTransactions> findByUserIDAndVideoID(Long userID, Long videoID);
+    List<VideoTransactions> findByUserIDAndVideoID(Long userID, String videoID);
 }

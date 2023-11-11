@@ -122,7 +122,7 @@ public class PaymentServiceController {
 
 
     @PostMapping(value = "/buyvideo")
-    public ResponseEntity<?> buyVideo(@RequestParam(value = "userid") Long userid, @RequestParam(value = "videoid") Long videoid, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID, HttpServletRequest request) {
+    public ResponseEntity<?> buyVideo(@RequestParam(value = "userid") Long userid, @RequestParam(value = "videoid") String videoid, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserID") Long videoOwnerUserID, HttpServletRequest request) {
         if (userid == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
@@ -173,7 +173,7 @@ public class PaymentServiceController {
     }
 
     @GetMapping(value = "/isVideoPurchased")
-    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId") Long userId, @RequestParam(value = "videoId") Long videoId) {
+    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId") Long userId, @RequestParam(value = "videoId") String videoId) {
         if (userId == null) {
             return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), false));
         }

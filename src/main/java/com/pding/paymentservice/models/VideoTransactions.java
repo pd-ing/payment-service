@@ -28,7 +28,7 @@ public class VideoTransactions {
 
     private Long userID;
 
-    private Long videoID;
+    private String videoID;
 
     private BigDecimal treesConsumed;
 
@@ -36,7 +36,7 @@ public class VideoTransactions {
 
     private Long videoOwnerUserID;
 
-    public VideoTransactions(Long userID, Long videoID, BigDecimal treesConsumed, Long videoOwnerUserID) {
+    public VideoTransactions(Long userID, String videoID, BigDecimal treesConsumed, Long videoOwnerUserID) {
         this.userID = userID;
         this.videoID = videoID;
         this.treesConsumed = treesConsumed;
