@@ -1,4 +1,4 @@
-package com.pding.paymentservice.repository;
+package com.pding.paymentservice.payload.response;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import lombok.AllArgsConstructor;

@@ -26,7 +26,7 @@ public class WalletHistory {
 
     private Long walletId;
 
-    private Long userId;
+    private String userId;
 
     private BigDecimal purchasedTrees;
 
@@ -46,7 +46,7 @@ public class WalletHistory {
 
     private String ipAddress;
 
-    public WalletHistory(Long walletId, Long userId, BigDecimal purchasedTrees,
+    public WalletHistory(Long walletId, String userId, BigDecimal purchasedTrees,
                          LocalDateTime purchaseDate, String transactionId, String transactionStatus,
                          BigDecimal amount, String paymentMethod, String currency, String description,
                          String ipAddress) {

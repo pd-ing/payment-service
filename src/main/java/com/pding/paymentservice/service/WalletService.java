@@ -4,10 +4,15 @@ import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Wallet;
+import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.WalletResponse;
+import com.pding.paymentservice.repository.VideoTransactionsRepository;
 import com.pding.paymentservice.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.tree.Trees;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +27,12 @@ public class WalletService {
     @Autowired
     WalletRepository walletRepository;
 
+    @Autowired
+    VideoTransactionsRepository videoTransactionsRepository;
+
     @Transactional
-    public Wallet addToWallet(long userID, BigDecimal trees, LocalDateTime lastPurchasedDate) {
-        Optional<Wallet> optionalWallet = fetchWalletByUserID(userID);
+    public Wallet addToWallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+        Optional<Wallet> optionalWallet = fetchWalletByUserId(userId);
 
         Wallet wallet;
         if (optionalWallet.isPresent()) {
@@ -42,26 +50,26 @@ public class WalletService {
             walletRepository.save(wallet);
 
         } else {
-            wallet = new Wallet(userID, trees, lastPurchasedDate);
+            wallet = new Wallet(userId, trees, lastPurchasedDate);
             walletRepository.save(wallet);
         }
         return wallet;
     }
 
-    public Optional<Wallet> fetchWalletByUserID(long userID) {
-        Optional<Wallet> wallet = walletRepository.findWalletByUserID(userID);
+    public Optional<Wallet> fetchWalletByUserId(String userId) {
+        Optional<Wallet> wallet = walletRepository.findWalletByUserId(userId);
 
         if (!wallet.isPresent()) {
-            Wallet newWallet = new Wallet(userID, new BigDecimal(0), null);
+            Wallet newWallet = new Wallet(userId, new BigDecimal(0), null);
             walletRepository.save(newWallet);
 
-            return walletRepository.findWalletByUserID(userID);
+            return walletRepository.findWalletByUserId(userId);
         }
         return wallet;
     }
 
-    public Boolean canUserBuyVideo(long userID, BigDecimal treeToConsume) {
-        Optional<Wallet> wallet = walletRepository.findWalletByUserID(userID);
+    public Boolean canUserBuyVideo(String userId, BigDecimal treeToConsume) {
+        Optional<Wallet> wallet = walletRepository.findWalletByUserId(userId);
         if (wallet.isPresent()) {
             Wallet walletObj = wallet.get();
             if (walletObj.getTrees().compareTo(treeToConsume) > 0) {
@@ -71,8 +79,8 @@ public class WalletService {
         return false;
     }
 
-    public void deductFromWallet(long userID, BigDecimal treesToDeduct) {
-        Optional<Wallet> wallet = fetchWalletByUserID(userID);
+    public void deductFromWallet(String userId, BigDecimal treesToDeduct) {
+        Optional<Wallet> wallet = fetchWalletByUserId(userId);
 
         if (wallet.isPresent()) {
             Wallet walletObj = wallet.get();
@@ -92,8 +100,27 @@ public class WalletService {
                 throw new InvalidAmountException("Invalid amount(Trees) to deduct. Amount(Trees) must be greater than or equal to zero.");
             }
         } else {
-            log.error("No wallet info present for userID " + userID);
-            throw new WalletNotFoundException("No wallet info present for userID " + userID);
+            log.error("No wallet info present for userId " + userId);
+            throw new WalletNotFoundException("No wallet info present for userID " + userId);
+        }
+    }
+
+    public Wallet updateWalletForUser(String userId, BigDecimal purchasedTrees, LocalDateTime purchasedDate) {
+        Wallet wallet = addToWallet(userId, purchasedTrees, purchasedDate);
+        log.info("Wallet table updated", wallet);
+        return wallet;
+    }
+
+    public ResponseEntity<?> getWallet(String userId) {
+        if (userId == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
+        }
+        try {
+            Optional<Wallet> wallet = fetchWalletByUserId(userId);
+            BigDecimal treesEarned = videoTransactionsRepository.getTotalTreesEarnedByVideoOwner(userId);
+            return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), treesEarned));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 }

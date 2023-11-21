@@ -14,12 +14,12 @@ public interface VideoTransactionsRepository extends JpaRepository<VideoTransact
 
     VideoTransactions save(VideoTransactions transaction);
 
-    List<VideoTransactions> getVideoTransactionsByUserID(long userID);
+    List<VideoTransactions> getVideoTransactionsByUserId(String userId);
 
 
-    @Query("SELECT SUM(vt.treesConsumed) FROM VideoTransactions vt WHERE vt.videoOwnerUserID = :videoOwnerUserID")
-    BigDecimal getTotalTreesEarnedByVideoOwner(Long videoOwnerUserID);
+    @Query("SELECT SUM(vt.treesConsumed) FROM VideoTransactions vt WHERE vt.videoOwnerUserId = :videoOwnerUserId")
+    BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserId);
 
     // Query method to find records by userID and videoID
-    List<VideoTransactions> findByUserIDAndVideoID(Long userID, String videoID);
+    List<VideoTransactions> findByUserIdAndVideoId(String userId, String videoId);
 }

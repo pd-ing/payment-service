@@ -24,7 +24,7 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userID;
+    private String userId;
 
     private BigDecimal trees;
 
@@ -38,8 +38,8 @@ public class Wallet {
 
     private Integer totalTransactions = 0;
 
-    public Wallet(Long userid, BigDecimal trees, LocalDateTime lastPurchasedDate) {
-        this.userID = userid;
+    public Wallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+        this.userId = userId;
         this.trees = trees;
         this.lastPurchasedDate = lastPurchasedDate;
         createdDate = LocalDateTime.now();
