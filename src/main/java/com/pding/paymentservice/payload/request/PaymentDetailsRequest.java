@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PaymentDetailsRequest {
     @NotNull(message = "User ID cannot be null.")
-    private Long userid;
+    private String userId;
 
     @NotNull(message = "Trees cannot be null.")
     @DecimalMin(value = "0.0", inclusive = false, message = "Trees should be greater than 0.")
@@ -48,7 +48,7 @@ public class PaymentDetailsRequest {
     private String ipAddress;
 
     @NotBlank(message = "Transaction id cannot be blank")
-    private String transactionID;
+    private String transactionId;
 
     @NotBlank(message = "Transaction status cannot be blank")
     private String transactionStatus;

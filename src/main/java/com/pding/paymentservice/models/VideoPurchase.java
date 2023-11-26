@@ -1,6 +1,5 @@
 package com.pding.paymentservice.models;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,38 +15,33 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Wallet")
+@Table(name = "VideoPurchase")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class Wallet {
+public class VideoPurchase {
     @Id
     //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @UuidGenerator
     private String id;
 
-    @Column(unique = true)
     private String userId;
 
-    private BigDecimal trees;
+    private String videoId;
 
-    private LocalDateTime lastPurchasedDate;
+    private BigDecimal treesConsumed;
 
-    private LocalDateTime createdDate;
+    private LocalDateTime lastUpdateDate;
 
-    private LocalDateTime updatedDate;
+    private String videoOwnerUserId;
 
-    private Boolean isActive = true;
-
-    private Integer totalTransactions = 0;
-
-    public Wallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
         this.userId = userId;
-        this.trees = trees;
-        this.lastPurchasedDate = lastPurchasedDate;
-        createdDate = LocalDateTime.now();
-        updatedDate = LocalDateTime.now();
-        totalTransactions = 1;
+        this.videoId = videoId;
+        this.treesConsumed = treesConsumed;
+        this.lastUpdateDate = LocalDateTime.now();
+        this.videoOwnerUserId = videoOwnerUserId;
     }
+
 }

@@ -16,12 +16,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Wallet")
+@Table(name = "Earning")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class Wallet {
+public class Earning {
     @Id
     //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @UuidGenerator
@@ -30,24 +30,20 @@ public class Wallet {
     @Column(unique = true)
     private String userId;
 
-    private BigDecimal trees;
-
-    private LocalDateTime lastPurchasedDate;
+    private BigDecimal treesEarned;
 
     private LocalDateTime createdDate;
 
     private LocalDateTime updatedDate;
 
-    private Boolean isActive = true;
-
     private Integer totalTransactions = 0;
 
-    public Wallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+    public Earning(String userId, BigDecimal treesEarned) {
+        LocalDateTime currentDate = LocalDateTime.now();
         this.userId = userId;
-        this.trees = trees;
-        this.lastPurchasedDate = lastPurchasedDate;
-        createdDate = LocalDateTime.now();
-        updatedDate = LocalDateTime.now();
-        totalTransactions = 1;
+        this.treesEarned = treesEarned;
+        this.createdDate = currentDate;
+        this.updatedDate = currentDate;
+        this.totalTransactions = 1;
     }
 }

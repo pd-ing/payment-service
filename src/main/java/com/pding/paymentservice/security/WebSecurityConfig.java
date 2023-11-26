@@ -1,7 +1,5 @@
 package com.pding.paymentservice.security;
 
-import com.pding.paymentservice.security.jwt.AuthEntryPointJwt;
-import com.pding.paymentservice.security.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 //@EnableWebSecurity
-@EnableMethodSecurity
-        (//securedEnabled = true,
-                //      jsr250Enabled = true,
-                prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
     @Autowired
@@ -41,11 +36,14 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/charge").authenticated()
                                 .requestMatchers("/api/payment/test").authenticated()
                                 .requestMatchers("/api/payment/wallet").authenticated()
-                                .requestMatchers("/api/payment/wallethistory").authenticated()
-                                .requestMatchers("/api/payment/buyvideo").authenticated()
-                                .requestMatchers("/api/payment/videotransactions").authenticated()
-                                .requestMatchers("/api/payment/treesEarned").authenticated()
+                                .requestMatchers("/api/payment/walletHistory").authenticated()
+                                .requestMatchers("/api/payment/buyVideo").authenticated()
+                                .requestMatchers("/api/payment/videoPurchaseHistory").authenticated()
+                                //.requestMatchers("/api/payment/treesEarned").authenticated()
                                 .requestMatchers("/api/payment/isVideoPurchased").authenticated()
+                                .requestMatchers("/api/payment/donationHistoryForUser").authenticated()
+                                .requestMatchers("/api/payment/donationHistoryForPd").authenticated()
+                                .requestMatchers("/api/payment/donate").authenticated()
                 );
 
 

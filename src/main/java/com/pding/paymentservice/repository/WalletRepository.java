@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 @Repository
-public interface WalletRepository extends JpaRepository<Wallet, Long> {
-    Optional<Wallet> findWalletByUserID(Long userID);
-    
+public interface WalletRepository extends JpaRepository<Wallet, String> {
+    Optional<Wallet> findWalletByUserId(String userID);
+
 }

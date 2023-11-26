@@ -11,27 +11,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WalletHistoryRepository extends JpaRepository<WalletHistory, Long> {
+public interface WalletHistoryRepository extends JpaRepository<WalletHistory, String> {
 
+    List<WalletHistory> findByWalletId(String walletId);
 
-    // Find wallet history entries by walletId
-    List<WalletHistory> findByWalletId(Long walletId);
+    List<WalletHistory> findByUserId(String userId);
 
-    // Find wallet history entries by userID
-    List<WalletHistory> findByUserId(Long walletId);
+    Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, String userId);
 
-    // Fetches WalletHistory based on a given transactionId and userId
-    Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, Long userId);
-
-    // Find wallet history entries by purchaseDate range
-    List<WalletHistory> findByPurchaseDateBetween(LocalDateTime startDate, LocalDateTime endDate);
-
-    // Find wallet history entries by purchasedTrees greater than a specified value
-    List<WalletHistory> findByPurchasedTreesGreaterThan(BigDecimal value);
-
-    // Find the latest wallet history entry for a specific wallet
-    WalletHistory findFirstByWalletIdOrderByPurchaseDateDesc(Long walletId);
-
-    // Find wallet history entries by user ID (if walletId is associated with a user)
-    List<WalletHistory> findByWalletIdIn(List<Long> walletIds);
 }

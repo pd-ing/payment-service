@@ -1,4 +1,4 @@
-package com.pding.paymentservice.security.jwt;
+package com.pding.paymentservice.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;

@@ -1,21 +1,16 @@
 package com.pding.paymentservice.payload.response;
 
-
-import com.pding.paymentservice.models.Earning;
-import com.pding.paymentservice.models.Wallet;
+import com.pding.paymentservice.models.Donation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class WalletResponse {
+public class DonationResponse {
     ErrorResponse errorResponse;
-    Wallet spendingWallet;
-    Earning earningWallet;
+    Donation donation;
 }

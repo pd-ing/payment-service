@@ -1,4 +1,4 @@
-package com.pding.paymentservice.security.jwt;
+package com.pding.paymentservice.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
