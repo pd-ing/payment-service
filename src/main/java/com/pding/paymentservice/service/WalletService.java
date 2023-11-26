@@ -6,10 +6,9 @@ import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.WalletResponse;
-import com.pding.paymentservice.repository.VideoTransactionsRepository;
+import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.v4.runtime.tree.Trees;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +27,7 @@ public class WalletService {
     WalletRepository walletRepository;
 
     @Autowired
-    VideoTransactionsRepository videoTransactionsRepository;
+    VideoPurchaseRepository videoPurchaseRepository;
 
     @Transactional
     public Wallet addToWallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
@@ -101,6 +100,7 @@ public class WalletService {
             }
         } else {
             log.error("No wallet info present for userId " + userId);
+            log.error("Creating wallet for for userId " + userId);
             throw new WalletNotFoundException("No wallet info present for userID " + userId);
         }
     }
@@ -117,7 +117,7 @@ public class WalletService {
         }
         try {
             Optional<Wallet> wallet = fetchWalletByUserId(userId);
-            BigDecimal treesEarned = videoTransactionsRepository.getTotalTreesEarnedByVideoOwner(userId);
+            BigDecimal treesEarned = videoPurchaseRepository.getTotalTreesEarnedByVideoOwner(userId);
             return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), treesEarned));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));

@@ -1,25 +1,9 @@
 package com.pding.paymentservice.controllers;
 
-import com.pding.paymentservice.exception.InsufficientTreesException;
-import com.pding.paymentservice.exception.InvalidAmountException;
-import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.VideoTransactions;
-import com.pding.paymentservice.models.Wallet;
-import com.pding.paymentservice.models.WalletHistory;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
-import com.pding.paymentservice.payload.response.BuyVideoResponse;
-import com.pding.paymentservice.payload.response.ChargeResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
-import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
-import com.pding.paymentservice.payload.response.WalletHistoryResponse;
-import com.pding.paymentservice.payload.response.WalletResponse;
-import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.service.PaymentService;
-import com.pding.paymentservice.service.VideoTransactionsService;
-import com.pding.paymentservice.service.WalletHistoryService;
-import com.pding.paymentservice.service.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -35,12 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -50,11 +29,6 @@ public class PaymentServiceController {
     @Autowired
     PaymentService paymentService;
 
-    @Autowired
-    WalletService walletService;
-
-    @Autowired
-    WalletHistoryService walletHistoryService;
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
@@ -75,16 +49,6 @@ public class PaymentServiceController {
         return paymentService.chargeCustomer(paymentDetailsRequest);
     }
 
-
-    @GetMapping(value = "/wallet")
-    public ResponseEntity<?> getWallet(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
-        return walletService.getWallet(userId);
-    }
-
-    @GetMapping(value = "/walletHistory")
-    public ResponseEntity<?> getWalletHistory(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
-        return walletHistoryService.getHistory(userId);
-    }
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)

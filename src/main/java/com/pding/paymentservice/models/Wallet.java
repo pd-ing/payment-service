@@ -1,5 +1,6 @@
 package com.pding.paymentservice.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,7 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "wallet")
+@Table(name = "Wallet")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -24,6 +25,7 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String userId;
 
     private BigDecimal trees;

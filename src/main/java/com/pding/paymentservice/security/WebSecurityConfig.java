@@ -1,7 +1,5 @@
 package com.pding.paymentservice.security;
 
-import com.pding.paymentservice.security.jwt.AuthEntryPointJwt;
-import com.pding.paymentservice.security.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 //@EnableWebSecurity
-@EnableMethodSecurity
-        (//securedEnabled = true,
-                //      jsr250Enabled = true,
-                prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
     @Autowired

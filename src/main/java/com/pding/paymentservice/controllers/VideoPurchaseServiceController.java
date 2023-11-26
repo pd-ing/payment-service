@@ -1,15 +1,7 @@
 package com.pding.paymentservice.controllers;
 
-import com.pding.paymentservice.exception.InsufficientTreesException;
-import com.pding.paymentservice.exception.InvalidAmountException;
-import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.VideoTransactions;
-import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
-import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
-import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
-import com.pding.paymentservice.service.VideoTransactionsService;
+import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -32,26 +23,26 @@ import java.util.List;
 public class VideoPurchaseServiceController {
 
     @Autowired
-    VideoTransactionsService videoTransactionsService;
+    VideoPurchaseService videoPurchaseService;
 
     @PostMapping(value = "/buyVideo")
     public ResponseEntity<?> buyVideo(@RequestParam(value = "userId") String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
-        return videoTransactionsService.buyVideo(userId, videoId, trees, videoOwnerUserId);
+        return videoPurchaseService.buyVideo(userId, videoId, trees, videoOwnerUserId);
     }
 
-    @GetMapping(value = "/videoTransactions")
+    @GetMapping(value = "/videoPurchase")
     public ResponseEntity<?> getVideotransactions(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
-        return videoTransactionsService.getVideoTransactions(userId);
+        return videoPurchaseService.getVideoTransactions(userId);
     }
 
     @GetMapping(value = "/treesEarned")
     public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserId") String videoOwnerUserId) {
-        return videoTransactionsService.getTreesEarned(videoOwnerUserId);
+        return videoPurchaseService.getTreesEarned(videoOwnerUserId);
     }
 
     @GetMapping(value = "/isVideoPurchased")
     public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId") String userId, @RequestParam(value = "videoId") String videoId) {
-        return videoTransactionsService.isVideoPurchased(userId, videoId);
+        return videoPurchaseService.isVideoPurchased(userId, videoId);
     }
 
 

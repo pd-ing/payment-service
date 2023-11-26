@@ -3,56 +3,62 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.VideoTransactions;
-import com.pding.paymentservice.models.Wallet;
+import com.pding.paymentservice.models.TransactionType;
+import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
-import com.pding.paymentservice.repository.VideoTransactionsRepository;
+import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-public class VideoTransactionsService {
+public class VideoPurchaseService {
 
     @Autowired
-    VideoTransactionsRepository videoTransactionsRepository;
+    VideoPurchaseRepository videoPurchaseRepository;
 
     @Autowired
     WalletService walletService;
 
+    @Autowired
+    LedgerService ledgerService;
+
+    @Autowired
+    EarningService earningService;
+
     @Transactional
-    public VideoTransactions createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
+    public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
         walletService.deductFromWallet(userId, treesToConsumed);
 
-        VideoTransactions transaction = new VideoTransactions(userId, videoId, treesToConsumed, videoOwnerUserId);
-        VideoTransactions video = videoTransactionsRepository.save(transaction);
+        VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
+        VideoPurchase video = videoPurchaseRepository.save(transaction);
+
+        earningService.addToEarning(videoOwnerUserId, treesToConsumed);
+        ledgerService.saveToLedger(video.getId(), treesToConsumed, TransactionType.VIDEO_PURCHASE);
 
         return video;
     }
 
 
-    public List<VideoTransactions> getAllTransactionsForUser(String userID) {
-        return videoTransactionsRepository.getVideoTransactionsByUserId(userID);
+    public List<VideoPurchase> getAllTransactionsForUser(String userID) {
+        return videoPurchaseRepository.getVideoPurchaseByUserId(userID);
     }
 
     public BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserID) {
-        return videoTransactionsRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
+        return videoPurchaseRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
     }
 
     public Boolean isVideoPurchasedByUser(String userID, String videoID) {
-        List<VideoTransactions> videoTransactions = videoTransactionsRepository.findByUserIdAndVideoId(userID, videoID);
+        List<VideoPurchase> videoTransactions = videoPurchaseRepository.findByUserIdAndVideoId(userID, videoID);
         if (videoTransactions == null)
             return false;
 
@@ -73,7 +79,7 @@ public class VideoTransactionsService {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         try {
-            VideoTransactions video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
+            VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -91,7 +97,7 @@ public class VideoTransactionsService {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
         try {
-            List<VideoTransactions> videoTransactions = getAllTransactionsForUser(userId);
+            List<VideoPurchase> videoTransactions = getAllTransactionsForUser(userId);
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

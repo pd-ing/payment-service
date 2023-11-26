@@ -2,6 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.exception.ChargeNewCardException;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
+import com.pding.paymentservice.models.TransactionType;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.ChargeResponse;
@@ -31,6 +32,9 @@ public class PaymentService {
     @Autowired
     WalletHistoryService walletHistoryService;
 
+    @Autowired
+    LedgerService ledgerService;
+
     @Transactional
     public String chargeCustomer(String userId,
                                  BigDecimal purchasedTrees, LocalDateTime purchasedDate,
@@ -39,10 +43,14 @@ public class PaymentService {
                                  String description, String ipAddress) throws Exception {
         try {
             validatePaymentIntentID(transactionID, userId);
-
+            
             Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedDate);
+
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);
+
+            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, TransactionType.TREE_PURCHASE);
+
             return "Payment Details updated successfully.";
         } catch (Exception e) {
             e.printStackTrace();

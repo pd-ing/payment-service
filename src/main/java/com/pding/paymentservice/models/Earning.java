@@ -1,8 +1,7 @@
 package com.pding.paymentservice.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,32 +15,33 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "VideoTransactions")
+@Table(name = "Earning")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class VideoTransactions {
+public class Earning {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String userId;
 
-    private String videoId;
+    private BigDecimal treesEarned;
 
-    private BigDecimal treesConsumed;
+    private LocalDateTime createdDate;
 
-    private LocalDateTime timestamp;
+    private LocalDateTime updatedDate;
 
-    private String videoOwnerUserId;
+    private Integer totalTransactions = 0;
 
-    public VideoTransactions(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
+    public Earning(String userId, BigDecimal treesEarned) {
+        LocalDateTime currentDate = LocalDateTime.now();
         this.userId = userId;
-        this.videoId = videoId;
-        this.treesConsumed = treesConsumed;
-        this.timestamp = LocalDateTime.now();
-        this.videoOwnerUserId = videoOwnerUserId;
+        this.treesEarned = treesEarned;
+        this.createdDate = currentDate;
+        this.updatedDate = currentDate;
+        this.totalTransactions = 1;
     }
-
 }

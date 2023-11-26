@@ -1,6 +1,6 @@
 package com.pding.paymentservice.payload.response;
 
-import com.pding.paymentservice.models.VideoTransactions;
+import com.pding.paymentservice.models.VideoPurchase;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +15,5 @@ import java.util.List;
 @AllArgsConstructor
 public class GetVideoTransactionsResponse {
     ErrorResponse errorResponse;
-    List<VideoTransactions> videoTransactionsList;
+    List<VideoPurchase> videoPurchaseList;
 }
