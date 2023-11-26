@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WalletHistoryRepository extends JpaRepository<WalletHistory, Long> {
-    
-    List<WalletHistory> findByWalletId(Long walletId);
+public interface WalletHistoryRepository extends JpaRepository<WalletHistory, String> {
+
+    List<WalletHistory> findByWalletId(String walletId);
 
     List<WalletHistory> findByUserId(String userId);
 

@@ -38,4 +38,20 @@ public class EarningService {
         }
         earningRepository.save(earningObj);
     }
+
+    public Optional<Earning> getEarningForUserId(String userId) {
+        Optional<Earning> earning = earningRepository.findByUserId(userId);
+        if (!earning.isPresent()) {
+            Earning earningObj = new Earning();
+            earningObj.setUserId(userId);
+            earningObj.setTreesEarned(new BigDecimal(0));
+            earningObj.setTotalTransactions(0);
+
+            earningRepository.save(earningObj);
+
+            return earningRepository.findByUserId(userId);
+        }
+
+        return earning;
+    }
 }

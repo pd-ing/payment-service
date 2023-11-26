@@ -1,6 +1,8 @@
 package com.pding.paymentservice.models;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -9,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,18 +24,20 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Ledger {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator
+    private String id;
 
-    private Long walletOrVideoOrDonationOrWithdrawalId;
+    private String walletOrVideoOrDonationOrWithdrawalId;
 
     private BigDecimal treesTransacted;
 
     private LocalDateTime timestamp;
 
+    @Enumerated(EnumType.STRING)
     private TransactionType transactionType; // "Purchase", "Donation", "Withdrawal", etc.
 
-    public Ledger(Long walletOrVideoOrDonationOrWithdrawalId, BigDecimal treesTransacted, TransactionType transactionType) {
+    public Ledger(String walletOrVideoOrDonationOrWithdrawalId, BigDecimal treesTransacted, TransactionType transactionType) {
         this.walletOrVideoOrDonationOrWithdrawalId = walletOrVideoOrDonationOrWithdrawalId;
         this.treesTransacted = treesTransacted;
         this.transactionType = transactionType;

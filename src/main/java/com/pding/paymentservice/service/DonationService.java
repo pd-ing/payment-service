@@ -9,6 +9,7 @@ import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 import com.pding.paymentservice.repository.EarningRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -49,18 +51,27 @@ public class DonationService {
         return donation;
     }
 
-    public ResponseEntity<?> donateToPd(String userId, BigDecimal trees, String PdUserId) {
+
+    public List<Donation> userDonationHistory(String userId) {
+        return donationRepository.findByDonorUserId(userId);
+    }
+
+    public List<Donation> pdDonationHistory(String pdUserId) {
+        return donationRepository.findByPdUserId(pdUserId);
+    }
+
+    public ResponseEntity<?> donateToPd(String userId, BigDecimal trees, String pdUserId) {
         if (userId == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
-        if (PdUserId == null) {
+        if (pdUserId == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "PdUserId parameter is required."));
         }
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         try {
-            Donation donation = createDonationTransaction(userId, trees, PdUserId);
+            Donation donation = createDonationTransaction(userId, trees, pdUserId);
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -72,4 +83,30 @@ public class DonationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    public ResponseEntity<?> getDonationHistoryForUser(String userId) {
+        if (userId == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
+        }
+        try {
+            List<Donation> userDonationHistory = userDonationHistory(userId);
+
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> getDonationHistoryForPd(String pdUserId) {
+        if (pdUserId == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
+        }
+        try {
+            List<Donation> userDonationHistory = pdDonationHistory(pdUserId);
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
 }

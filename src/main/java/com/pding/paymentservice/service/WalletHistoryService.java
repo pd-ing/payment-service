@@ -22,7 +22,7 @@ public class WalletHistoryService {
     @Autowired
     WalletHistoryRepository walletHistoryRepository;
 
-    public void recordPurchaseHistory(long walletId, String userId, BigDecimal purchasedTrees,
+    public void recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees,
                                       LocalDateTime purchasedDate,
                                       String transactionID, String transactionStatus, BigDecimal amount, String paymentMethod,
                                       String currency, String description, String ipAddress) {
@@ -31,8 +31,8 @@ public class WalletHistoryService {
         walletHistoryRepository.save(walletHistory);
     }
 
-    public List<WalletHistory> fetchWalletHistoryByWalletID(long walletID) {
-        return walletHistoryRepository.findByWalletId(walletID);
+    public List<WalletHistory> fetchWalletHistoryByWalletID(String walletId) {
+        return walletHistoryRepository.findByWalletId(walletId);
     }
 
     public List<WalletHistory> fetchWalletHistoryByUserId(String userId) {
@@ -43,7 +43,7 @@ public class WalletHistoryService {
         return walletHistoryRepository.findByTransactionIdAndUserId(transactionID, userId);
     }
 
-    public void createWalletHistoryEntry(long walletID, String userId,
+    public void createWalletHistoryEntry(String walletID, String userId,
                                          BigDecimal purchasedTrees, LocalDateTime purchasedDate,
                                          String transactionID, String transactionStatus, BigDecimal amount,
                                          String paymentMethod, String currency,

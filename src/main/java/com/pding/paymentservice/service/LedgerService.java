@@ -16,7 +16,7 @@ public class LedgerService {
     @Autowired
     LedgerRespository ledgerRespository;
 
-    public void saveToLedger(Long walletOrVideoOrDonationOrWithdrawalId, BigDecimal treesTransacted, TransactionType transactionType) {
+    public void saveToLedger(String walletOrVideoOrDonationOrWithdrawalId, BigDecimal treesTransacted, TransactionType transactionType) {
         Ledger ledger = new Ledger(walletOrVideoOrDonationOrWithdrawalId, treesTransacted, transactionType);
         ledgerRespository.save(ledger);
     }

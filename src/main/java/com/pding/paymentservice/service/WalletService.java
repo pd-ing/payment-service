@@ -3,6 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
+import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.WalletResponse;
@@ -27,7 +28,8 @@ public class WalletService {
     WalletRepository walletRepository;
 
     @Autowired
-    VideoPurchaseRepository videoPurchaseRepository;
+    EarningService earningService;
+
 
     @Transactional
     public Wallet addToWallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
@@ -59,7 +61,12 @@ public class WalletService {
         Optional<Wallet> wallet = walletRepository.findWalletByUserId(userId);
 
         if (!wallet.isPresent()) {
-            Wallet newWallet = new Wallet(userId, new BigDecimal(0), null);
+            Wallet newWallet = new Wallet();
+            newWallet.setUserId(userId);
+            newWallet.setTrees(new BigDecimal(0));
+            newWallet.setLastPurchasedDate(null);
+            newWallet.setTotalTransactions(0);
+
             walletRepository.save(newWallet);
 
             return walletRepository.findWalletByUserId(userId);
@@ -117,8 +124,8 @@ public class WalletService {
         }
         try {
             Optional<Wallet> wallet = fetchWalletByUserId(userId);
-            BigDecimal treesEarned = videoPurchaseRepository.getTotalTreesEarnedByVideoOwner(userId);
-            return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), treesEarned));
+            Optional<Earning> earning = earningService.getEarningForUserId(userId);
+            return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), earning.get()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }

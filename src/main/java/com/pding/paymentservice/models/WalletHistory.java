@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,10 +22,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class WalletHistory {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator
+    private String id;
 
-    private Long walletId;
+    private String walletId;
 
     private String userId;
 
@@ -46,7 +48,7 @@ public class WalletHistory {
 
     private String ipAddress;
 
-    public WalletHistory(Long walletId, String userId, BigDecimal purchasedTrees,
+    public WalletHistory(String walletId, String userId, BigDecimal purchasedTrees,
                          LocalDateTime purchaseDate, String transactionId, String transactionStatus,
                          BigDecimal amount, String paymentMethod, String currency, String description,
                          String ipAddress) {

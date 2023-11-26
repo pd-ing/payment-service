@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,20 +22,21 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Donation {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator
+    private String id;
 
     private String donorUserId;
 
-    private String PdUserId;
+    private String pdUserId;
 
     private BigDecimal donatedTrees;
 
     private LocalDateTime lastUpdateDate;
 
-    public Donation(String donorUserId, String PdUserId, BigDecimal donatedTrees) {
+    public Donation(String donorUserId, String pdUserId, BigDecimal donatedTrees) {
         this.donorUserId = donorUserId;
-        this.PdUserId = PdUserId;
+        this.pdUserId = pdUserId;
         this.donatedTrees = donatedTrees;
         this.lastUpdateDate = LocalDateTime.now();
     }

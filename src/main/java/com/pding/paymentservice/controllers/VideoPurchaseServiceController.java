@@ -30,15 +30,15 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.buyVideo(userId, videoId, trees, videoOwnerUserId);
     }
 
-    @GetMapping(value = "/videoPurchase")
+    @GetMapping(value = "/videoPurchaseHistory")
     public ResponseEntity<?> getVideotransactions(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
         return videoPurchaseService.getVideoTransactions(userId);
     }
 
-    @GetMapping(value = "/treesEarned")
-    public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserId") String videoOwnerUserId) {
-        return videoPurchaseService.getTreesEarned(videoOwnerUserId);
-    }
+//    @GetMapping(value = "/treesEarned")
+//    public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserId") String videoOwnerUserId) {
+//        return videoPurchaseService.getTreesEarned(videoOwnerUserId);
+//    }
 
     @GetMapping(value = "/isVideoPurchased")
     public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId") String userId, @RequestParam(value = "videoId") String videoId) {

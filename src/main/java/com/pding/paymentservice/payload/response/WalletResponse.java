@@ -1,6 +1,7 @@
 package com.pding.paymentservice.payload.response;
 
 
+import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.Wallet;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,6 @@ import java.math.BigDecimal;
 @Builder
 public class WalletResponse {
     ErrorResponse errorResponse;
-    Wallet wallet;
-    BigDecimal treesEarned;
+    Wallet spendingWallet;
+    Earning earningWallet;
 }

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
-public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, Long> {
+public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, String> {
 
     //VideoPurchase save(VideoPurchase transaction);
 
