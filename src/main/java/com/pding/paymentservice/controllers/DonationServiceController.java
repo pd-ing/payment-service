@@ -1,12 +1,16 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.models.Earning;
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.EarningService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,5 +40,16 @@ public class DonationServiceController {
     @GetMapping(value = "/donationHistoryForPd")
     public ResponseEntity<?> getDonationHistoryForPd(@RequestParam(value = "pdUserId") String pdUserId) {
         return donationService.getDonationHistoryForPd(pdUserId);
+    }
+
+    @GetMapping(value = "/topDonorsList")
+    public ResponseEntity<?> getDonationHistoryForPd(@RequestParam(value = "limit") Long limit) {
+        return donationService.getTopDonors(limit);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
+        String paramName = ex.getParameterName();
+        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
     }
 }
