@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -12,6 +13,7 @@ import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 
+import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,12 @@ public class DonationService {
 
     @Autowired
     UserServiceNetworkManager userServiceNetworkManager;
+
+    @Autowired
+    TokenSigner tokenSigner;
+
+    @Autowired
+    PdLogger pdLogger;
 
     @Transactional
     public Donation createDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
@@ -83,15 +91,40 @@ public class DonationService {
                         row -> (String) row[0],          // donorUserId
                         row -> (BigDecimal) row[1]       // totalDonatedTrees
                 ));
-        
+
         List<PublicUserNet> publicUsers = userServiceNetworkManager
                 .getUsersListFlux(donorUserIds)
                 .collect(Collectors.toList())
                 .block();
 
         for (PublicUserNet user : publicUsers) {
+            String profilePicture = null;
+            try {
+                if (user.getProfilePicture() != null) {
+                    profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8);
+                }
+            } catch (Exception e) {
+                pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
+                e.printStackTrace();
+
+            }
+
+            String coverImage = null;
+            try {
+                if (user.getCoverImage() != null) {
+                    coverImage = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getCoverImage()), 8);
+                }
+            } catch (Exception e) {
+                pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
+                e.printStackTrace();
+
+            }
+
             BigDecimal treesDonated = topDonorsMap.get(user.getId());
+            
             user.setTreesDonated(treesDonated);
+            user.setProfilePicture(profilePicture);
+            user.setCoverImage(coverImage);
         }
 
         return publicUsers;
