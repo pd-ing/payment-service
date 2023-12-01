@@ -26,9 +26,6 @@ public class FirebaseInitializer implements CommandLineRunner {
     @Value("${aws.param.firebaseKey}")
     private String firebaseKey;
 
-    @Autowired
-    private PdLogger pdLogger;
-
     public String getFirebaseServiceAccount() {
         GetParameterResponse response = ssmClient.getParameter(
                 GetParameterRequest.builder()
@@ -52,10 +49,10 @@ public class FirebaseInitializer implements CommandLineRunner {
             FirebaseApp.initializeApp(options);
 
         } catch (FileNotFoundException e) {
-            pdLogger.logException(PdLogger.EVENT.FIREBASE_AUTH, e);
+            // TODO logs - service_account file not found
             throw new RuntimeException(e);
         } catch (IOException e) {
-            pdLogger.logException(PdLogger.EVENT.FIREBASE_AUTH, e);
+            //TODO logs
             throw new RuntimeException(e);
         }
     }
