@@ -1,6 +1,11 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.exception.EarningNotFoundException;
+import com.pding.paymentservice.exception.InsufficientTreesException;
+import com.pding.paymentservice.exception.InvalidAmountException;
+import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Earning;
+import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.repository.EarningRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +44,7 @@ public class EarningService {
         earningRepository.save(earningObj);
     }
 
-    public Optional<Earning> getEarningForUserId(String userId) {
+    public Optional<Earning> fetchEarningForUserId(String userId) {
         Optional<Earning> earning = earningRepository.findByUserId(userId);
         if (!earning.isPresent()) {
             Earning earningObj = new Earning();
@@ -53,5 +58,33 @@ public class EarningService {
         }
 
         return earning;
+    }
+
+
+    public void deductFromEarning(String userId, BigDecimal treesToDeduct) {
+        Optional<Earning> earning = fetchEarningForUserId(userId);
+
+        if (earning.isPresent()) {
+            Earning earningObj = earning.get();
+            BigDecimal currentTrees = earningObj.getTreesEarned();
+
+            if (treesToDeduct.compareTo(BigDecimal.ZERO) >= 0) {
+                BigDecimal newTreesBalance = currentTrees.subtract(treesToDeduct);
+                if (newTreesBalance.compareTo(BigDecimal.ZERO) >= 0) {
+                    earningObj.setTreesEarned(newTreesBalance);
+                    earningRepository.save(earningObj);
+                } else {
+                    log.error("Insufficient trees. Cannot perform transaction.");
+                    throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");
+                }
+            } else {
+                log.error("Invalid amount(Trees) to deduct. Amount(Trees) must be greater than or equal to zero.");
+                throw new InvalidAmountException("Invalid amount(Trees) to deduct. Amount(Trees) must be greater than or equal to zero.");
+            }
+        } else {
+            log.error("No Earning info present for userId " + userId);
+            log.error("Creating Earning info for for userId " + userId);
+            throw new EarningNotFoundException("No Earnings found for userID " + userId);
+        }
     }
 }

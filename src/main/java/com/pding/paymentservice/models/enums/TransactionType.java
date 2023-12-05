@@ -1,9 +1,11 @@
-package com.pding.paymentservice.models;
+package com.pding.paymentservice.models.enums;
 
 public enum TransactionType {
     TREE_PURCHASE("treePurchase"),
     DONATION("donation"),
-    WITHDRAWAL("withdrawal"),
+    WITHDRAWAL_STARTED("withdrawal_started"),
+    WITHDRAWAL_COMPLETED("withdrawal_completed"),
+    WITHDRAWAL_FAILED("withdrawal_failed"),
     VIDEO_PURCHASE("videoPurchase");
 
     private final String displayName;

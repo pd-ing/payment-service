@@ -1,7 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.models.Ledger;
-import com.pding.paymentservice.models.TransactionType;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.repository.LedgerRespository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

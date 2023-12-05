@@ -1,14 +1,12 @@
 package com.pding.paymentservice.service;
 
-import com.pding.paymentservice.exception.ChargeNewCardException;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
-import com.pding.paymentservice.models.TransactionType;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.ChargeResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.stripe.StripeClient;
-import com.stripe.model.Charge;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,7 +41,7 @@ public class PaymentService {
                                  String description, String ipAddress) throws Exception {
         try {
             validatePaymentIntentID(transactionID, userId);
-            
+
             Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedDate);
 
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedDate, transactionID, transactionStatus,

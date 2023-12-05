@@ -3,7 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.TransactionType;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;

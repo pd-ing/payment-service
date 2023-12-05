@@ -124,7 +124,7 @@ public class WalletService {
         }
         try {
             Optional<Wallet> wallet = fetchWalletByUserId(userId);
-            Optional<Earning> earning = earningService.getEarningForUserId(userId);
+            Optional<Earning> earning = earningService.fetchEarningForUserId(userId);
             return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), earning.get()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));

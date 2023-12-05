@@ -5,7 +5,7 @@ import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
-import com.pding.paymentservice.models.TransactionType;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
@@ -121,7 +121,7 @@ public class DonationService {
             }
 
             BigDecimal treesDonated = topDonorsMap.get(user.getId());
-            
+
             user.setTreesDonated(treesDonated);
             user.setProfilePicture(profilePicture);
             user.setCoverImage(coverImage);

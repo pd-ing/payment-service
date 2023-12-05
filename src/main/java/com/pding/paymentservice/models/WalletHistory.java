@@ -39,7 +39,7 @@ public class WalletHistory {
     private String transactionStatus;
 
     private BigDecimal amount;
-
+    
     private String paymentMethod;
 
     private String currency;
