@@ -4,7 +4,7 @@ import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
-import com.pding.paymentservice.payload.response.ChargeResponse;
+import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
@@ -82,9 +82,9 @@ public class PaymentService {
                     paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(),
                     paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
 
-            return ResponseEntity.ok().body(new ChargeResponse(null, charge));
+            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ChargeResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 }

@@ -6,6 +6,7 @@ public enum TransactionType {
     WITHDRAWAL_STARTED("withdrawal_started"),
     WITHDRAWAL_COMPLETED("withdrawal_completed"),
     WITHDRAWAL_FAILED("withdrawal_failed"),
+    TREES_REVERTED("trees_reverted"),
     VIDEO_PURCHASE("videoPurchase");
 
     private final String displayName;

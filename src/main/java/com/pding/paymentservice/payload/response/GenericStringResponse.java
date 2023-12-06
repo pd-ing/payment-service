@@ -1,6 +1,5 @@
 package com.pding.paymentservice.payload.response;
 
-import com.stripe.model.Charge;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class ChargeResponse {
+public class GenericStringResponse {
     ErrorResponse errorResponse;
     String charge;
 }

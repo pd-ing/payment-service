@@ -54,7 +54,6 @@ public class WebhookController {
                 case "payment_intent.payment_failed":
                     withdrawalService.failWithdrawal(paymentIntentId);
                     break;
-
                 default:
 
                     break;
