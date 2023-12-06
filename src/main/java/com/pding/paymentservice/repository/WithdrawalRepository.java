@@ -15,4 +15,7 @@ public interface WithdrawalRepository extends JpaRepository<Withdrawal, String> 
     List<Withdrawal> findByPdUserId(String pdUserId);
 
     List<Withdrawal> findByPdUserIdOrderByCreatedDateDesc(String pdUserId);
+
+    Optional<Withdrawal> findByPdUserIdAndTransactionId(String pdUserId, String transactionId);
+
 }

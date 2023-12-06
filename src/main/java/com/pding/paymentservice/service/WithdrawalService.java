@@ -1,6 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.WithdrawalStatus;
@@ -9,6 +10,7 @@ import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.WithdrawalRepository;
+import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,9 @@ public class WithdrawalService {
 
     @Autowired
     LedgerService ledgerService;
+
+    @Autowired
+    private StripeClient stripeClient;
 
 
     @Transactional
@@ -88,6 +93,18 @@ public class WithdrawalService {
         }
     }
 
+    private boolean validatePaymentIntentID(String pdUserId, String transactionId) throws Exception {
+        if (!stripeClient.isPaymentIntentIDPresentInStripe(transactionId)) {
+            throw new InvalidTransactionIDException("paymentIntent id : " + transactionId + " , is invalid");
+        }
+
+        if (withdrawalRepository.findByPdUserIdAndTransactionId(pdUserId, transactionId).isPresent()) {
+            throw new InvalidTransactionIDException("paymentIntent id : " + transactionId + " , is already used for the payment");
+        }
+
+        return true;
+    }
+
     public ResponseEntity<?> withDraw(String pdUserId, BigDecimal trees, String transactionId) {
         if (pdUserId == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
@@ -100,8 +117,11 @@ public class WithdrawalService {
         }
 
         try {
+            validatePaymentIntentID(pdUserId, transactionId);
             startWithdrawal(pdUserId, trees, transactionId);
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process initialted successfully, Will take 5-7 businees days to credit in your account"));
+        } catch (InvalidTransactionIDException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
