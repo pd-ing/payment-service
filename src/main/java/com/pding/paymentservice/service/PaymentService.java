@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.Wallet;
@@ -32,6 +33,9 @@ public class PaymentService {
 
     @Autowired
     LedgerService ledgerService;
+
+    @Autowired
+    PdLogger pdLogger;
 
     @Transactional
     public String chargeCustomer(String userId,
@@ -84,6 +88,7 @@ public class PaymentService {
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }

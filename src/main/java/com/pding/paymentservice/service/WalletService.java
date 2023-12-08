@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -30,6 +31,9 @@ public class WalletService {
     @Autowired
     EarningService earningService;
 
+
+    @Autowired
+    PdLogger pdLogger;
 
     @Transactional
     public Wallet addToWallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
@@ -108,7 +112,8 @@ public class WalletService {
         } else {
             log.error("No wallet info present for userId " + userId);
             log.error("Creating wallet for for userId " + userId);
-            throw new WalletNotFoundException("No wallet info present for userID " + userId);
+            //throw new WalletNotFoundException("No wallet info present for userID " + userId);
+            throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");
         }
     }
 
@@ -127,6 +132,7 @@ public class WalletService {
             Optional<Earning> earning = earningService.fetchEarningForUserId(userId);
             return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), earning.get()));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }

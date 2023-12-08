@@ -150,6 +150,7 @@ public class DonationService {
         } catch (InvalidAmountException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -163,6 +164,7 @@ public class DonationService {
 
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -175,6 +177,7 @@ public class DonationService {
             List<Donation> userDonationHistory = pdDonationHistory(pdUserId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -187,6 +190,7 @@ public class DonationService {
             List<PublicUserNet> publicUserNetList = getTopDonorsInfo(limit);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
         } catch (Exception e) {
+            pdLogger.logException(e);
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(errorResponse, null));
         }

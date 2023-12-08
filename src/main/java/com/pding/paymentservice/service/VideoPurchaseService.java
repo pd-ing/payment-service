@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -11,6 +12,7 @@ import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,9 @@ public class VideoPurchaseService {
 
     @Autowired
     EarningService earningService;
+
+    @Autowired
+    PdLogger pdLogger;
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
@@ -88,6 +93,7 @@ public class VideoPurchaseService {
         } catch (InvalidAmountException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -100,6 +106,7 @@ public class VideoPurchaseService {
             List<VideoPurchase> videoTransactions = getAllTransactionsForUser(userId);
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -127,6 +134,7 @@ public class VideoPurchaseService {
             Boolean isPurchased = isVideoPurchasedByUser(userId, videoId);
             return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponse(null, isPurchased));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
         }
     }

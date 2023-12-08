@@ -40,6 +40,9 @@ public class WithdrawalService {
     @Autowired
     private StripeClient stripeClient;
 
+    @Autowired
+    PdLogger pdLogger;
+
 
     @Transactional
     public void startWithdrawal(String pdUserId, BigDecimal trees, String transactionId) throws Exception {
@@ -123,6 +126,7 @@ public class WithdrawalService {
         } catch (InvalidTransactionIDException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
+            pdLogger.logException(PdLogger.Priority.p0, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -136,6 +140,7 @@ public class WithdrawalService {
             List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdOrderByCreatedDateDesc(pdUserId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
         } catch (Exception e) {
+            pdLogger.logException(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }

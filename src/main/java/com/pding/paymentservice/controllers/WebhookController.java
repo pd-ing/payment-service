@@ -1,5 +1,6 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.service.EarningService;
 import com.pding.paymentservice.service.WithdrawalService;
 import com.stripe.model.PaymentIntent;
@@ -28,6 +29,9 @@ public class WebhookController {
     @Autowired
     WithdrawalService withdrawalService;
 
+    @Autowired
+    PdLogger pdLogger;
+
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
@@ -42,6 +46,7 @@ public class WebhookController {
 
             if ("payment_intent.succeeded".equals(event.getType()) ||
                     "payment_intent.payment_failed".equals(event.getType())) {
+
                 PaymentIntent paymentIntent = (PaymentIntent) event.getData().getObject();
                 paymentIntentId = paymentIntent.getId();
             }
@@ -61,6 +66,7 @@ public class WebhookController {
 
             return new ResponseEntity<>("Success", HttpStatus.OK);
         } catch (Exception e) {
+            pdLogger.logException(PdLogger.Priority.p0, e);
             return new ResponseEntity<>("Webhook processing failed", HttpStatus.BAD_REQUEST);
         }
     }
