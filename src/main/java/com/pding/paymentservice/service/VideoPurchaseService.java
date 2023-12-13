@@ -11,9 +11,9 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
-import com.pding.paymentservice.payload.response.VideoEarningsAndSales;
+import com.pding.paymentservice.models.VideoEarningsAndSales;
+import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VideoPurchaseService {
@@ -74,12 +76,8 @@ public class VideoPurchaseService {
         return true;
     }
 
-    public BigDecimal getTreesEarnedByVideo(String videoId) {
-        return videoPurchaseRepository.getTotalTreesEarnedForVideoId(videoId);
-    }
-
-    public Long getTotalVideoSales(String videoId) {
-        return videoPurchaseRepository.getSalesCountForVideoId(videoId);
+    public Map<String, VideoEarningsAndSales> getVideoStats(List<String> videoId) {
+        return videoPurchaseRepository.getTotalTreesEarnedAndSalesCountMapForVideoIds(videoId);
     }
 
     public ResponseEntity<?> buyVideo(String userId, String videoId, BigDecimal trees, String videoOwnerUserId) {
@@ -149,17 +147,18 @@ public class VideoPurchaseService {
     }
 
 
-    public ResponseEntity<?> videoEarningAndSales(String videoId) {
-        if (videoId == null || videoId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new VideoEarningsAndSales(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), null, null));
+    public ResponseEntity<?> videoEarningAndSales(String videoIds) {
+        if (videoIds == null || videoIds.isEmpty()) {
+            return ResponseEntity.badRequest().body(new VideoEarningsAndSalesResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), null));
         }
         try {
-            BigDecimal treesEarned = getTreesEarnedByVideo(videoId);
-            Long totalSales = getTotalVideoSales(videoId);
-            return ResponseEntity.ok().body(new VideoEarningsAndSales(null, treesEarned, totalSales));
+            List<String> videoIdsList = Arrays.stream(videoIds.split(","))
+                    .toList();
+            Map<String, VideoEarningsAndSales> videoStats = getVideoStats(videoIdsList);
+            return ResponseEntity.ok().body(new VideoEarningsAndSalesResponse(null, videoStats));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_EARNING_AND_SALES, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoEarningsAndSales(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoEarningsAndSalesResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 }
