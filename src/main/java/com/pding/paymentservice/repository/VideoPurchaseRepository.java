@@ -1,13 +1,17 @@
 package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.models.VideoEarningsAndSales;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, String> {
@@ -23,10 +27,41 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     // Query method to find records by userID and videoID
     List<VideoPurchase> findByUserIdAndVideoId(String userId, String videoId);
 
+//    @Query("SELECT vp.videoId, COALESCE(SUM(vp.treesConsumed), 0), COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId IN :videoIds GROUP BY vp.videoId")
+//    List<Object[]> getTotalTreesEarnedAndSalesCountForVideoIds(@Param("videoIds") List<String> videoIds);
+//
+//    default Map<String, VideoEarningsAndSales> getTotalTreesEarnedAndSalesCountMapForVideoIds(List<String> videoIds) {
+//        List<Object[]> results = getTotalTreesEarnedAndSalesCountForVideoIds(videoIds);
+//        return results.stream()
+//                .collect(Collectors.toMap(
+//                        result -> (String) result[0],  // videoId
+//                        result -> new VideoEarningsAndSales(
+//                                (BigDecimal) result[1],  // total trees earned
+//                                (Long) result[2]  // total sales count
+//                        )
+//                ));
+//    }
 
-    @Query("SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.videoId = :videoId")
-    BigDecimal getTotalTreesEarnedForVideoId(@Param("videoId") String videoId);
+    @Query("SELECT vp.videoId, COALESCE(SUM(vp.treesConsumed), 0), COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId IN :videoIds GROUP BY vp.videoId")
+    List<Object[]> getTotalTreesEarnedAndSalesCountForVideoIds(@Param("videoIds") List<String> videoIds);
 
-    @Query("SELECT COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId = :videoId")
-    long getSalesCountForVideoId(@Param("videoId") String videoId);
+    default Map<String, VideoEarningsAndSales> getTotalTreesEarnedAndSalesCountMapForVideoIds(List<String> videoIds) {
+        List<Object[]> results = getTotalTreesEarnedAndSalesCountForVideoIds(videoIds);
+
+        // Create a map with default values for cases where a record is not found
+        Map<String, VideoEarningsAndSales> resultMap = new HashMap<>();
+        for (String videoId : videoIds) {
+            resultMap.put(videoId, new VideoEarningsAndSales(BigDecimal.ZERO, 0L));
+        }
+
+        // Update values for records that are found
+        results.forEach(result -> {
+            String videoId = (String) result[0];
+            BigDecimal totalTreesEarned = (BigDecimal) result[1];
+            Long totalSalesCount = (Long) result[2];
+            resultMap.put(videoId, new VideoEarningsAndSales(totalTreesEarned, totalSalesCount));
+        });
+
+        return resultMap;
+    }
 }

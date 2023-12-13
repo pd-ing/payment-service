@@ -1,5 +1,6 @@
-package com.pding.paymentservice.payload.response;
+package com.pding.paymentservice.models;
 
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +13,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VideoEarningsAndSales {
-    ErrorResponse errorResponse;
 
     BigDecimal treesEarned;
 
