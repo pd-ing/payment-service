@@ -40,9 +40,36 @@ public class PdLogger {
 
     public static enum EVENT {
         //p0
+        DONATE(Priority.p0),
+
+        CHARGE(Priority.p0),
+
+        BUY_VIDEO(Priority.p0),
+
+        IS_VIDEO_PURCHASED(Priority.p0),
+
+        STRIPE_WEBHOOK(Priority.p0),
 
         //p1
-        IMAGE_CDN_LINK(Priority.p1);
+        IMAGE_CDN_LINK(Priority.p1),
+
+        DONATION_HISTORY_FOR_USER(Priority.p1),
+
+        DONATION_HISTORY_FOR_PD(Priority.p1),
+
+        TOP_DONOR_LIST(Priority.p1),
+
+        VIDEO_PURCHASE_HISTORY(Priority.p1),
+
+        WALLET(Priority.p1),
+
+        WALLET_HISTORY(Priority.p1),
+
+        WITHDRAW(Priority.p1),
+
+        WITHDRAW_TRANSACTION(Priority.p1),
+
+        VIDEO_EARNING_AND_SALES(Priority.p1);
 
         private final Priority priority;
 

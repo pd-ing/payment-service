@@ -27,7 +27,7 @@ public class VideoPurchase {
     private String id;
 
     private String userId;
-
+    
     private String videoId;
 
     private BigDecimal treesConsumed;

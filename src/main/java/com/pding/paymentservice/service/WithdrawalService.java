@@ -109,13 +109,13 @@ public class WithdrawalService {
     }
 
     public ResponseEntity<?> withDraw(String pdUserId, BigDecimal trees, String transactionId) {
-        if (pdUserId == null) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
-        if (transactionId == null) {
+        if (transactionId == null || transactionId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "transactionId parameter is required."));
         }
 
@@ -126,13 +126,13 @@ public class WithdrawalService {
         } catch (InvalidTransactionIDException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.Priority.p0, e);
+            pdLogger.logException(PdLogger.EVENT.WITHDRAW, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
     public ResponseEntity<?> getWithDrawTransactions(String pdUserId) {
-        if (pdUserId == null) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
 
@@ -140,7 +140,7 @@ public class WithdrawalService {
             List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdOrderByCreatedDateDesc(pdUserId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
         } catch (Exception e) {
-            pdLogger.logException(e);
+            pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }

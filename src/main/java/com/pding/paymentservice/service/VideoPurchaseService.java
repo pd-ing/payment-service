@@ -11,6 +11,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
+import com.pding.paymentservice.payload.response.VideoEarningsAndSales;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,11 +74,19 @@ public class VideoPurchaseService {
         return true;
     }
 
+    public BigDecimal getTreesEarnedByVideo(String videoId) {
+        return videoPurchaseRepository.getTotalTreesEarnedForVideoId(videoId);
+    }
+
+    public Long getTotalVideoSales(String videoId) {
+        return videoPurchaseRepository.getSalesCountForVideoId(videoId);
+    }
+
     public ResponseEntity<?> buyVideo(String userId, String videoId, BigDecimal trees, String videoOwnerUserId) {
-        if (userId == null) {
+        if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
-        if (videoId == null) {
+        if (videoId == null || videoId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
         }
         if (trees == null) {
@@ -93,26 +102,26 @@ public class VideoPurchaseService {
         } catch (InvalidAmountException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
-            pdLogger.logException(e);
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
     public ResponseEntity<?> getVideoTransactions(String userId) {
-        if (userId == null) {
+        if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
         try {
             List<VideoPurchase> videoTransactions = getAllTransactionsForUser(userId);
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
         } catch (Exception e) {
-            pdLogger.logException(e);
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
     public ResponseEntity<?> getTreesEarned(String videoOwnerUserId) {
-        if (videoOwnerUserId == null) {
+        if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserID parameter is required."));
         }
         try {
@@ -124,18 +133,33 @@ public class VideoPurchaseService {
     }
 
     public ResponseEntity<?> isVideoPurchased(String userId, String videoId) {
-        if (userId == null) {
+        if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), false));
         }
-        if (videoId == null) {
+        if (videoId == null || videoId.isEmpty()) {
             return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), false));
         }
         try {
             Boolean isPurchased = isVideoPurchasedByUser(userId, videoId);
             return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponse(null, isPurchased));
         } catch (Exception e) {
-            pdLogger.logException(e);
+            pdLogger.logException(PdLogger.EVENT.IS_VIDEO_PURCHASED, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
+        }
+    }
+
+
+    public ResponseEntity<?> videoEarningAndSales(String videoId) {
+        if (videoId == null || videoId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new VideoEarningsAndSales(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "video parameter is required."), null, null));
+        }
+        try {
+            BigDecimal treesEarned = getTreesEarnedByVideo(videoId);
+            Long totalSales = getTotalVideoSales(videoId);
+            return ResponseEntity.ok().body(new VideoEarningsAndSales(null, treesEarned, totalSales));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_EARNING_AND_SALES, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoEarningsAndSales(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 }

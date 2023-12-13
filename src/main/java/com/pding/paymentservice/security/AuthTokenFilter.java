@@ -31,7 +31,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     PdLogger pdLogger;
 
     List<String> permitAllEndpoints = Arrays.asList(
-            "/api/payment/topDonorsList"
+            "/api/payment/topDonorsList",
+            "/api/payment/webhook",
+            "/api/payment/videoEarningAndSales"
     );
 
     @Override

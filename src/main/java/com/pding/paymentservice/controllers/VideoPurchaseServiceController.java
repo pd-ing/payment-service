@@ -46,6 +46,11 @@ public class VideoPurchaseServiceController {
     }
 
 
+    @GetMapping(value = "/videoEarningAndSales")
+    public ResponseEntity<?> videoEarningAndSales(@RequestParam(value = "videoId") String videoId) {
+        return videoPurchaseService.videoEarningAndSales(videoId);
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {

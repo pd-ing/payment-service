@@ -1,5 +1,7 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.PdLogger.EVENT;
 import com.pding.paymentservice.models.WalletHistory;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.WalletHistoryResponse;
@@ -21,6 +23,9 @@ public class WalletHistoryService {
 
     @Autowired
     WalletHistoryRepository walletHistoryRepository;
+
+    @Autowired
+    PdLogger pdLogger;
 
     public void recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees,
                                       LocalDateTime purchasedDate,
@@ -55,13 +60,14 @@ public class WalletHistoryService {
 
 
     public ResponseEntity<?> getHistory(String userId) {
-        if (userId == null) {
+        if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
         try {
             List<WalletHistory> walletHistory = fetchWalletHistoryByUserId(userId);
             return ResponseEntity.ok().body(new WalletHistoryResponse(null, walletHistory));
         } catch (Exception e) {
+            pdLogger.logException(EVENT.WALLET_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }

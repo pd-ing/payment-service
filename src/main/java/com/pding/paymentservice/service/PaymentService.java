@@ -88,7 +88,7 @@ public class PaymentService {
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
         } catch (Exception e) {
-            pdLogger.logException(e);
+            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }

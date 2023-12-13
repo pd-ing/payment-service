@@ -66,7 +66,7 @@ public class WebhookController {
 
             return new ResponseEntity<>("Success", HttpStatus.OK);
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.Priority.p0, e);
+            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, e);
             return new ResponseEntity<>("Webhook processing failed", HttpStatus.BAD_REQUEST);
         }
     }
