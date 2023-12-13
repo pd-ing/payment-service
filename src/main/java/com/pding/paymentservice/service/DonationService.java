@@ -5,7 +5,7 @@ import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
-import com.pding.paymentservice.models.TransactionType;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
@@ -121,7 +121,7 @@ public class DonationService {
             }
 
             BigDecimal treesDonated = topDonorsMap.get(user.getId());
-            
+
             user.setTreesDonated(treesDonated);
             user.setProfilePicture(profilePicture);
             user.setCoverImage(coverImage);
@@ -131,10 +131,10 @@ public class DonationService {
     }
 
     public ResponseEntity<?> donateToPd(String userId, BigDecimal trees, String pdUserId) {
-        if (userId == null) {
+        if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
-        if (pdUserId == null) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "PdUserId parameter is required."));
         }
         if (trees == null) {
@@ -150,12 +150,13 @@ public class DonationService {
         } catch (InvalidAmountException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.DONATE, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
     public ResponseEntity<?> getDonationHistoryForUser(String userId) {
-        if (userId == null) {
+        if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }
         try {
@@ -163,18 +164,20 @@ public class DonationService {
 
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
         } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.DONATION_HISTORY_FOR_USER, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
     public ResponseEntity<?> getDonationHistoryForPd(String pdUserId) {
-        if (pdUserId == null) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
         try {
             List<Donation> userDonationHistory = pdDonationHistory(pdUserId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
         } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.DONATION_HISTORY_FOR_PD, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -187,6 +190,7 @@ public class DonationService {
             List<PublicUserNet> publicUserNetList = getTopDonorsInfo(limit);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
         } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.TOP_DONOR_LIST, e);
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(errorResponse, null));
         }
