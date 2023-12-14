@@ -27,4 +27,13 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
 //                .collect(Collectors.toList());
     }
 
+
+    @Query("SELECT d.donorUserId, SUM(d.donatedTrees) as totalDonatedTrees " +
+            "FROM Donation d " +
+            "WHERE d.pdUserId = :pdUserId " +
+            "GROUP BY d.donorUserId " +
+            "ORDER BY totalDonatedTrees DESC " +
+            "LIMIT :limit")
+    List<Object[]> findTopDonorUserAndDonatedTreesByPdUserID(@Param("pdUserId") String pdUserId, @Param("limit") Long limit);
+
 }

@@ -75,8 +75,8 @@ public class DonationService {
         return donationRepository.findByPdUserId(pdUserId);
     }
 
-    public List<PublicUserNet> getTopDonorsInfo(Long limit) throws Exception {
-        List<Object[]> donorUserObjects = donationRepository.findTopDonorUserIds(limit);
+    public List<PublicUserNet> getTopDonorsInfo(String pdUserId, Long limit) throws Exception {
+        List<Object[]> donorUserObjects = donationRepository.findTopDonorUserAndDonatedTreesByPdUserID(pdUserId, limit);
         if (donorUserObjects.isEmpty()) {
             return new ArrayList<>();
         }
@@ -182,12 +182,15 @@ public class DonationService {
         }
     }
 
-    public ResponseEntity<?> getTopDonors(Long limit) {
+    public ResponseEntity<?> getTopDonors(String pdUserId, Long limit) {
         if (limit == null || limit <= 0 || limit > 30) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "limit parameter is invalid or not passed. Please pass limit between 1-30"));
         }
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
+        }
         try {
-            List<PublicUserNet> publicUserNetList = getTopDonorsInfo(limit);
+            List<PublicUserNet> publicUserNetList = getTopDonorsInfo(pdUserId, limit);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.TOP_DONOR_LIST, e);
