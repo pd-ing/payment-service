@@ -32,6 +32,8 @@ public class WalletHistory {
 
     private BigDecimal purchasedTrees;
 
+    private BigDecimal purchasedLeafs;
+
     private LocalDateTime purchaseDate;
 
     private String transactionId;
@@ -39,7 +41,7 @@ public class WalletHistory {
     private String transactionStatus;
 
     private BigDecimal amount;
-    
+
     private String paymentMethod;
 
     private String currency;
@@ -48,13 +50,14 @@ public class WalletHistory {
 
     private String ipAddress;
 
-    public WalletHistory(String walletId, String userId, BigDecimal purchasedTrees,
+    public WalletHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
                          LocalDateTime purchaseDate, String transactionId, String transactionStatus,
                          BigDecimal amount, String paymentMethod, String currency, String description,
                          String ipAddress) {
         this.walletId = walletId;
         this.userId = userId;
         this.purchasedTrees = purchasedTrees;
+        this.purchasedLeafs = purchasedLeafs;
         this.purchaseDate = purchaseDate;
         this.transactionId = transactionId;
         this.transactionStatus = transactionStatus;

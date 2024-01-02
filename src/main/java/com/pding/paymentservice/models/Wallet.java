@@ -32,6 +32,8 @@ public class Wallet {
 
     private BigDecimal trees;
 
+    private BigDecimal leafs;
+
     private LocalDateTime lastPurchasedDate;
 
     private LocalDateTime createdDate;
@@ -42,9 +44,10 @@ public class Wallet {
 
     private Integer totalTransactions = 0;
 
-    public Wallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+    public Wallet(String userId, BigDecimal trees, BigDecimal leafs, LocalDateTime lastPurchasedDate) {
         this.userId = userId;
         this.trees = trees;
+        this.leafs = leafs;
         this.lastPurchasedDate = lastPurchasedDate;
         createdDate = LocalDateTime.now();
         updatedDate = LocalDateTime.now();

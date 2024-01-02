@@ -36,16 +36,18 @@ public class WalletService {
     PdLogger pdLogger;
 
     @Transactional
-    public Wallet addToWallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+    public Wallet addToWallet(String userId, BigDecimal trees, BigDecimal leafs, LocalDateTime lastPurchasedDate) {
         Optional<Wallet> optionalWallet = fetchWalletByUserId(userId);
 
         Wallet wallet;
         if (optionalWallet.isPresent()) {
             wallet = optionalWallet.get();
 
-            BigDecimal updatedTree = wallet.getTrees().add(trees);
+            BigDecimal updatedTrees = wallet.getTrees().add(trees);
+            BigDecimal updatedLeafs = wallet.getLeafs().add(leafs);
 
-            wallet.setTrees(updatedTree);
+            wallet.setTrees(updatedTrees);
+            wallet.setLeafs(updatedLeafs);
             wallet.setLastPurchasedDate(LocalDateTime.now());
             wallet.setUpdatedDate(LocalDateTime.now());
 
@@ -53,9 +55,8 @@ public class WalletService {
             wallet.setTotalTransactions(updatedTotaltransactions);
 
             walletRepository.save(wallet);
-
         } else {
-            wallet = new Wallet(userId, trees, lastPurchasedDate);
+            wallet = new Wallet(userId, trees, leafs, lastPurchasedDate);
             walletRepository.save(wallet);
         }
         return wallet;
@@ -68,6 +69,7 @@ public class WalletService {
             Wallet newWallet = new Wallet();
             newWallet.setUserId(userId);
             newWallet.setTrees(new BigDecimal(0));
+            newWallet.setLeafs(new BigDecimal(0));
             newWallet.setLastPurchasedDate(null);
             newWallet.setTotalTransactions(0);
 
@@ -117,8 +119,8 @@ public class WalletService {
         }
     }
 
-    public Wallet updateWalletForUser(String userId, BigDecimal purchasedTrees, LocalDateTime purchasedDate) {
-        Wallet wallet = addToWallet(userId, purchasedTrees, purchasedDate);
+    public Wallet updateWalletForUser(String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate) {
+        Wallet wallet = addToWallet(userId, purchasedTrees, purchasedLeafs, purchasedDate);
         log.info("Wallet table updated", wallet);
         return wallet;
     }

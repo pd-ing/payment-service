@@ -27,11 +27,11 @@ public class WalletHistoryService {
     @Autowired
     PdLogger pdLogger;
 
-    public void recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees,
+    public void recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
                                       LocalDateTime purchasedDate,
                                       String transactionID, String transactionStatus, BigDecimal amount, String paymentMethod,
                                       String currency, String description, String ipAddress) {
-        WalletHistory walletHistory = new WalletHistory(walletId, userId, purchasedTrees, purchasedDate, transactionID, transactionStatus,
+        WalletHistory walletHistory = new WalletHistory(walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
         walletHistoryRepository.save(walletHistory);
     }
@@ -49,11 +49,11 @@ public class WalletHistoryService {
     }
 
     public void createWalletHistoryEntry(String walletID, String userId,
-                                         BigDecimal purchasedTrees, LocalDateTime purchasedDate,
+                                         BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
                                          String transactionID, String transactionStatus, BigDecimal amount,
                                          String paymentMethod, String currency,
                                          String description, String ipAddress) {
-        recordPurchaseHistory(walletID, userId, purchasedTrees, purchasedDate, transactionID, transactionStatus,
+        recordPurchaseHistory(walletID, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
         log.info("Wallet history table updated");
     }
