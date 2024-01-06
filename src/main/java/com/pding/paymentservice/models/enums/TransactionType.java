@@ -8,9 +8,11 @@ public enum TransactionType {
     WITHDRAWAL_COMPLETED("withdrawal_completed"),
     WITHDRAWAL_FAILED("withdrawal_failed"),
     TREES_REVERTED("trees_reverted"),
-    VIDEO_PURCHASE("videoPurchase");
+    VIDEO_PURCHASE("videoPurchase"),
+    AUDIO_CALL("audioCall"),
+    VIDEO_CALL("videoCall");
 
-    
+
     private final String displayName;
 
     TransactionType(String displayName) {

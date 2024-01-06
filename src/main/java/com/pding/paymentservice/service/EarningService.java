@@ -6,6 +6,7 @@ import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.Wallet;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.repository.EarningRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class EarningService {
     EarningRepository earningRepository;
 
     @Transactional
-    public void addToEarning(String userId, BigDecimal trees) {
+    public void addTreesToEarning(String userId, BigDecimal trees) {
         Optional<Earning> earning = earningRepository.findByUserId(userId);
 
         Earning earningObj = null;
@@ -39,10 +40,33 @@ public class EarningService {
             Integer updatedTotalTransactions = earningObj.getTotalTransactions() + 1;
             earningObj.setTotalTransactions(updatedTotalTransactions);
         } else {
-            earningObj = new Earning(userId, trees);
+            earningObj = new Earning(userId, trees, new BigDecimal(0));
         }
         earningRepository.save(earningObj);
     }
+
+
+    @Transactional
+    public void addLeafsToEarning(String userId, BigDecimal leafs) {
+        Optional<Earning> earning = earningRepository.findByUserId(userId);
+
+        Earning earningObj = null;
+        if (earning.isPresent()) {
+            earningObj = earning.get();
+
+            BigDecimal updatedLeafsEarned = earningObj.getLeafsEarned().add(leafs);
+
+            earningObj.setLeafsEarned(updatedLeafsEarned);
+            earningObj.setUpdatedDate(LocalDateTime.now());
+
+            Integer updatedTotalTransactions = earningObj.getTotalTransactions() + 1;
+            earningObj.setTotalTransactions(updatedTotalTransactions);
+        } else {
+            earningObj = new Earning(userId, new BigDecimal(0), leafs);
+        }
+        earningRepository.save(earningObj);
+    }
+
 
     public Optional<Earning> fetchEarningForUserId(String userId) {
         Optional<Earning> earning = earningRepository.findByUserId(userId);

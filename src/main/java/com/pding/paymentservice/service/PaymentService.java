@@ -51,7 +51,7 @@ public class PaymentService {
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);
 
-            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, TransactionType.TREE_PURCHASE);
+            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.TREE_PURCHASE);
 
             return "Payment Details updated successfully.";
         } catch (Exception e) {
@@ -110,4 +110,6 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    
 }

@@ -69,8 +69,10 @@ public class PdLogger {
 
         WITHDRAW_TRANSACTION(Priority.p1),
 
-        VIDEO_EARNING_AND_SALES(Priority.p1);
+        VIDEO_EARNING_AND_SALES(Priority.p1),
 
+        CALL_CHARGE(Priority.p1);
+        
         private final Priority priority;
 
         private EVENT(Priority priority) {

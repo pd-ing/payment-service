@@ -27,17 +27,42 @@ public class Ledger {
     @UuidGenerator
     private String id;
 
-    private String walletOrVideoOrDonationOrWithdrawalId;
+    private String walletOrVideoOrDonationOrWithdrawalId; // This is EOL'd on 5 Jan,2024
+
+    private String walletId;
+
+    private String videoId;
+
+    private String withdrawId;
+
+    private String donationId;
+
+    private String callId;
 
     private BigDecimal treesTransacted;
+
+    private BigDecimal leafsTransacted;
 
     private LocalDateTime timestamp;
 
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType; // "Purchase", "Donation", "Withdrawal", etc.
 
-    public Ledger(String walletOrVideoOrDonationOrWithdrawalId, BigDecimal treesTransacted, TransactionType transactionType) {
-        this.walletOrVideoOrDonationOrWithdrawalId = walletOrVideoOrDonationOrWithdrawalId;
+    // referenceId can be walletId, videoId, withdrawId, donationId, earningId
+    public Ledger(String referenceId, BigDecimal treesTransacted, BigDecimal leafsTransacted, TransactionType transactionType) {
+        if (transactionType.equals(TransactionType.TREE_PURCHASE) || transactionType.equals(TransactionType.LEAF_PURCHASE)) {
+            this.walletId = referenceId;
+        } else if (transactionType.equals(TransactionType.VIDEO_PURCHASE)) {
+            this.videoId = referenceId;
+        } else if (transactionType.equals(TransactionType.WITHDRAWAL_STARTED) || transactionType.equals(TransactionType.WITHDRAWAL_FAILED) ||
+                transactionType.equals(TransactionType.WITHDRAWAL_COMPLETED) || transactionType.equals(TransactionType.TREES_REVERTED)) {
+            this.withdrawId = referenceId;
+        } else if (transactionType.equals(TransactionType.DONATION)) {
+            this.donationId = referenceId;
+        } else if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL)) {
+            this.callId = referenceId;
+        }
+        //this.walletOrVideoOrDonationOrWithdrawalId = walletOrVideoOrDonationOrWithdrawalId;
         this.treesTransacted = treesTransacted;
         this.transactionType = transactionType;
         this.timestamp = LocalDateTime.now();

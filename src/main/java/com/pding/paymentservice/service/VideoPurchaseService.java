@@ -45,13 +45,13 @@ public class VideoPurchaseService {
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
-        walletService.deductFromWallet(userId, treesToConsumed);
+        walletService.deductTreesFromWallet(userId, treesToConsumed);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
         VideoPurchase video = videoPurchaseRepository.save(transaction);
 
-        earningService.addToEarning(videoOwnerUserId, treesToConsumed);
-        ledgerService.saveToLedger(video.getId(), treesToConsumed, TransactionType.VIDEO_PURCHASE);
+        earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
+        ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE);
 
         return video;
     }

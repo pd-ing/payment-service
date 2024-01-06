@@ -28,7 +28,7 @@ public class DonationServiceController {
     DonationService donationService;
 
     @PostMapping(value = "/donate")
-    public ResponseEntity<?> buyVideo(@RequestParam(value = "donorUserId") String donorUserId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
+    public ResponseEntity<?> donateTrees(@RequestParam(value = "donorUserId") String donorUserId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
         return donationService.donateToPd(donorUserId, trees, pdUserId);
     }
 
