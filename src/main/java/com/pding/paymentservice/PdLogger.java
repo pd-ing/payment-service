@@ -71,8 +71,12 @@ public class PdLogger {
 
         VIDEO_EARNING_AND_SALES(Priority.p1),
 
-        CALL_CHARGE(Priority.p1);
-        
+        CALL_CHARGE(Priority.p1),
+
+        CALL_DETAILS_HISTORY_FOR_PD(Priority.p1),
+        CALL_DETAILS_HISTORY_FOR_USER(Priority.p1),
+        TOP_CALLER_LIST_FOR_PD(Priority.p1),
+        TOP_CALLER_LIST(Priority.p1);;
         private final Priority priority;
 
         private EVENT(Priority priority) {

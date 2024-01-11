@@ -50,6 +50,10 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/withDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/videoEarningAndSales").permitAll()
                                 .requestMatchers("/api/payment/buyCall").authenticated()
+                                .requestMatchers("/api/payment/callHistoryForPd").authenticated()
+                                .requestMatchers("/api/payment/callHistoryForUser").authenticated()
+                                .requestMatchers("/api/payment/topCallersForPd").authenticated()
+                                .requestMatchers("/api/payment/topCallers").authenticated()
                 );
 
 

@@ -34,4 +34,6 @@ public class PublicUserNet {
     private String coverImage;
 
     private BigDecimal treesDonated;
+
+    private BigDecimal leafsTransacted;
 }
