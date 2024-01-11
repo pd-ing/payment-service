@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class GenericStringResponse {
     ErrorResponse errorResponse;
-    String charge;
+    String message;
 }

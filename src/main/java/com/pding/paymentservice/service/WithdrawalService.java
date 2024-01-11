@@ -60,7 +60,7 @@ public class WithdrawalService {
         Withdrawal withdrawal = new Withdrawal(pdUserId, trees, transactionId, WithdrawalStatus.PENDING);
         withdrawalRepository.save(withdrawal);
 
-        ledgerService.saveToLedger(withdrawal.getId(), trees, TransactionType.WITHDRAWAL_STARTED);
+        ledgerService.saveToLedger(withdrawal.getId(), trees, new BigDecimal(0), TransactionType.WITHDRAWAL_STARTED);
     }
 
 
@@ -73,7 +73,7 @@ public class WithdrawalService {
             Withdrawal withdrawal = withdrawalOptional.get();
             withdrawal.setStatus(WithdrawalStatus.COMPLETE);
 
-            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), TransactionType.WITHDRAWAL_COMPLETED);
+            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.WITHDRAWAL_COMPLETED);
         } else {
             log.info("No withdrawal found with transactionId " + transactionId);
         }
@@ -88,9 +88,9 @@ public class WithdrawalService {
             Withdrawal withdrawal = withdrawalOptional.get();
             withdrawal.setStatus(WithdrawalStatus.FAILED);
 
-            earningService.addToEarning(withdrawal.getPdUserId(), withdrawal.getTrees());
-            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), TransactionType.WITHDRAWAL_FAILED);
-            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), TransactionType.TREES_REVERTED);
+            earningService.addTreesToEarning(withdrawal.getPdUserId(), withdrawal.getTrees());
+            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.WITHDRAWAL_FAILED);
+            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.TREES_REVERTED);
         } else {
             log.info("No withdrawal found with transactionId " + transactionId);
         }

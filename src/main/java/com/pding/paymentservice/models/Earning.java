@@ -1,5 +1,6 @@
 package com.pding.paymentservice.models;
 
+import com.pding.paymentservice.models.enums.TransactionType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,16 +33,19 @@ public class Earning {
 
     private BigDecimal treesEarned;
 
+    private BigDecimal leafsEarned;
+
     private LocalDateTime createdDate;
 
     private LocalDateTime updatedDate;
 
     private Integer totalTransactions = 0;
 
-    public Earning(String userId, BigDecimal treesEarned) {
+    public Earning(String userId, BigDecimal treesEarned, BigDecimal leafsEarned) {
         LocalDateTime currentDate = LocalDateTime.now();
         this.userId = userId;
         this.treesEarned = treesEarned;
+        this.leafsEarned = leafsEarned;
         this.createdDate = currentDate;
         this.updatedDate = currentDate;
         this.totalTransactions = 1;

@@ -55,13 +55,13 @@ public class DonationService {
 
     @Transactional
     public Donation createDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
-        walletService.deductFromWallet(userId, treesToDonate);
+        walletService.deductTreesFromWallet(userId, treesToDonate);
 
         Donation transaction = new Donation(userId, PdUserId, treesToDonate);
         Donation donation = donationRepository.save(transaction);
 
-        earningService.addToEarning(PdUserId, treesToDonate);
-        ledgerService.saveToLedger(donation.getId(), treesToDonate, TransactionType.DONATION);
+        earningService.addTreesToEarning(PdUserId, treesToDonate);
+        ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION);
 
         return donation;
     }

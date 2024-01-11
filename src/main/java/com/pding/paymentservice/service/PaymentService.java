@@ -39,19 +39,19 @@ public class PaymentService {
 
     @Transactional
     public String chargeCustomer(String userId,
-                                 BigDecimal purchasedTrees, LocalDateTime purchasedDate,
+                                 BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
                                  String transactionID, String transactionStatus, BigDecimal amount,
                                  String paymentMethod, String currency,
                                  String description, String ipAddress) throws Exception {
         try {
             validatePaymentIntentID(transactionID, userId);
 
-            Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedDate);
+            Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedLeafs, purchasedDate);
 
-            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedDate, transactionID, transactionStatus,
+            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);
 
-            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, TransactionType.TREE_PURCHASE);
+            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.TREE_PURCHASE);
 
             return "Payment Details updated successfully.";
         } catch (Exception e) {
@@ -79,12 +79,30 @@ public class PaymentService {
         try {
             if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
                 paymentDetailsRequest.setTrees(new BigDecimal(0));
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
             }
-            String charge = chargeCustomer(paymentDetailsRequest.getUserId(), paymentDetailsRequest.getTrees(),
-                    paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionId(),
-                    paymentDetailsRequest.getTransactionStatus(), paymentDetailsRequest.getAmount(),
-                    paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(),
-                    paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
+
+            // If any of trees or leaf is null then init it with 0.
+            if (paymentDetailsRequest.getTrees() == null) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+            }
+            if (paymentDetailsRequest.getLeafs() == null) {
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            String charge = chargeCustomer(
+                    paymentDetailsRequest.getUserId(),
+                    paymentDetailsRequest.getTrees(),
+                    paymentDetailsRequest.getLeafs(),
+                    paymentDetailsRequest.getPurchasedDate(),
+                    paymentDetailsRequest.getTransactionId(),
+                    paymentDetailsRequest.getTransactionStatus(),
+                    paymentDetailsRequest.getAmount(),
+                    paymentDetailsRequest.getPaymentMethod(),
+                    paymentDetailsRequest.getCurrency(),
+                    paymentDetailsRequest.getDescription(),
+                    paymentDetailsRequest.getIpAddress()
+            );
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
         } catch (Exception e) {
@@ -92,4 +110,6 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    
 }

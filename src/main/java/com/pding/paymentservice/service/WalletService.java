@@ -1,6 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.exception.InsufficientLeafsException;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -36,16 +37,18 @@ public class WalletService {
     PdLogger pdLogger;
 
     @Transactional
-    public Wallet addToWallet(String userId, BigDecimal trees, LocalDateTime lastPurchasedDate) {
+    public Wallet addToWallet(String userId, BigDecimal trees, BigDecimal leafs, LocalDateTime lastPurchasedDate) {
         Optional<Wallet> optionalWallet = fetchWalletByUserId(userId);
 
         Wallet wallet;
         if (optionalWallet.isPresent()) {
             wallet = optionalWallet.get();
 
-            BigDecimal updatedTree = wallet.getTrees().add(trees);
+            BigDecimal updatedTrees = wallet.getTrees().add(trees);
+            BigDecimal updatedLeafs = wallet.getLeafs().add(leafs);
 
-            wallet.setTrees(updatedTree);
+            wallet.setTrees(updatedTrees);
+            wallet.setLeafs(updatedLeafs);
             wallet.setLastPurchasedDate(LocalDateTime.now());
             wallet.setUpdatedDate(LocalDateTime.now());
 
@@ -53,9 +56,8 @@ public class WalletService {
             wallet.setTotalTransactions(updatedTotaltransactions);
 
             walletRepository.save(wallet);
-
         } else {
-            wallet = new Wallet(userId, trees, lastPurchasedDate);
+            wallet = new Wallet(userId, trees, leafs, lastPurchasedDate);
             walletRepository.save(wallet);
         }
         return wallet;
@@ -68,6 +70,7 @@ public class WalletService {
             Wallet newWallet = new Wallet();
             newWallet.setUserId(userId);
             newWallet.setTrees(new BigDecimal(0));
+            newWallet.setLeafs(new BigDecimal(0));
             newWallet.setLastPurchasedDate(null);
             newWallet.setTotalTransactions(0);
 
@@ -89,7 +92,7 @@ public class WalletService {
         return false;
     }
 
-    public void deductFromWallet(String userId, BigDecimal treesToDeduct) {
+    public void deductTreesFromWallet(String userId, BigDecimal treesToDeduct) {
         Optional<Wallet> wallet = fetchWalletByUserId(userId);
 
         if (wallet.isPresent()) {
@@ -117,8 +120,36 @@ public class WalletService {
         }
     }
 
-    public Wallet updateWalletForUser(String userId, BigDecimal purchasedTrees, LocalDateTime purchasedDate) {
-        Wallet wallet = addToWallet(userId, purchasedTrees, purchasedDate);
+    public void deductLeafsFromWallet(String userId, BigDecimal leafsToDeduct) {
+        Optional<Wallet> wallet = fetchWalletByUserId(userId);
+
+        if (wallet.isPresent()) {
+            Wallet walletObj = wallet.get();
+            BigDecimal currentLeafs = walletObj.getLeafs();
+
+            if (leafsToDeduct.compareTo(BigDecimal.ZERO) >= 0) {
+                BigDecimal newLeafBalance = currentLeafs.subtract(leafsToDeduct);
+                if (newLeafBalance.compareTo(BigDecimal.ZERO) >= 0) {
+                    walletObj.setLeafs(newLeafBalance);
+                    walletRepository.save(walletObj);
+                } else {
+                    log.error("Insufficient leafs. Cannot perform transaction.");
+                    throw new InsufficientLeafsException("Insufficient leafs. Cannot perform transaction.");
+                }
+            } else {
+                log.error("Invalid amount(leafs) to deduct. Amount(leafs) must be greater than or equal to zero.");
+                throw new InvalidAmountException("Invalid amount(leafs) to deduct. Amount(leafs) must be greater than or equal to zero.");
+            }
+        } else {
+            log.error("No wallet info present for userId " + userId);
+            log.error("Creating wallet for for userId " + userId);
+            //throw new WalletNotFoundException("No wallet info present for userID " + userId);
+            throw new InsufficientLeafsException("Insufficient leafs. Cannot perform transaction.");
+        }
+    }
+
+    public Wallet updateWalletForUser(String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate) {
+        Wallet wallet = addToWallet(userId, purchasedTrees, purchasedLeafs, purchasedDate);
         log.info("Wallet table updated", wallet);
         return wallet;
     }
@@ -136,4 +167,5 @@ public class WalletService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
+
 }

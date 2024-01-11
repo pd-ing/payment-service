@@ -1,5 +1,7 @@
 package com.pding.paymentservice.payload.request;
 
+import com.pding.paymentservice.payload.request.validation.EitherTreesOrLeafsNotNull;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,13 +19,16 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EitherTreesOrLeafsNotNull(message = "Only one of trees or leafs should be not null, or both cannot have a value or both cannot be null")
 public class PaymentDetailsRequest {
     @NotNull(message = "User ID cannot be null.")
     private String userId;
 
-    @NotNull(message = "Trees cannot be null.")
     @DecimalMin(value = "0.0", inclusive = false, message = "Trees should be greater than 0.")
     private BigDecimal trees;
+
+    @DecimalMin(value = "0.0", inclusive = false, message = "Leafs should be greater than 0.")
+    private BigDecimal leafs;
 
     @NotNull(message = "Purchase Date cannot be null.")
     private LocalDateTime purchasedDate;
