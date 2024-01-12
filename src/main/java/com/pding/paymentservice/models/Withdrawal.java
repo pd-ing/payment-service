@@ -34,19 +34,19 @@ public class Withdrawal {
 
     private BigDecimal trees;
 
+    private BigDecimal leafs;
+
     @Enumerated(EnumType.STRING)
     private WithdrawalStatus status;
-
-    private String transactionId;
 
     private LocalDateTime createdDate;
 
     private LocalDateTime updatedDate;
 
-    public Withdrawal(String pdUerId, BigDecimal trees, String transactionId, WithdrawalStatus status) {
+    public Withdrawal(String pdUerId, BigDecimal trees, BigDecimal leafs, WithdrawalStatus status) {
         this.pdUserId = pdUerId;
         this.trees = trees;
-        this.transactionId = transactionId;
+        this.leafs = leafs;
         this.status = status;
         this.createdDate = LocalDateTime.now();
         this.updatedDate = LocalDateTime.now();

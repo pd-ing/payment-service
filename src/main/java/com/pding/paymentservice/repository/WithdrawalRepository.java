@@ -8,14 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WithdrawalRepository extends JpaRepository<Withdrawal, String> {
-    Optional<Withdrawal> findByTransactionId(String transactionId);
-
     List<Withdrawal> findByPdUserIdAndStatus(String pdUserId, WithdrawalStatus status);
 
     List<Withdrawal> findByPdUserId(String pdUserId);
 
     List<Withdrawal> findByPdUserIdOrderByCreatedDateDesc(String pdUserId);
 
-    Optional<Withdrawal> findByPdUserIdAndTransactionId(String pdUserId, String transactionId);
-
+    //Optional<Withdrawal> findByPdUserIdAndTransactionId(String pdUserId, String transactionId);
 }

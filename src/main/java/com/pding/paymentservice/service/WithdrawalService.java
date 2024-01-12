@@ -45,54 +45,56 @@ public class WithdrawalService {
 
 
     @Transactional
-    public void startWithdrawal(String pdUserId, BigDecimal trees, String transactionId) throws Exception {
-        if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
-            throw new Exception("Withdrawal requests can only be made on Mondays.");
-        }
+    void startWithdrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) throws Exception {
+//        if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
+//            throw new Exception("Withdrawal requests can only be made on Mondays.");
+//        }
 
         List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, WithdrawalStatus.PENDING);
         if (!withdrawalList.isEmpty()) {
             throw new Exception("You already have an ongoing withdrawal request.");
         }
 
-        earningService.deductFromEarning(pdUserId, trees);
+        earningService.deductTreesAndLeafs(pdUserId, trees, leafs);
 
-        Withdrawal withdrawal = new Withdrawal(pdUserId, trees, transactionId, WithdrawalStatus.PENDING);
+        Withdrawal withdrawal = new Withdrawal(pdUserId, trees, leafs, WithdrawalStatus.PENDING);
         withdrawalRepository.save(withdrawal);
 
-        ledgerService.saveToLedger(withdrawal.getId(), trees, new BigDecimal(0), TransactionType.WITHDRAWAL_STARTED);
+        ledgerService.saveToLedger(withdrawal.getId(), trees, leafs, TransactionType.WITHDRAWAL_STARTED);
     }
 
 
     @Transactional
-    public void completeWithdrawal(String transactionId) {
-        Optional<Withdrawal> withdrawalOptional = withdrawalRepository.findByTransactionId(transactionId);
+    void completeWithdrawal(String pdUserId) throws Exception {
+        List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, WithdrawalStatus.PENDING);
 
-        if (withdrawalOptional.isPresent()) {
+        if (withdrawalList.size() == 1) {
 
-            Withdrawal withdrawal = withdrawalOptional.get();
+            Withdrawal withdrawal = withdrawalList.get(0);
             withdrawal.setStatus(WithdrawalStatus.COMPLETE);
 
-            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.WITHDRAWAL_COMPLETED);
+            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_COMPLETED);
         } else {
-            log.info("No withdrawal found with transactionId " + transactionId);
+            throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
         }
     }
 
     @Transactional
-    public void failWithdrawal(String transactionId) {
-        Optional<Withdrawal> withdrawalOptional = withdrawalRepository.findByTransactionId(transactionId);
+    void failWithdrawal(String pdUserId) throws Exception {
+        List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, WithdrawalStatus.PENDING);
 
-        if (withdrawalOptional.isPresent()) {
+        if (withdrawalList.size() == 1) {
 
-            Withdrawal withdrawal = withdrawalOptional.get();
+            Withdrawal withdrawal = withdrawalList.get(0);
             withdrawal.setStatus(WithdrawalStatus.FAILED);
 
-            earningService.addTreesToEarning(withdrawal.getPdUserId(), withdrawal.getTrees());
-            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.WITHDRAWAL_FAILED);
+            earningService.addTreesAndLeafsToEarning(withdrawal.getPdUserId(), withdrawal.getTrees(), withdrawal.getLeafs());
+
+            ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_FAILED);
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.TREES_REVERTED);
+            ledgerService.saveToLedger(withdrawal.getId(), new BigDecimal(0), withdrawal.getLeafs(), TransactionType.LEAFS_REVERTED);
         } else {
-            log.info("No withdrawal found with transactionId " + transactionId);
+            throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
         }
     }
 
@@ -101,32 +103,29 @@ public class WithdrawalService {
             throw new InvalidTransactionIDException("paymentIntent id : " + transactionId + " , is invalid");
         }
 
-        if (withdrawalRepository.findByPdUserIdAndTransactionId(pdUserId, transactionId).isPresent()) {
-            throw new InvalidTransactionIDException("paymentIntent id : " + transactionId + " , is already used for the payment");
-        }
+//        if (withdrawalRepository.findByPdUserIdAndTransactionId(pdUserId, transactionId).isPresent()) {
+//            throw new InvalidTransactionIDException("paymentIntent id : " + transactionId + " , is already used for the payment");
+//        }
 
         return true;
     }
 
-    public ResponseEntity<?> withDraw(String pdUserId, BigDecimal trees, String transactionId) {
+    public ResponseEntity<?> startWithDrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) {
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
-        if (transactionId == null || transactionId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "transactionId parameter is required."));
+        if (leafs == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafs parameter is required."));
         }
 
         try {
-            validatePaymentIntentID(pdUserId, transactionId);
-            startWithdrawal(pdUserId, trees, transactionId);
+            startWithdrawal(pdUserId, trees, leafs);
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process initialted successfully, Will take 5-7 businees days to credit in your account"));
-        } catch (InvalidTransactionIDException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.WITHDRAW, e);
+            pdLogger.logException(PdLogger.EVENT.START_WITHDRAW, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
@@ -142,6 +141,34 @@ public class WithdrawalService {
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> completeWithDraw(String pdUserId) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
+        }
+
+        try {
+            completeWithdrawal(pdUserId);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process completed successfully, Will take 5-7 businees days to credit in your account"));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> failWithDraw(String pdUserId) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
+        }
+
+        try {
+            failWithdrawal(pdUserId);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrawal Failed, Trees and Leafs rollback done successfully"));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 

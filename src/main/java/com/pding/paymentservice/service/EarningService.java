@@ -1,6 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.exception.EarningNotFoundException;
+import com.pding.paymentservice.exception.InsufficientLeafsException;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -85,7 +86,8 @@ public class EarningService {
     }
 
 
-    public void deductFromEarning(String userId, BigDecimal treesToDeduct) {
+    @Transactional
+    public void deductTreesFromEarning(String userId, BigDecimal treesToDeduct) {
         Optional<Earning> earning = fetchEarningForUserId(userId);
 
         if (earning.isPresent()) {
@@ -110,5 +112,44 @@ public class EarningService {
             log.error("Creating Earning info for for userId " + userId);
             throw new EarningNotFoundException("No Earnings found for userID " + userId);
         }
+    }
+
+    @Transactional
+    public void deductLeafsFromEarning(String userId, BigDecimal leafsToDeduct) {
+        Optional<Earning> earning = fetchEarningForUserId(userId);
+
+        if (earning.isPresent()) {
+            Earning earningObj = earning.get();
+            BigDecimal currentTrees = earningObj.getLeafsEarned();
+
+            if (leafsToDeduct.compareTo(BigDecimal.ZERO) >= 0) {
+                BigDecimal newLeafsBalance = currentTrees.subtract(leafsToDeduct);
+                if (newLeafsBalance.compareTo(BigDecimal.ZERO) >= 0) {
+                    earningObj.setLeafsEarned(newLeafsBalance);
+                    earningRepository.save(earningObj);
+                } else {
+                    log.error("Insufficient leafs. Cannot perform transaction.");
+                    throw new InsufficientLeafsException("Insufficient Leafs. Cannot perform transaction.");
+                }
+            } else {
+                log.error("Invalid amount(Leafs) to deduct. Amount(Leafs) must be greater than or equal to zero.");
+                throw new InvalidAmountException("Invalid amount(Leafs) to deduct. Amount(Leafs) must be greater than or equal to zero.");
+            }
+        } else {
+            log.error("No Earning info present for userId " + userId);
+            log.error("Creating Earning info for for userId " + userId);
+            throw new EarningNotFoundException("No Earnings found for userID " + userId);
+        }
+    }
+
+
+    void deductTreesAndLeafs(String userId, BigDecimal treesToDeduct, BigDecimal leafsToDeduct) {
+        deductTreesFromEarning(userId, treesToDeduct);
+        deductLeafsFromEarning(userId, leafsToDeduct);
+    }
+
+    void addTreesAndLeafsToEarning(String userId, BigDecimal treesToAdd, BigDecimal leafsToAdd) {
+        addTreesToEarning(userId, treesToAdd);
+        addLeafsToEarning(userId, leafsToAdd);
     }
 }

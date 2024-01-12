@@ -54,10 +54,10 @@ public class WebhookController {
             // Handle different types of events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    withdrawalService.completeWithdrawal(paymentIntentId);
+                    //withdrawalService.completeWithdrawal(paymentIntentId);
                     break;
                 case "payment_intent.payment_failed":
-                    withdrawalService.failWithdrawal(paymentIntentId);
+                    //withdrawalService.failWithdrawal(paymentIntentId);
                     break;
                 default:
 

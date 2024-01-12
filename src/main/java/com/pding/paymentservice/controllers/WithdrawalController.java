@@ -1,13 +1,17 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.service.WithdrawalService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,16 +27,33 @@ public class WithdrawalController {
 
     @Autowired
     WithdrawalService withdrawalService;
-    
 
-    @PostMapping(value = "/withDraw")
-    public ResponseEntity<?> withDrawTrees(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "trees") BigDecimal trees,
-                                           @RequestParam(value = "transactionId") String transactionId) {
-        return withdrawalService.withDraw(pdUserId, trees, transactionId);
+
+    @PostMapping(value = "/startWithDraw")
+    public ResponseEntity<?> startWithDraw(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "trees") BigDecimal trees,
+                                           @RequestParam(value = "leafs") BigDecimal leafs) {
+        return withdrawalService.startWithDrawal(pdUserId, trees, leafs);
+    }
+
+    @PostMapping(value = "/completeWithDraw")
+    public ResponseEntity<?> completeWithDraw(@RequestParam(value = "pdUserId") String pdUserId) {
+        return withdrawalService.completeWithDraw(pdUserId);
+    }
+
+    @PostMapping(value = "/failWithDraw")
+    public ResponseEntity<?> failWithDraw(@RequestParam(value = "pdUserId") String pdUserId) {
+        return withdrawalService.failWithDraw(pdUserId);
     }
 
     @GetMapping(value = "/withDrawTransactions")
     public ResponseEntity<?> withDrawTrees(@RequestParam(value = "pdUserId") String pdUserId) {
         return withdrawalService.getWithDrawTransactions(pdUserId);
+    }
+
+    // Handle MissingServletRequestParameterException --
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
+        String paramName = ex.getParameterName();
+        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
     }
 }

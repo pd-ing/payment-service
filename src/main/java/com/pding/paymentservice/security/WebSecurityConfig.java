@@ -46,14 +46,16 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/donate").authenticated()
                                 .requestMatchers("/api/payment/topDonorsList").permitAll()
                                 .requestMatchers("/api/payment/webhook").permitAll()
-                                .requestMatchers("/api/payment/withDraw").authenticated()
-                                .requestMatchers("/api/payment/withDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/videoEarningAndSales").permitAll()
                                 .requestMatchers("/api/payment/buyCall").authenticated()
                                 .requestMatchers("/api/payment/callHistoryForPd").authenticated()
                                 .requestMatchers("/api/payment/callHistoryForUser").authenticated()
                                 .requestMatchers("/api/payment/topCallersForPd").authenticated()
                                 .requestMatchers("/api/payment/topCallers").authenticated()
+                                .requestMatchers("/api/payment/startWithDraw").authenticated()
+                                .requestMatchers("/api/payment/completeWithDraw").authenticated()
+                                .requestMatchers("/api/payment/failWithDraw").authenticated()
+                                .requestMatchers("/api/payment/withDrawTransactions").authenticated()
                 );
 
 
