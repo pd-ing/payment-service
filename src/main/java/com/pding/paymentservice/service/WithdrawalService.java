@@ -5,11 +5,13 @@ import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.WithdrawalStatus;
+import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.WithdrawalRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,9 @@ public class WithdrawalService {
     @Autowired
     PdLogger pdLogger;
 
+    @Autowired
+    AuthHelper authHelper;
+
 
     @Transactional
     void startWithdrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) throws Exception {
@@ -74,8 +79,10 @@ public class WithdrawalService {
             withdrawal.setStatus(WithdrawalStatus.COMPLETE);
 
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_COMPLETED);
-        } else {
+        } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
+        } else {
+            throw new Exception("Invalid transaction, Please start withdraw request before completing it ");
         }
     }
 
@@ -93,8 +100,10 @@ public class WithdrawalService {
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_FAILED);
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.TREES_REVERTED);
             ledgerService.saveToLedger(withdrawal.getId(), new BigDecimal(0), withdrawal.getLeafs(), TransactionType.LEAFS_REVERTED);
-        } else {
+        } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
+        } else {
+            throw new Exception("Invalid transaction, Please start withdraw request before failing it ");
         }
     }
 
@@ -110,19 +119,17 @@ public class WithdrawalService {
         return true;
     }
 
-    public ResponseEntity<?> startWithDrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
-        if (trees == null) {
+    public ResponseEntity<?> startWithDrawal(WithdrawRequest withdrawRequest) {
+        if (withdrawRequest.getTrees() == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
-        if (leafs == null) {
+        if (withdrawRequest.getLeafs() == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafs parameter is required."));
         }
 
         try {
-            startWithdrawal(pdUserId, trees, leafs);
+            String pdUserId = authHelper.getUserId();
+            startWithdrawal(pdUserId, withdrawRequest.getTrees(), withdrawRequest.getLeafs());
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process initialted successfully, Will take 5-7 businees days to credit in your account"));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.START_WITHDRAW, e);
@@ -130,12 +137,9 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> getAllWithDrawTransactions(String pdUserId) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
-
+    public ResponseEntity<?> getAllWithDrawTransactions() {
         try {
+            String pdUserId = authHelper.getUserId();
             List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdOrderByCreatedDateDesc(pdUserId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
         } catch (Exception e) {
@@ -144,12 +148,9 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> getWithDrawTransactionsByStatus(String pdUserId, String status) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
+    public ResponseEntity<?> getWithDrawTransactions(String status) {
         if (status == null || status.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "status parameter is required."));
+            return getAllWithDrawTransactions();
         }
         WithdrawalStatus withdrawalStatus = null;
         if (status.equals("pending")) {
@@ -163,6 +164,7 @@ public class WithdrawalService {
         }
 
         try {
+            String pdUserId = authHelper.getUserId();
             List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, withdrawalStatus);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
         } catch (Exception e) {
@@ -171,13 +173,13 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> completeWithDraw(String pdUserId) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
+    public ResponseEntity<?> completeWithDraw(WithdrawRequest withdrawRequest) {
+        if (withdrawRequest.getPdUserId() == null || withdrawRequest.getPdUserId().isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
 
         try {
-            completeWithdrawal(pdUserId);
+            completeWithdrawal(withdrawRequest.getPdUserId());
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process completed successfully, Will take 5-7 businees days to credit in your account"));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
@@ -185,13 +187,13 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> failWithDraw(String pdUserId) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
+    public ResponseEntity<?> failWithDraw(WithdrawRequest withdrawRequest) {
+        if (withdrawRequest.getPdUserId() == null || withdrawRequest.getPdUserId().isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
 
         try {
-            failWithdrawal(pdUserId);
+            failWithdrawal(withdrawRequest.getPdUserId());
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrawal Failed, Trees and Leafs rollback done successfully"));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);

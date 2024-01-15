@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.service.WithdrawalService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,29 +32,24 @@ public class WithdrawalController {
 
 
     @PostMapping(value = "/startWithDraw")
-    public ResponseEntity<?> startWithDraw(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "trees") BigDecimal trees,
-                                           @RequestParam(value = "leafs") BigDecimal leafs) {
-        return withdrawalService.startWithDrawal(pdUserId, trees, leafs);
+    public ResponseEntity<?> startWithDraw(@RequestBody WithdrawRequest withdrawRequest) {
+        return withdrawalService.startWithDrawal(withdrawRequest);
     }
 
     @PostMapping(value = "/completeWithDraw")
-    public ResponseEntity<?> completeWithDraw(@RequestParam(value = "pdUserId") String pdUserId) {
-        return withdrawalService.completeWithDraw(pdUserId);
+    public ResponseEntity<?> completeWithDraw(@RequestBody WithdrawRequest withdrawRequest) {
+        return withdrawalService.completeWithDraw(withdrawRequest);
     }
 
     @PostMapping(value = "/failWithDraw")
-    public ResponseEntity<?> failWithDraw(@RequestParam(value = "pdUserId") String pdUserId) {
-        return withdrawalService.failWithDraw(pdUserId);
+    public ResponseEntity<?> failWithDraw(@RequestBody WithdrawRequest withdrawRequest) {
+        return withdrawalService.failWithDraw(withdrawRequest);
     }
 
-    @GetMapping(value = "/allWithDrawTransactions")
-    public ResponseEntity<?> allWithDrawTrees(@RequestParam(value = "pdUserId") String pdUserId) {
-        return withdrawalService.getAllWithDrawTransactions(pdUserId);
-    }
 
-    @GetMapping(value = "/withDrawTransactionsByStatus")
-    public ResponseEntity<?> withDrawTreesByStatus(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "status") String status) {
-        return withdrawalService.getWithDrawTransactionsByStatus(pdUserId, status);
+    @GetMapping(value = "/withDrawTransactions")
+    public ResponseEntity<?> withDrawTransactions(@RequestParam(value = "status", required = false) String status) {
+        return withdrawalService.getWithDrawTransactions(status);
     }
 
     // Handle MissingServletRequestParameterException --
