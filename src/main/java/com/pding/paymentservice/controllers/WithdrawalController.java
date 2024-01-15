@@ -45,9 +45,14 @@ public class WithdrawalController {
         return withdrawalService.failWithDraw(pdUserId);
     }
 
-    @GetMapping(value = "/withDrawTransactions")
-    public ResponseEntity<?> withDrawTrees(@RequestParam(value = "pdUserId") String pdUserId) {
-        return withdrawalService.getWithDrawTransactions(pdUserId);
+    @GetMapping(value = "/allWithDrawTransactions")
+    public ResponseEntity<?> allWithDrawTrees(@RequestParam(value = "pdUserId") String pdUserId) {
+        return withdrawalService.getAllWithDrawTransactions(pdUserId);
+    }
+
+    @GetMapping(value = "/withDrawTransactionsByStatus")
+    public ResponseEntity<?> withDrawTreesByStatus(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "status") String status) {
+        return withdrawalService.getWithDrawTransactionsByStatus(pdUserId, status);
     }
 
     // Handle MissingServletRequestParameterException --

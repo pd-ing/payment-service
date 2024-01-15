@@ -130,13 +130,40 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> getWithDrawTransactions(String pdUserId) {
+    public ResponseEntity<?> getAllWithDrawTransactions(String pdUserId) {
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
         }
 
         try {
             List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdOrderByCreatedDateDesc(pdUserId);
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> getWithDrawTransactionsByStatus(String pdUserId, String status) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
+        }
+        if (status == null || status.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "status parameter is required."));
+        }
+        WithdrawalStatus withdrawalStatus = null;
+        if (status.equals("pending")) {
+            withdrawalStatus = WithdrawalStatus.PENDING;
+        } else if (status.equals("failed")) {
+            withdrawalStatus = WithdrawalStatus.FAILED;
+        } else if (status.equals("complete")) {
+            withdrawalStatus = WithdrawalStatus.COMPLETE;
+        } else {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid value for status parameter, Following are valid values pending, failed, complete"));
+        }
+
+        try {
+            List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, withdrawalStatus);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
