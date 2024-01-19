@@ -173,6 +173,17 @@ public class WithdrawalService {
         }
     }
 
+    public ResponseEntity<?> getPendingWithDrawTransactions() {
+        try {
+            String pdUserId = authHelper.getUserId();
+            List<Withdrawal> withdrawalList = withdrawalRepository.findByStatus(WithdrawalStatus.PENDING);
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
     public ResponseEntity<?> completeWithDraw(WithdrawRequest withdrawRequest) {
         if (withdrawRequest.getPdUserId() == null || withdrawRequest.getPdUserId().isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));

@@ -52,6 +52,11 @@ public class WithdrawalController {
         return withdrawalService.getWithDrawTransactions(status);
     }
 
+    @GetMapping(value = "/pendingWithDrawTransactions")
+    public ResponseEntity<?> pendingWithDrawTransactions() {
+        return withdrawalService.getPendingWithDrawTransactions();
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
