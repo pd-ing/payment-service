@@ -1,7 +1,9 @@
 package com.pding.paymentservice.network;
 
+import com.pding.paymentservice.payload.net.GetUserWithStripeIdResponseNet;
 import com.pding.paymentservice.payload.net.GetUsersResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.net.PublicUserWithStripeIdNet;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,8 @@ public class UserServiceNetworkManager {
     @Value("${service.user.host}")
     private String userService;
 
+    @Value("${service.user.host.admin}")
+    private String userServiceAdmin;
     private final OkHttpClient client;
 
     @Autowired
@@ -39,6 +43,23 @@ public class UserServiceNetworkManager {
                 .flatMapMany(resp -> {
                     if (resp.getError() == null && resp.getResult() != null) {
                         return Flux.fromIterable(resp.getResult());
+                    } else {
+                        return Flux.empty();
+                    }
+                });
+    }
+
+    public Flux<PublicUserWithStripeIdNet> getUsersListWithStripeFlux(List<String> userIds) throws Exception {
+        if (userIds == null || userIds.isEmpty()) return Flux.empty();
+
+        String param = userIds.stream().map(Object::toString).collect(Collectors.joining(","));
+        return webClient.get()
+                .uri(userServiceAdmin + "/publicUserWithStripeId?userIds=" + param)
+                .retrieve()
+                .bodyToMono(GetUserWithStripeIdResponseNet.class)
+                .flatMapMany(resp -> {
+                    if (resp.getErrorResponse() == null && resp.getPublicUserInfoWithStripeId() != null) {
+                        return Flux.fromIterable(resp.getPublicUserInfoWithStripeId());
                     } else {
                         return Flux.empty();
                     }
