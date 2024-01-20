@@ -5,26 +5,37 @@ import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.WithdrawalStatus;
+import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.net.PublicUserWithStripeIdNet;
 import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.WithdrawalResponseWithStripeId;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.WithdrawalRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
+import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -47,6 +58,12 @@ public class WithdrawalService {
 
     @Autowired
     AuthHelper authHelper;
+
+    @Autowired
+    UserServiceNetworkManager userServiceNetworkManager;
+
+    @Autowired
+    TokenSigner tokenSigner;
 
 
     @Transactional
@@ -119,6 +136,77 @@ public class WithdrawalService {
         return true;
     }
 
+    public List<String> extractPdUserIds(List<Withdrawal> withdrawalList) {
+        return withdrawalList.stream()
+                .map(Withdrawal::getPdUserId)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, PublicUserWithStripeIdNet> createMapOfPublicUserWithStripeIdNet(List<PublicUserWithStripeIdNet> publicUserWithStripeIdNetList) {
+        Map<String, PublicUserWithStripeIdNet> userMap = new HashMap<>();
+
+        if (publicUserWithStripeIdNetList == null) {
+            return userMap;
+        }
+
+        for (PublicUserWithStripeIdNet user : publicUserWithStripeIdNetList) {
+            userMap.put(user.id, user);
+        }
+
+        return userMap;
+    }
+
+    List<WithdrawalResponseWithStripeId> createWithDrawResponseWithStripeId(List<Withdrawal> withdrawalList) throws Exception {
+        List<String> withdrawalIds = extractPdUserIds(withdrawalList);
+        List<PublicUserWithStripeIdNet> publicUserWithStripeIdNetList = userServiceNetworkManager.getUsersListWithStripeFlux(withdrawalIds).collect(Collectors.toList())
+                .block();
+
+        Map<String, PublicUserWithStripeIdNet> publicUserWithStripeIdNetMap = createMapOfPublicUserWithStripeIdNet(publicUserWithStripeIdNetList);
+
+        // Creating a new List<WithdrawalResponseWithStripeId>
+        List<WithdrawalResponseWithStripeId> responseList = new ArrayList<>();
+
+        for (Withdrawal withdrawal : withdrawalList) {
+
+            PublicUserWithStripeIdNet publicUserWithStripeIdNet = publicUserWithStripeIdNetMap.get(withdrawal.getPdUserId());
+
+            String email = "";
+            String nickname = "";
+            String linkedStripeId = "";
+            String profilePicture = "";
+            if (publicUserWithStripeIdNet != null) {
+                email = publicUserWithStripeIdNet.getEmail();
+                nickname = publicUserWithStripeIdNet.getEmail();
+                linkedStripeId = publicUserWithStripeIdNet.getLinkedStripeId();
+            }
+
+            if (publicUserWithStripeIdNet.getProfilePicture() != null) {
+                try {
+                    profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(publicUserWithStripeIdNet.getProfilePicture()), 8);
+                } catch (Exception e) {
+                    pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
+                    e.printStackTrace();
+
+                }
+            }
+            WithdrawalResponseWithStripeId response = new WithdrawalResponseWithStripeId(
+                    withdrawal.getId(),
+                    withdrawal.getPdUserId(),
+                    withdrawal.getTrees(),
+                    withdrawal.getLeafs(),
+                    withdrawal.getStatus(),
+                    withdrawal.getCreatedDate(),
+                    withdrawal.getUpdatedDate(),
+                    email,
+                    nickname,
+                    linkedStripeId,
+                    profilePicture
+            );
+            responseList.add(response);
+        }
+        return responseList;
+    }
+
     public ResponseEntity<?> startWithDrawal(WithdrawRequest withdrawRequest) {
         if (withdrawRequest.getTrees() == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
@@ -137,7 +225,7 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> getAllWithDrawTransactions() {
+    public ResponseEntity<?> getAllWithDrawTransactionsForUserId() {
         try {
             String pdUserId = authHelper.getUserId();
             List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdOrderByCreatedDateDesc(pdUserId);
@@ -150,7 +238,7 @@ public class WithdrawalService {
 
     public ResponseEntity<?> getWithDrawTransactions(String status) {
         if (status == null || status.isEmpty()) {
-            return getAllWithDrawTransactions();
+            return getAllWithDrawTransactionsForUserId();
         }
         WithdrawalStatus withdrawalStatus = null;
         if (status.equals("pending")) {
@@ -177,7 +265,29 @@ public class WithdrawalService {
         try {
             String pdUserId = authHelper.getUserId();
             List<Withdrawal> withdrawalList = withdrawalRepository.findByStatus(WithdrawalStatus.PENDING);
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalList));
+
+            List<WithdrawalResponseWithStripeId> withdrawalResponseWithStripeIds = createWithDrawResponseWithStripeId(withdrawalList);
+
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalResponseWithStripeIds));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> getAllWithDrawTransactions(int page, int size) {
+        try {
+            String pdUserId = authHelper.getUserId();
+
+            PageRequest pageRequest = PageRequest.of(page, size);
+
+            Page<Withdrawal> withdrawalPage = withdrawalRepository.findAll(pageRequest);
+
+            List<Withdrawal> withdrawalList = withdrawalPage.getContent();
+
+            List<WithdrawalResponseWithStripeId> withdrawalResponseWithStripeIds = createWithDrawResponseWithStripeId(withdrawalList);
+
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalResponseWithStripeIds));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

@@ -5,6 +5,7 @@ import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.service.WithdrawalService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,9 +53,15 @@ public class WithdrawalController {
         return withdrawalService.getWithDrawTransactions(status);
     }
 
-    @GetMapping(value = "/pendingWithDrawTransactions")
+    @GetMapping(value = "/admin/pendingWithDrawTransactions")
     public ResponseEntity<?> pendingWithDrawTransactions() {
         return withdrawalService.getPendingWithDrawTransactions();
+    }
+
+    @GetMapping(value = "/admin/allWithDrawTransactions")
+    public ResponseEntity<?> allWithDrawTransactions(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                     @RequestParam(defaultValue = "10") @Min(1) int size) {
+        return withdrawalService.getAllWithDrawTransactions(page, size);
     }
 
     // Handle MissingServletRequestParameterException --
