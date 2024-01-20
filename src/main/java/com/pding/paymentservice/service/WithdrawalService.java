@@ -11,8 +11,9 @@ import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.Pagination.PaginationInfoWithGenericList;
+import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.WithdrawalResponseWithStripeId;
-import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.WithdrawalRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
@@ -28,13 +29,10 @@ import org.springframework.data.domain.Page;
 
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -287,10 +285,18 @@ public class WithdrawalService {
 
             List<WithdrawalResponseWithStripeId> withdrawalResponseWithStripeIds = createWithDrawResponseWithStripeId(withdrawalList);
 
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, withdrawalResponseWithStripeIds));
+            // Create a PaginationInfo object with embedded response list
+            PaginationInfoWithGenericList<WithdrawalResponseWithStripeId> paginationInfo = new PaginationInfoWithGenericList<>(
+                    withdrawalPage.getNumber(),
+                    withdrawalPage.getSize(),
+                    withdrawalPage.getTotalElements(),
+                    withdrawalPage.getTotalPages(),
+                    withdrawalResponseWithStripeIds
+            );
+            return ResponseEntity.ok().body(new PaginationResponse(null, paginationInfo));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaginationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
