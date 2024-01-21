@@ -198,7 +198,8 @@ public class WithdrawalService {
                     email,
                     nickname,
                     linkedStripeId,
-                    profilePicture
+                    profilePicture,
+                    publicUserWithStripeIdNet.getPdType()
             );
             responseList.add(response);
         }

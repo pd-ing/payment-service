@@ -24,4 +24,6 @@ public class PublicUserWithStripeIdNet {
     public String linkedStripeId;
 
     public String profilePicture;
+
+    public String pdType;
 }

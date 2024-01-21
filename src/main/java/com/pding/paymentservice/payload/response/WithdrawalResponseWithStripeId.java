@@ -38,4 +38,6 @@ public class WithdrawalResponseWithStripeId {
     public String linkedStripeId;
 
     public String profilePicture;
+
+    public String pdType;
 }
