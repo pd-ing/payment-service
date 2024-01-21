@@ -29,6 +29,8 @@ import org.springframework.data.domain.Page;
 
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,9 +68,9 @@ public class WithdrawalService {
 
     @Transactional
     void startWithdrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) throws Exception {
-//        if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
-//            throw new Exception("Withdrawal requests can only be made on Mondays.");
-//        }
+        if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
+            throw new Exception("Withdrawal requests can only be made on Mondays.");
+        }
 
         List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, WithdrawalStatus.PENDING);
         if (!withdrawalList.isEmpty()) {

@@ -5,12 +5,15 @@ import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.service.WithdrawalService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,7 +36,15 @@ public class WithdrawalController {
 
 
     @PostMapping(value = "/startWithDraw")
-    public ResponseEntity<?> startWithDraw(@RequestBody WithdrawRequest withdrawRequest) {
+    public ResponseEntity<?> startWithDraw(@Valid @RequestBody WithdrawRequest withdrawRequest, BindingResult result) {
+        if (result.hasErrors()) {
+            // Here, we're just grabbing the first error, but you might want to send all of them.
+            ObjectError error = result.getAllErrors().get(0);
+            return ResponseEntity.badRequest().body(
+                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
+            );
+        }
+
         return withdrawalService.startWithDrawal(withdrawRequest);
     }
 
