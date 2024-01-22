@@ -20,10 +20,10 @@ public class WithdrawRequest {
     String pdUserId;
 
     @Nullable
-    @DecimalMin(value = "500", inclusive = true, message = "Minimum withdraw value for trees is 500")
+    //@DecimalMin(value = "500", inclusive = true, message = "Minimum withdraw value for trees is 500")
     BigDecimal trees;
 
     @Nullable
-    @DecimalMin(value = "500", inclusive = true, message = "Minimum withdraw value for leafs is 500")
+    //@DecimalMin(value = "500", inclusive = true, message = "Minimum withdraw value for leafs is 500")
     BigDecimal leafs;
 }

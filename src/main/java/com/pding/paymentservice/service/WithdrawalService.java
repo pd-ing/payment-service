@@ -215,7 +215,9 @@ public class WithdrawalService {
         if (withdrawRequest.getLeafs() == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafs parameter is required."));
         }
-
+        if (withdrawRequest.getTrees().add(withdrawRequest.getLeafs()).compareTo(BigDecimal.valueOf(500)) < 0) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Combined value of trees + leafs should be greater than 500."));
+        }
         try {
             String pdUserId = authHelper.getUserId();
             startWithdrawal(pdUserId, withdrawRequest.getTrees(), withdrawRequest.getLeafs());
