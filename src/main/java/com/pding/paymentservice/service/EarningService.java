@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.EarningNotFoundException;
 import com.pding.paymentservice.exception.InsufficientLeafsException;
 import com.pding.paymentservice.exception.InsufficientTreesException;
@@ -7,15 +8,26 @@ import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.Wallet;
+import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.Pagination.PaginationInfoWithGenericList;
+import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
+import com.pding.paymentservice.payload.response.WithdrawalResponseWithStripeId;
 import com.pding.paymentservice.repository.EarningRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,6 +36,9 @@ public class EarningService {
 
     @Autowired
     EarningRepository earningRepository;
+
+    @Autowired
+    PdLogger pdLogger;
 
     @Transactional
     public void addTreesToEarning(String userId, BigDecimal trees) {
@@ -151,5 +166,26 @@ public class EarningService {
     void addTreesAndLeafsToEarning(String userId, BigDecimal treesToAdd, BigDecimal leafsToAdd) {
         addTreesToEarning(userId, treesToAdd);
         addLeafsToEarning(userId, leafsToAdd);
+    }
+
+
+    public ResponseEntity<?> getTopEarners(int page, int size) {
+        try {
+            PageRequest pageRequest = PageRequest.of(page, size);
+            Page<Earning> earnersPage = earningRepository.findAllOrderByTotalEarningsDesc(pageRequest);
+            List<Earning> earnersList = earnersPage.getContent();
+            // Create a PaginationInfo object with embedded response list
+            PaginationInfoWithGenericList<Earning> paginationInfo = new PaginationInfoWithGenericList<>(
+                    earnersPage.getNumber(),
+                    earnersPage.getSize(),
+                    earnersPage.getTotalElements(),
+                    earnersPage.getTotalPages(),
+                    earnersList
+            );
+            return ResponseEntity.ok().body(new PaginationResponse(null, paginationInfo));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaginationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
     }
 }

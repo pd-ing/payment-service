@@ -33,7 +33,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     List<String> permitAllEndpoints = Arrays.asList(
             "/api/payment/topDonorsList",
             "/api/payment/webhook",
-            "/api/payment/videoEarningAndSales"
+            "/api/payment/videoEarningAndSales",
+            "/api/payment/topEarners"
     );
 
     @Override
