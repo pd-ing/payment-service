@@ -90,6 +90,7 @@ public class EarningService {
             Earning earningObj = new Earning();
             earningObj.setUserId(userId);
             earningObj.setTreesEarned(new BigDecimal(0));
+            earningObj.setLeafsEarned(new BigDecimal(0));
             earningObj.setTotalTransactions(0);
 
             earningRepository.save(earningObj);
