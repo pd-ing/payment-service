@@ -76,6 +76,22 @@ public class VideoPurchaseService {
         return true;
     }
 
+    boolean validateActualCostOfVideo(String videoId, String videoOwnerUserId, BigDecimal treesProvidedByUser) {
+        BigDecimal actualVideoCostInTrees = videoPurchaseRepository.findActualCostOfVideo(videoId, videoOwnerUserId);
+
+        if (actualVideoCostInTrees != null) {
+            if (actualVideoCostInTrees.compareTo(treesProvidedByUser) == 0) {
+                return true; //this is the case where treesProvidedByUser match with the actual cost of the video
+            } else {
+                pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, new Exception("treesProvidedByUser does not match with the actual cost of the video"));
+                return false; //this is the case where treesProvidedByUser does not match with the actual cost of the video
+            }
+        } else {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, new Exception("Buy video request made for the video which is not present in database"));
+            return false; // this is the case where video is not present in video table, Don't allow to buy it
+        }
+    }
+
     public Map<String, VideoEarningsAndSales> getVideoStats(List<String> videoId) {
         return videoPurchaseRepository.getTotalTreesEarnedAndSalesCountMapForVideoIds(videoId);
     }
@@ -90,6 +106,13 @@ public class VideoPurchaseService {
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
+        if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserId parameter is required."));
+        }
+        if (!validateActualCostOfVideo(videoId, videoOwnerUserId, trees)) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Actual cost of video does not match with the trees provided to buy it"));
+        }
+
         try {
             VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));

@@ -40,6 +40,8 @@ public class PdLogger {
 
     public static enum EVENT {
         //p0
+
+        EVENTS(Priority.p0),
         DONATE(Priority.p0),
 
         CHARGE(Priority.p0),
@@ -76,7 +78,8 @@ public class PdLogger {
         CALL_DETAILS_HISTORY_FOR_PD(Priority.p1),
         CALL_DETAILS_HISTORY_FOR_USER(Priority.p1),
         TOP_CALLER_LIST_FOR_PD(Priority.p1),
-        TOP_CALLER_LIST(Priority.p1);;
+        TOP_CALLER_LIST(Priority.p1);
+
         private final Priority priority;
 
         private EVENT(Priority priority) {
