@@ -104,6 +104,7 @@ public class WalletService {
                 if (newTreesBalance.compareTo(BigDecimal.ZERO) >= 0) {
                     walletObj.setTrees(newTreesBalance);
                     walletRepository.save(walletObj);
+                    pdLogger.logInfo("BUY_VIDEO", "Deducted " + treesToDeduct + "trees  for userId" + userId);
                 } else {
                     log.error("Insufficient trees. Cannot perform transaction.");
                     throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");

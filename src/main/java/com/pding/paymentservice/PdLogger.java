@@ -3,7 +3,9 @@ package com.pding.paymentservice;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.security.LoggedInUserRecord;
 import io.sentry.Sentry;
+import io.sentry.SentryEvent;
 import io.sentry.SentryLevel;
+import io.sentry.protocol.Message;
 import io.sentry.protocol.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +40,21 @@ public class PdLogger {
         logException(null, Priority.p3, ex);
     }
 
+
+    public void logInfo(String code, String messageData) {
+        SentryEvent event = new SentryEvent();
+        Message message = new Message();
+        message.setMessage(messageData);
+        event.setMessage(message);
+
+        if (code != null) {
+            event.setExtra("infoCode", code);
+        }
+        event.setLevel(SentryLevel.INFO);
+
+        Sentry.captureEvent(event);
+    }
+    
     public static enum EVENT {
         //p0
 

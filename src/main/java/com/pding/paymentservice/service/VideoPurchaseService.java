@@ -49,9 +49,11 @@ public class VideoPurchaseService {
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
         VideoPurchase video = videoPurchaseRepository.save(transaction);
+        pdLogger.logInfo("BUY_VIDEO", "Video purchase record created with details UserId : " + userId + " VideoId : " + videoId + ", trees : " + treesToConsumed + ", VideoOwnerUserId : " + videoOwnerUserId);
 
         earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE);
+        pdLogger.logInfo("BUY_VIDEO", "Video purchase details recorded in LEGDER VideoId : " + videoId + ", trees : " + treesToConsumed + ", TransactionType : " + TransactionType.VIDEO_PURCHASE);
 
         return video;
     }
@@ -106,6 +108,9 @@ public class VideoPurchaseService {
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
+        if (trees.equals(new BigDecimal(0))) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Video cannnot be purchased for 0 trees"));
+        }
         if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserId parameter is required."));
         }
@@ -114,13 +119,17 @@ public class VideoPurchaseService {
         }
 
         try {
+            pdLogger.logInfo("BUY_VIDEO", "Buy video request made with following details UserId : " + userId + " VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
             VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         } catch (InsufficientTreesException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (InvalidAmountException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);

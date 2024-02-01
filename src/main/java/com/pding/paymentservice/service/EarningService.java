@@ -59,6 +59,7 @@ public class EarningService {
             earningObj = new Earning(userId, trees, new BigDecimal(0));
         }
         earningRepository.save(earningObj);
+        pdLogger.logInfo("BUY_VIDEO", "Earning details recorded for UserUd: " + userId + ", trees : " + trees);
     }
 
 
