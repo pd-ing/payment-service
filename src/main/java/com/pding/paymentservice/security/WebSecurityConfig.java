@@ -59,6 +59,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/pendingWithDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/admin/allWithDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/topEarners").permitAll()
+                                .requestMatchers("/api/payment/v2/buyVideo").authenticated()
+
 
                 );
 

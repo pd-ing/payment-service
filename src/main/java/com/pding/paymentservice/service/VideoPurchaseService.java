@@ -14,6 +14,7 @@ import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.models.VideoEarningsAndSales;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,10 @@ public class VideoPurchaseService {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    AuthHelper authHelper;
+
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
@@ -109,6 +114,7 @@ public class VideoPurchaseService {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         if (trees.equals(new BigDecimal(0))) {
+            pdLogger.logInfo("BUY_VIDEO", "Attempt made to purchase the video for 0 trees by, userId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Video cannnot be purchased for 0 trees"));
         }
         if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
@@ -120,6 +126,50 @@ public class VideoPurchaseService {
 
         try {
             pdLogger.logInfo("BUY_VIDEO", "Buy video request made with following details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
+            VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
+            return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
+        } catch (WalletNotFoundException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        } catch (InsufficientTreesException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (InvalidAmountException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+
+    public ResponseEntity<?> buyVideoV2(String videoId) {
+        if (videoId == null || videoId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
+        }
+
+        try {
+            String userId = authHelper.getUserId();
+            List<Object[]> rawResults = videoPurchaseRepository.findUserIdAndTreesByVideoId(videoId);
+            String videoOwnerUserId = "";
+            BigDecimal trees = null;
+
+            for (Object[] row : rawResults) {
+                videoOwnerUserId = (String) row[0];
+                trees = (BigDecimal) row[1];
+            }
+
+            if (trees == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "trees is null for the videoId provided"), null));
+            }
+
+            if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), " VideoOwnerUserID is null or empty for the videoId provided"), null));
+            }
+
+            pdLogger.logInfo("BUY_VIDEO", "Buy video request made with following details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
+
             VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {

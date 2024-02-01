@@ -67,4 +67,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT trees FROM videos WHERE video_id = :videoId AND user_id = :userId", nativeQuery = true)
     BigDecimal findActualCostOfVideo(@Param("videoId") String videoId, @Param("userId") String userId);
+
+    @Query(value = "SELECT user_id, trees FROM videos WHERE video_id = :videoId", nativeQuery = true)
+    List<Object[]> findUserIdAndTreesByVideoId(@Param("videoId") String videoId);
 }

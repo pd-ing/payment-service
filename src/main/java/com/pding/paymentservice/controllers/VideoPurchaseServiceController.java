@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,11 @@ public class VideoPurchaseServiceController {
     @PostMapping(value = "/buyVideo")
     public ResponseEntity<?> buyVideo(@RequestParam(value = "userId") String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
         return videoPurchaseService.buyVideo(userId, videoId, trees, videoOwnerUserId);
+    }
+
+    @PostMapping(value = "/v2/buyVideo")
+    public ResponseEntity<?> buyVideoV2(@RequestParam(value = "videoId") String videoId) {
+        return videoPurchaseService.buyVideoV2(videoId);
     }
 
     @GetMapping(value = "/videoPurchaseHistory")
