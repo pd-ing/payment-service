@@ -78,11 +78,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (FirebaseAuthException e) {
-            pdLogger.logException(PdLogger.Priority.p0, e);
+            //pdLogger.logException(PdLogger.Priority.p0, e);
             request.setAttribute("jwtErrors", e.getErrorCode() + " - " + e.getMessage());
             throw new SecurityException("Error in Authentication: " + e.getErrorCode().name());
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.Priority.p0, e);
+            //pdLogger.logException(PdLogger.Priority.p0, e);
             request.setAttribute("jwtErrors", e.getMessage());
             throw new SecurityException("Error in Authentication: " + e.getMessage());
         }
