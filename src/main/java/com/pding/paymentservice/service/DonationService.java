@@ -11,8 +11,10 @@ import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.GenericListDataResponse;
+import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,6 +54,9 @@ public class DonationService {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    AuthHelper authHelper;
 
     @Transactional
     public Donation createDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
@@ -140,7 +145,39 @@ public class DonationService {
         if (trees == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
+
         try {
+            //Set userId from token
+            String userIdFromToken = authHelper.getUserId();
+            if (userIdFromToken.equals(userId)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId provided in the payload does not match with the userId embedded in token"), null));
+            }
+            Donation donation = createDonationTransaction(userId, trees, pdUserId);
+            return ResponseEntity.ok().body(new DonationResponse(null, donation));
+        } catch (WalletNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        } catch (InsufficientTreesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (InvalidAmountException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.DONATE, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+
+    public ResponseEntity<?> donateToPdV2(BigDecimal trees, String pdUserId) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "PdUserId parameter is required."));
+        }
+        if (trees == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
+        }
+
+        try {
+            //Set userId from token
+            String userId = authHelper.getUserId();
             Donation donation = createDonationTransaction(userId, trees, pdUserId);
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {

@@ -50,6 +50,19 @@ public class PaymentServiceController {
     }
 
 
+    @PostMapping("/v2/charge")
+    public ResponseEntity<?> chargeCardV2(@Valid @RequestBody PaymentDetailsRequest paymentDetailsRequest, BindingResult result, HttpServletRequest request) throws Exception {
+        // Check for validation errors
+        if (result.hasErrors()) {
+            // Here, we're just grabbing the first error, but you might want to send all of them.
+            ObjectError error = result.getAllErrors().get(0);
+            return ResponseEntity.badRequest().body(
+                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
+            );
+        }
+        return paymentService.chargeCustomerV2(paymentDetailsRequest);
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {

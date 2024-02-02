@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @EitherTreesOrLeafsNotNull(message = "Only one of trees or leafs should be not null, or both cannot have a value or both cannot be null")
 public class PaymentDetailsRequest {
-    @NotNull(message = "User ID cannot be null.")
+    //@NotNull(message = "User ID cannot be null.")
     private String userId;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Trees should be greater than 0.")

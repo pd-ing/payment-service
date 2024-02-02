@@ -7,6 +7,7 @@ import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public class PaymentService {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    AuthHelper authHelper;
 
     @Transactional
     public String chargeCustomer(String userId,
@@ -90,6 +94,13 @@ public class PaymentService {
                 paymentDetailsRequest.setLeafs(new BigDecimal(0));
             }
 
+            //Set userId from token
+            String userId = authHelper.getUserId();
+
+            if (userId.equals(paymentDetailsRequest.getUserId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId provided in the payload does not match with the userId embedded in token"), null));
+            }
+
             String charge = chargeCustomer(
                     paymentDetailsRequest.getUserId(),
                     paymentDetailsRequest.getTrees(),
@@ -111,5 +122,45 @@ public class PaymentService {
         }
     }
 
-    
+
+    public ResponseEntity<?> chargeCustomerV2(PaymentDetailsRequest paymentDetailsRequest) {
+        try {
+            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            // If any of trees or leaf is null then init it with 0.
+            if (paymentDetailsRequest.getTrees() == null) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+            }
+            if (paymentDetailsRequest.getLeafs() == null) {
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            //Set userId from token
+            String userId = authHelper.getUserId();
+
+            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,started payment to buy " + paymentDetailsRequest.getTrees() + " trees");
+
+            String charge = chargeCustomer(
+                    userId,
+                    paymentDetailsRequest.getTrees(),
+                    paymentDetailsRequest.getLeafs(),
+                    paymentDetailsRequest.getPurchasedDate(),
+                    paymentDetailsRequest.getTransactionId(),
+                    paymentDetailsRequest.getTransactionStatus(),
+                    paymentDetailsRequest.getAmount(),
+                    paymentDetailsRequest.getPaymentMethod(),
+                    paymentDetailsRequest.getCurrency(),
+                    paymentDetailsRequest.getDescription(),
+                    paymentDetailsRequest.getIpAddress()
+            );
+
+            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
 }

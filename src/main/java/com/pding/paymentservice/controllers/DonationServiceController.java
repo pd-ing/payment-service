@@ -32,6 +32,11 @@ public class DonationServiceController {
         return donationService.donateToPd(donorUserId, trees, pdUserId);
     }
 
+    @PostMapping(value = "/v2/donate")
+    public ResponseEntity<?> donateTreesV2(@RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
+        return donationService.donateToPdV2(trees, pdUserId);
+    }
+
     @GetMapping(value = "/donationHistoryForUser")
     public ResponseEntity<?> getDonationHistoryForUser(@RequestParam(value = "donorUserId") String donorUserId) {
         return donationService.getDonationHistoryForUser(donorUserId);
