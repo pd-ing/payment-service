@@ -156,7 +156,7 @@ public class PaymentService {
                     paymentDetailsRequest.getDescription(),
                     paymentDetailsRequest.getIpAddress()
             );
-
+            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,completed payment to buy " + paymentDetailsRequest.getTrees() + " trees");
             return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.CHARGE, e);

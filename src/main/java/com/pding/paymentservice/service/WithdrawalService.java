@@ -176,7 +176,7 @@ public class WithdrawalService {
             String profilePicture = "";
             if (publicUserWithStripeIdNet != null) {
                 email = publicUserWithStripeIdNet.getEmail();
-                nickname = publicUserWithStripeIdNet.getEmail();
+                nickname = publicUserWithStripeIdNet.getNickname();
                 linkedStripeId = publicUserWithStripeIdNet.getLinkedStripeId();
             }
 
