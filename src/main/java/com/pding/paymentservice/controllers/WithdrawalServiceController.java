@@ -58,16 +58,6 @@ public class WithdrawalServiceController {
         return withdrawalService.getWithDrawTransactions(status);
     }
 
-    @GetMapping(value = "/admin/pendingWithDrawTransactions")
-    public ResponseEntity<?> pendingWithDrawTransactions() {
-        return withdrawalService.getPendingWithDrawTransactions();
-    }
-
-    @GetMapping(value = "/admin/allWithDrawTransactions")
-    public ResponseEntity<?> allWithDrawTransactions(@RequestParam(defaultValue = "0") @Min(0) int page,
-                                                     @RequestParam(defaultValue = "10") @Min(1) int size) {
-        return withdrawalService.getAllWithDrawTransactions(page, size);
-    }
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
