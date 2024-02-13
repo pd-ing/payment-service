@@ -34,7 +34,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/topDonorsList",
             "/api/payment/webhook",
             "/api/payment/videoEarningAndSales",
-            "/api/payment/topEarners"
+            "/api/payment/topEarners",
+            "/api/payment/admin/balanceTrees"
     );
 
     @Override
