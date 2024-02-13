@@ -36,4 +36,6 @@ public class PublicUserNet {
     private BigDecimal treesDonated;
 
     private BigDecimal leafsTransacted;
+
+    private BigDecimal totalTreesSpent;
 }

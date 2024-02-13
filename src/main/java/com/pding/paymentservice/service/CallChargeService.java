@@ -13,6 +13,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.repository.CallRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,9 @@ public class CallChargeService {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    AuthHelper authHelper;
 
 
     @Transactional
@@ -135,10 +139,7 @@ public class CallChargeService {
         return publicUsers;
     }
 
-    public ResponseEntity<?> buyCall(String userId, String pdUserId, BigDecimal leafsToCharge, String callType) {
-        if (userId == null || userId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userId parameter is required."), null));
-        }
+    public ResponseEntity<?> buyCall(String pdUserId, BigDecimal leafsToCharge, String callType) {
 
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."), null));
@@ -162,6 +163,7 @@ public class CallChargeService {
         }
 
         try {
+            String userId = authHelper.getUserId();
             String message = CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType);
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (WalletNotFoundException e) {

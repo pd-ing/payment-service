@@ -54,7 +54,7 @@ public class PdLogger {
 
         Sentry.captureEvent(event);
     }
-    
+
     public static enum EVENT {
         //p0
 
@@ -95,8 +95,9 @@ public class PdLogger {
         CALL_DETAILS_HISTORY_FOR_PD(Priority.p1),
         CALL_DETAILS_HISTORY_FOR_USER(Priority.p1),
         TOP_CALLER_LIST_FOR_PD(Priority.p1),
-        TOP_CALLER_LIST(Priority.p1);
+        TOP_CALLER_LIST(Priority.p1),
 
+        TOP_FAN_LIST(Priority.p1);
         private final Priority priority;
 
         private EVENT(Priority priority) {

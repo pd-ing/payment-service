@@ -25,9 +25,9 @@ public class CallChargeServiceController {
     CallChargeService callChargeService;
 
     @PostMapping(value = "/buyCall")
-    public ResponseEntity<?> buyCall(@RequestParam(value = "userId") String userId, @RequestParam(value = "pdUserId") String pdUserId,
+    public ResponseEntity<?> buyCall(@RequestParam(value = "pdUserId") String pdUserId,
                                      @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge, @RequestParam(value = "callType") String callType) {
-        return callChargeService.buyCall(userId, pdUserId, leafsToCharge, callType);
+        return callChargeService.buyCall(pdUserId, leafsToCharge, callType);
     }
 
     @GetMapping(value = "/callHistoryForPd")
