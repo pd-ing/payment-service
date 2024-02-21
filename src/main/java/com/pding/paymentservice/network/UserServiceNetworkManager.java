@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,6 +44,23 @@ public class UserServiceNetworkManager {
                 .flatMapMany(resp -> {
                     if (resp.getError() == null && resp.getResult() != null) {
                         return Flux.fromIterable(resp.getResult());
+                    } else {
+                        return Flux.empty();
+                    }
+                });
+    }
+
+    public Flux<List<PublicUserNet>> getUsersListFlux(Set<String> userIds) throws Exception {
+        if (userIds == null || userIds.isEmpty()) return Flux.empty();
+
+        String param = userIds.stream().map(Object::toString).collect(Collectors.joining(","));
+        return webClient.get()
+                .uri(userService + "/usersList?userIds=" + param)
+                .retrieve()
+                .bodyToMono(GetUsersResponseNet.class)
+                .flatMapMany(resp -> {
+                    if (resp.getError() == null && resp.getResult() != null) {
+                        return Flux.just(resp.getResult());
                     } else {
                         return Flux.empty();
                     }

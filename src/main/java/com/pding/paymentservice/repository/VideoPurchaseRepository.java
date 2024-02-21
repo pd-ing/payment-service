@@ -70,4 +70,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT user_id, trees FROM videos WHERE video_id = :videoId", nativeQuery = true)
     List<Object[]> findUserIdAndTreesByVideoId(@Param("videoId") String videoId);
+
+    List<VideoPurchase> findAllByVideoIdOrderByLastUpdateDateDesc(String videoId);
 }

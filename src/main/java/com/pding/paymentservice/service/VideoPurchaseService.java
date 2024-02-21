@@ -6,6 +6,9 @@ import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -22,9 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class VideoPurchaseService {
@@ -46,6 +49,9 @@ public class VideoPurchaseService {
 
     @Autowired
     AuthHelper authHelper;
+
+    @Autowired
+    private UserServiceNetworkManager userServiceNetworkManager;
 
 
     @Transactional
@@ -243,4 +249,47 @@ public class VideoPurchaseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoEarningsAndSalesResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    public ResponseEntity<?> loadPurchaseListOfSellerResponse(String videoId) {
+        try {
+            return ResponseEntity.ok(convertToResponse(loadPurchaseListOfSeller(videoId)));
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
+    private List<VideoPurchaserInfo> convertToResponse(List<VideoPurchase> dataList) throws Exception {
+        Set<String> userIds = dataList.stream().parallel().map(VideoPurchase::getUserId).collect(Collectors.toSet());
+
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
+
+        if (usersFlux == null) {
+            return null;
+        }
+
+        Map<String, PublicUserNet> userMap = usersFlux.stream().parallel().collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+
+        List<VideoPurchaserInfo> res = new ArrayList<>();
+
+        dataList.forEach((v) -> {
+            PublicUserNet p = userMap.get(v.getUserId());
+            if (p != null) {
+                String date = v.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
+                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date));
+            }
+        });
+
+        return res;
+    }
+
+    private List<VideoPurchase> loadPurchaseListOfSeller(String videoId) {
+        try {
+            return videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return List.of();
+        }
+    }
+
 }
