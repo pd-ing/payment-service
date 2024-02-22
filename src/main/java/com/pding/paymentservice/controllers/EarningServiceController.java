@@ -33,8 +33,12 @@ public class EarningServiceController {
     }
 
     @GetMapping(value = "/getPurchaserOfVideo")
-    public ResponseEntity<?> purchaserListOfVideo(@RequestParam String videoId) {
-        return videoPurchaseService.loadPurchaseListOfSellerResponse(videoId);
+    public ResponseEntity<?> purchaserListOfVideo(
+            @RequestParam String videoId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size
+    ) {
+        return videoPurchaseService.loadPurchaseListOfSellerResponse(videoId, page, size);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

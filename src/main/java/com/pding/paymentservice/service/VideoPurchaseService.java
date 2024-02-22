@@ -19,6 +19,7 @@ import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -250,9 +251,9 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> loadPurchaseListOfSellerResponse(String videoId) {
+    public ResponseEntity<?> loadPurchaseListOfSellerResponse(String videoId, int page, int size) {
         try {
-            return ResponseEntity.ok(convertToResponse(loadPurchaseListOfSeller(videoId)));
+            return ResponseEntity.ok(convertToResponse(loadPurchaseListOfSeller(videoId, page, size)));
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
@@ -283,9 +284,10 @@ public class VideoPurchaseService {
         return res;
     }
 
-    private List<VideoPurchase> loadPurchaseListOfSeller(String videoId) {
+    private List<VideoPurchase> loadPurchaseListOfSeller(String videoId, int page, int size) {
         try {
-            return videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId);
+            PageRequest pageRequest = PageRequest.of(page, size);
+            return videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest).toList();
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return List.of();
