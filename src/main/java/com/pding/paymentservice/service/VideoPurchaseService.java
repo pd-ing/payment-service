@@ -13,12 +13,15 @@ import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
+import com.pding.paymentservice.payload.response.Pagination.PaginationInfoWithGenericList;
+import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.models.VideoEarningsAndSales;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -253,27 +256,34 @@ public class VideoPurchaseService {
 
     public ResponseEntity<?> loadPurchaseListOfSellerResponse(String videoId, int page, int size) {
         try {
-            return ResponseEntity.ok(convertToResponse(loadPurchaseListOfSeller(videoId, page, size)));
+            return ResponseEntity.ok(new PaginationResponse(null, loadPurchaseListOfSeller(videoId, page, size)));
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
         }
     }
 
-    private List<VideoPurchaserInfo> convertToResponse(List<VideoPurchase> dataList) throws Exception {
-        Set<String> userIds = dataList.stream().parallel().map(VideoPurchase::getUserId).collect(Collectors.toSet());
+    private PaginationInfoWithGenericList<VideoPurchaserInfo> convertToResponse(Page<VideoPurchase> dataList) throws Exception {
+        List<VideoPurchase> dataContent = dataList.getContent();
+        Set<String> userIds = dataContent.stream().parallel().map(VideoPurchase::getUserId).collect(Collectors.toSet());
 
         List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
 
         if (usersFlux == null) {
-            return List.of();
+            return new PaginationInfoWithGenericList<>(
+                    dataList.getNumber(),
+                    dataList.getSize(),
+                    dataList.getTotalElements(),
+                    dataList.getTotalPages(),
+                    List.of()
+            );
         }
 
         Map<String, PublicUserNet> userMap = usersFlux.stream().parallel().collect(Collectors.toMap(PublicUserNet::getId, user -> user));
 
         List<VideoPurchaserInfo> res = new ArrayList<>();
 
-        dataList.forEach((v) -> {
+        dataContent.forEach((v) -> {
             PublicUserNet p = userMap.get(v.getUserId());
             if (p != null) {
                 String date = v.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
@@ -281,16 +291,24 @@ public class VideoPurchaseService {
             }
         });
 
-        return res;
+        return new PaginationInfoWithGenericList<>(
+                dataList.getNumber(),
+                dataList.getSize(),
+                dataList.getTotalElements(),
+                dataList.getTotalPages(),
+                res
+        );
     }
 
-    private List<VideoPurchase> loadPurchaseListOfSeller(String videoId, int page, int size) {
+    private PaginationInfoWithGenericList<VideoPurchaserInfo> loadPurchaseListOfSeller(String videoId, int page, int size) {
         try {
             PageRequest pageRequest = PageRequest.of(page, size);
-            return videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest).toList();
+            Page<VideoPurchase> pageData =  videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest);
+
+            return convertToResponse(pageData);
         } catch (Exception ex) {
             pdLogger.logException(ex);
-            return List.of();
+            return null;
         }
     }
 
