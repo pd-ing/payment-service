@@ -266,7 +266,7 @@ public class VideoPurchaseService {
         List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
 
         if (usersFlux == null) {
-            return null;
+            return List.of();
         }
 
         Map<String, PublicUserNet> userMap = usersFlux.stream().parallel().collect(Collectors.toMap(PublicUserNet::getId, user -> user));
