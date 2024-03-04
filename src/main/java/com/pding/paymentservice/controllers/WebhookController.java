@@ -36,11 +36,13 @@ public class WebhookController {
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
         try {
+            pdLogger.logInfo("WEBHOOK","Callback recieved for type "+ payload);
             Event event = Webhook.constructEvent(
                     payload,
                     signatureHeader,
                     secretKey
             );
+            pdLogger.logInfo("WEBHOOK","Callback Successfull for  "+ event.getType());
             // Extract Payment Intent ID
             String paymentIntentId = null;
 
@@ -63,7 +65,6 @@ public class WebhookController {
 
                     break;
             }
-
             return new ResponseEntity<>("Success", HttpStatus.OK);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, e);
