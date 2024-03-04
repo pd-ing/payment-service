@@ -23,7 +23,7 @@ import com.stripe.net.Webhook;
 
 public class WebhookController {
 
-    @Value("${stripe.secret.key}")
+    @Value("${stripe.webhook.secret}")
     private String secretKey;
 
     @Autowired
