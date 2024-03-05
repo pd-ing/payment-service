@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,14 +27,17 @@ public class WalletServiceController {
     @Autowired
     WalletHistoryService walletHistoryService;
 
+    @Autowired
+    AuthHelper authHelper;
+
     @GetMapping(value = "/wallet")
-    public ResponseEntity<?> getWallet(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
-        return walletService.getWallet(userId);
+    public ResponseEntity<?> getWallet(@RequestParam(value = "userId", required = false) String userId, HttpServletRequest request) {
+        return walletService.getWallet(authHelper.getUserId());
     }
 
     @GetMapping(value = "/walletHistory")
-    public ResponseEntity<?> getWalletHistory(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
-        return walletHistoryService.getHistory(userId);
+    public ResponseEntity<?> getWalletHistory(@RequestParam(value = "userId", required = false) String userId, HttpServletRequest request) {
+        return walletHistoryService.getHistory(authHelper.getUserId());
     }
 
     // Handle MissingServletRequestParameterException --

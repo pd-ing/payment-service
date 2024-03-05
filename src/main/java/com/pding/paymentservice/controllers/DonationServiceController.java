@@ -2,6 +2,7 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.EarningService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,11 +26,13 @@ import java.math.BigDecimal;
 public class DonationServiceController {
 
     @Autowired
+    AuthHelper authHelper;
+    @Autowired
     DonationService donationService;
 
     @PostMapping(value = "/donate")
-    public ResponseEntity<?> donateTrees(@RequestParam(value = "donorUserId") String donorUserId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
-        return donationService.donateToPd(donorUserId, trees, pdUserId);
+    public ResponseEntity<?> donateTrees(@RequestParam(value = "donorUserId", required = false) String donorUserId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
+        return donationService.donateToPd(authHelper.getUserId(), trees, pdUserId);
     }
 
     @PostMapping(value = "/v2/donate")
@@ -38,8 +41,8 @@ public class DonationServiceController {
     }
 
     @GetMapping(value = "/donationHistoryForUser")
-    public ResponseEntity<?> getDonationHistoryForUser(@RequestParam(value = "donorUserId") String donorUserId) {
-        return donationService.getDonationHistoryForUser(donorUserId);
+    public ResponseEntity<?> getDonationHistoryForUser(@RequestParam(value = "donorUserId", required = false) String donorUserId) {
+        return donationService.getDonationHistoryForUser(authHelper.getUserId());
     }
 
     @GetMapping(value = "/donationHistoryForPd")

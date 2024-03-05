@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthHelper {
 
-    public String getUserId() throws Exception {
+    public String getUserId() {
         return getLoggedInFirebaseUser().getUid();
     }
 
@@ -23,7 +23,7 @@ public class AuthHelper {
         return getLoggedInFirebaseUser().getEmailVerified();
     }
 
-    public LoggedInUserRecord getLoggedInFirebaseUser() throws Exception {
+    public LoggedInUserRecord getLoggedInFirebaseUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -34,7 +34,7 @@ public class AuthHelper {
             }
         }
 
-        throw new Exception("Login again.");
+        throw new RuntimeException("Login again.");
     }
 
 }

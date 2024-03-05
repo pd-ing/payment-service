@@ -24,11 +24,13 @@ import java.math.BigDecimal;
 public class VideoPurchaseServiceController {
 
     @Autowired
+    AuthHelper authHelper;
+    @Autowired
     VideoPurchaseService videoPurchaseService;
 
     @PostMapping(value = "/buyVideo")
-    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId") String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
-        return videoPurchaseService.buyVideo(userId, videoId, trees, videoOwnerUserId);
+    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
+        return videoPurchaseService.buyVideo(authHelper.getUserId(), videoId, trees, videoOwnerUserId);
     }
 
     @PostMapping(value = "/v2/buyVideo")
@@ -37,8 +39,8 @@ public class VideoPurchaseServiceController {
     }
 
     @GetMapping(value = "/videoPurchaseHistory")
-    public ResponseEntity<?> getVideotransactions(@RequestParam(value = "userId") String userId, HttpServletRequest request) {
-        return videoPurchaseService.getVideoTransactions(userId);
+    public ResponseEntity<?> getVideotransactions(@RequestParam(value = "userId", required = false) String userId, HttpServletRequest request) {
+        return videoPurchaseService.getVideoTransactions(authHelper.getUserId());
     }
 
 //    @GetMapping(value = "/treesEarned")
@@ -47,8 +49,8 @@ public class VideoPurchaseServiceController {
 //    }
 
     @GetMapping(value = "/isVideoPurchased")
-    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId") String userId, @RequestParam(value = "videoId") String videoId) {
-        return videoPurchaseService.isVideoPurchased(userId, videoId);
+    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId) {
+        return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
     }
 
 

@@ -147,11 +147,6 @@ public class DonationService {
         }
 
         try {
-            //Set userId from token
-            String userIdFromToken = authHelper.getUserId();
-            if (userIdFromToken.equals(userId)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId provided in the payload does not match with the userId embedded in token"), null));
-            }
             Donation donation = createDonationTransaction(userId, trees, pdUserId);
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {

@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.CallChargeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,9 @@ public class CallChargeServiceController {
     @Autowired
     CallChargeService callChargeService;
 
+    @Autowired
+    AuthHelper authHelper;
+
     @PostMapping(value = "/buyCall")
     public ResponseEntity<?> buyCall(@RequestParam(value = "pdUserId") String pdUserId,
                                      @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge, @RequestParam(value = "callType") String callType) {
@@ -31,20 +35,20 @@ public class CallChargeServiceController {
     }
 
     @GetMapping(value = "/callHistoryForPd")
-    public ResponseEntity<?> getCallHistoryForPd(@RequestParam(value = "pdUserId") String pdUserId) {
-        return callChargeService.callDetailsHistoryForPd(pdUserId);
+    public ResponseEntity<?> getCallHistoryForPd(@RequestParam(value = "pdUserId", required = false) String pdUserId) {
+        return callChargeService.callDetailsHistoryForPd(authHelper.getUserId());
     }
 
 
     @GetMapping(value = "/callHistoryForUser")
-    public ResponseEntity<?> getCallHistoryForUser(@RequestParam(value = "userId") String userId) {
-        return callChargeService.callDetailsHistoryForUser(userId);
+    public ResponseEntity<?> getCallHistoryForUser(@RequestParam(value = "userId", required = false) String userId) {
+        return callChargeService.callDetailsHistoryForUser(authHelper.getUserId());
     }
 
 
     @GetMapping(value = "/topCallersForPd")
-    public ResponseEntity<?> getTopCallersForPd(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "limit") Long limit) {
-        return callChargeService.getTopCallersForPd(pdUserId, limit);
+    public ResponseEntity<?> getTopCallersForPd(@RequestParam(value = "pdUserId", required = false) String pdUserId, @RequestParam(value = "limit") Long limit) {
+        return callChargeService.getTopCallersForPd(authHelper.getUserId(), limit);
     }
 
     @GetMapping(value = "/topCallers")
