@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Java CI with Maven for PROD
+name: Java CI with Maven for PROD US-WEST-1
 
 on:
   push:
