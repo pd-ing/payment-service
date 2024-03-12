@@ -2,6 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
+import com.pding.paymentservice.models.WalletHistory;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
@@ -13,11 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -78,6 +82,70 @@ public class PaymentService {
         return true;
     }
 
+    @Transactional
+    public String startPaymentToBuyTrees(String userId,
+                                         BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
+                                         String transactionID, BigDecimal amount,
+                                         String paymentMethod, String currency,
+                                         String description, String ipAddress) throws Exception {
+
+        try {
+            Wallet wallet = walletService.fetchWalletByUserId(userId).get();
+
+
+            String transactionStatus = TransactionType.PAYMENT_STARTED.getDisplayName();
+            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
+                    amount, paymentMethod, currency, description, ipAddress);
+
+            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.PAYMENT_STARTED);
+
+            return "Payment started successfully for paymentIntentId " + transactionID;
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new Exception("Payment starting failed with following error : " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public String completePaymentToBuyTrees(String paymentIntentId) throws Exception {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+
+            Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), walletHistory.getPurchasedLeafs(), walletHistory.getPurchaseDate());
+
+            ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED);
+
+            walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
+
+            walletHistoryService.save(walletHistory);
+
+            return "Payment started successfully for paymentIntentId " + paymentIntentId;
+        } else {
+            throw new Exception("Could not find wallet history information for the paymentIntentId " + paymentIntentId);
+        }
+    }
+
+    @Transactional
+    public String failPaymentToBuyTrees(String paymentIntentId) throws Exception {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+            
+            ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED);
+
+            walletHistory.setTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
+
+            walletHistoryService.save(walletHistory);
+
+            return "Payment failed for paymentIntentId " + paymentIntentId;
+        } else {
+            throw new Exception("Could not find wallet history information for the paymentIntentId " + paymentIntentId);
+        }
+    }
 
     public ResponseEntity<?> chargeCustomer(PaymentDetailsRequest paymentDetailsRequest) {
         try {
