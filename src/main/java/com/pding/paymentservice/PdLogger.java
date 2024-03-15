@@ -63,8 +63,6 @@ public class PdLogger {
 
         CHARGE(Priority.p0),
 
-        START_PAYMENT(Priority.p0),
-
         BUY_VIDEO(Priority.p0),
 
         IS_VIDEO_PURCHASED(Priority.p0),

@@ -65,7 +65,6 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
                                 .requestMatchers("/api/payment/v2/charge").authenticated()
-                                .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
 
 
                 );

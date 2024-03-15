@@ -2,7 +2,6 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.service.EarningService;
-import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.WithdrawalService;
 import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +27,7 @@ public class WebhookController {
     private String secretKey;
 
     @Autowired
-    PaymentService paymentService;
+    WithdrawalService withdrawalService;
 
     @Autowired
     PdLogger pdLogger;
@@ -37,13 +36,13 @@ public class WebhookController {
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
         try {
-            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" + "Callback recieved for type " + payload));
+            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" +"Callback recieved for type "+ payload));
             Event event = Webhook.constructEvent(
                     payload,
                     signatureHeader,
                     secretKey
             );
-            pdLogger.logInfo("WEBHOOK", "Callback Successfull for  " + event.getType());
+            pdLogger.logInfo("WEBHOOK","Callback Successfull for  "+ event.getType());
             // Extract Payment Intent ID
             String paymentIntentId = null;
 
@@ -57,12 +56,13 @@ public class WebhookController {
             // Handle different types of events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    paymentService.completePaymentToBuyTrees(paymentIntentId);
+                    //withdrawalService.completeWithdrawal(paymentIntentId);
                     break;
                 case "payment_intent.payment_failed":
-                    paymentService.failPaymentToBuyTrees(paymentIntentId);
+                    //withdrawalService.failWithdrawal(paymentIntentId);
                     break;
                 default:
+
                     break;
             }
             return new ResponseEntity<>("Success", HttpStatus.OK);
