@@ -11,7 +11,14 @@ public enum TransactionType {
     LEAFS_REVERTED("leafs_reverted"),
     VIDEO_PURCHASE("videoPurchase"),
     AUDIO_CALL("audioCall"),
-    VIDEO_CALL("videoCall");
+    VIDEO_CALL("videoCall"),
+
+    PAYMENT_STARTED("paymentStarted"),
+
+    PAYMENT_COMPLETED("paymentCompleted"),
+
+    PAYMENT_FAILED("paymentFailed");
+
 
 
     private final String displayName;

@@ -55,6 +55,6 @@ public class PaymentDetailsRequest {
     @NotBlank(message = "Transaction id cannot be blank")
     private String transactionId;
 
-    @NotBlank(message = "Transaction status cannot be blank")
+    //@NotBlank(message = "Transaction status cannot be blank")
     private String transactionStatus;
 }
