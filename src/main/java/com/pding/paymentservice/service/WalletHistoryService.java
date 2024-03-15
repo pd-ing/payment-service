@@ -44,8 +44,12 @@ public class WalletHistoryService {
         return walletHistoryRepository.findByUserId(userId);
     }
 
-    public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionID, String userId) {
-        return walletHistoryRepository.findByTransactionIdAndUserId(transactionID, userId);
+    public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, String userId) {
+        return walletHistoryRepository.findByTransactionIdAndUserId(transactionId, userId);
+    }
+
+    public Optional<WalletHistory> findByTransactionId(String transactionId) {
+        return walletHistoryRepository.findByTransactionId(transactionId);
     }
 
     public void createWalletHistoryEntry(String walletID, String userId,
@@ -58,6 +62,9 @@ public class WalletHistoryService {
         log.info("Wallet history table updated");
     }
 
+    public void save(WalletHistory walletHistory) {
+        walletHistoryRepository.save(walletHistory);
+    }
 
     public ResponseEntity<?> getHistory(String userId) {
         if (userId == null || userId.isEmpty()) {

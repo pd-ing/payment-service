@@ -2,6 +2,7 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.service.EarningService;
+import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.WithdrawalService;
 import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class WebhookController {
     private String secretKey;
 
     @Autowired
-    WithdrawalService withdrawalService;
+    PaymentService paymentService;
 
     @Autowired
     PdLogger pdLogger;
@@ -36,13 +37,13 @@ public class WebhookController {
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
         try {
-            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" +"Callback recieved for type "+ payload));
+            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" + "Callback recieved for type " + payload));
             Event event = Webhook.constructEvent(
                     payload,
                     signatureHeader,
                     secretKey
             );
-            pdLogger.logInfo("WEBHOOK","Callback Successfull for  "+ event.getType());
+            pdLogger.logInfo("WEBHOOK", "Callback Successfull for  " + event.getType());
             // Extract Payment Intent ID
             String paymentIntentId = null;
 
@@ -56,13 +57,12 @@ public class WebhookController {
             // Handle different types of events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    //withdrawalService.completeWithdrawal(paymentIntentId);
+                    paymentService.completePaymentToBuyTrees(paymentIntentId);
                     break;
                 case "payment_intent.payment_failed":
-                    //withdrawalService.failWithdrawal(paymentIntentId);
+                    paymentService.failPaymentToBuyTrees(paymentIntentId);
                     break;
                 default:
-
                     break;
             }
             return new ResponseEntity<>("Success", HttpStatus.OK);

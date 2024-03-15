@@ -1,7 +1,9 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +31,9 @@ public class PaymentServiceController {
     @Autowired
     PaymentService paymentService;
 
+    @Autowired
+    PdLogger pdLogger;
+
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
@@ -49,6 +54,25 @@ public class PaymentServiceController {
         return paymentService.chargeCustomer(paymentDetailsRequest);
     }
 
+    @PostMapping("/startPaymentToBuyTrees")
+    public ResponseEntity<?> startPayment(@Valid @RequestBody PaymentDetailsRequest paymentDetailsRequest, BindingResult result) {
+        if (result.hasErrors()) {
+            // Here, we're just grabbing the first error, but you might want to send all of them.
+            ObjectError error = result.getAllErrors().get(0);
+            return ResponseEntity.badRequest().body(
+                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
+            );
+        }
+
+        try {
+            String response = paymentService.startPaymentToBuyTrees(paymentDetailsRequest);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, response));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.START_PAYMENT, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+
+    }
 
     @PostMapping("/v2/charge")
     public ResponseEntity<?> chargeCardV2(@Valid @RequestBody PaymentDetailsRequest paymentDetailsRequest, BindingResult result, HttpServletRequest request) throws Exception {
