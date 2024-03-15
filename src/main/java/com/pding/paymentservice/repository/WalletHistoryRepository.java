@@ -19,6 +19,4 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, St
 
     Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, String userId);
 
-    Optional<WalletHistory> findByTransactionId(String transactionId);
-
 }
