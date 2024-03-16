@@ -52,6 +52,11 @@ public class WebhookController {
 
                 PaymentIntent paymentIntent = (PaymentIntent) event.getData().getObject();
                 paymentIntentId = paymentIntent.getId();
+                // Extract the Checkout Session ID from the Payment Intent
+                String checkoutSessionId = paymentIntent.getMetadata().get("checkout_session");
+
+                pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("checkoutSessionId " + checkoutSessionId));
+
             }
 
             // Handle different types of events
