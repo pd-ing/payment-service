@@ -37,12 +37,13 @@ public class WebhookController {
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
         try {
-            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK " + "Callback recieved for type " + payload));
+            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" + "Callback recieved for type " + payload));
             Event event = Webhook.constructEvent(
                     payload,
                     signatureHeader,
                     secretKey
             );
+            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK , EventType:" + event.getType() + ",nCallback recieved for type " + payload));
             pdLogger.logInfo("WEBHOOK", "Callback Successfull for  " + event.getType());
             // Extract Payment Intent ID
             String paymentIntentId = null;
@@ -52,11 +53,6 @@ public class WebhookController {
 
                 PaymentIntent paymentIntent = (PaymentIntent) event.getData().getObject();
                 paymentIntentId = paymentIntent.getId();
-                // Extract the Checkout Session ID from the Payment Intent
-                String checkoutSessionId = paymentIntent.getMetadata().get("checkout_session");
-
-                pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("checkoutSessionId " + checkoutSessionId));
-
             }
 
             // Handle different types of events
