@@ -43,7 +43,7 @@ public class WebhookController {
                     signatureHeader,
                     secretKey
             );
-            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK , EventType:" + event.getType() + ",nCallback recieved for type " + payload));
+            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK , EventType:" + event.getType() + ",nCallback recieved for type " + payload));
             pdLogger.logInfo("WEBHOOK", "Callback Successfull for  " + event.getType());
             // Extract Payment Intent ID
             String paymentIntentId = null;
@@ -58,10 +58,10 @@ public class WebhookController {
             // Handle different types of events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    paymentService.completePaymentToBuyTrees(paymentIntentId);
+                    //paymentService.completePaymentToBuyTrees(paymentIntentId);
                     break;
                 case "payment_intent.payment_failed":
-                    paymentService.failPaymentToBuyTrees(paymentIntentId);
+                    //paymentService.failPaymentToBuyTrees(paymentIntentId);
                     break;
                 default:
                     break;
