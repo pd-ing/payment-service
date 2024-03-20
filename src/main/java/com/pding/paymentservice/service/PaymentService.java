@@ -89,10 +89,6 @@ public class PaymentService {
             String userId = authHelper.getUserId();
             Wallet wallet = walletService.fetchWalletByUserId(userId).get();
 
-            if (!validatePaymentIntentId(paymentDetailsRequest.getTransactionId())) {
-                throw new Exception("Invalid payment attempt made, As paymentIntentId is already used");
-            }
-            
             String transactionStatus = TransactionType.PAYMENT_STARTED.getDisplayName();
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, paymentDetailsRequest.getTrees(), paymentDetailsRequest.getLeafs(), paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionId(), transactionStatus,
                     paymentDetailsRequest.getAmount(), paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(), paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
@@ -114,12 +110,14 @@ public class PaymentService {
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
 
+
             Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), walletHistory.getPurchasedLeafs(), walletHistory.getPurchaseDate());
 
             ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED);
 
+            String description = walletHistory.getDescription() + ", Completed payment successfully";
+            walletHistory.setDescription(description);
             walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
-
             walletHistoryService.save(walletHistory);
             return "Payment started successfully for paymentIntentId " + paymentIntentId;
         } else {
@@ -136,24 +134,15 @@ public class PaymentService {
 
             ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED);
 
+            String description = walletHistory.getDescription() + ", payment failed";
+            walletHistory.setDescription(description);
             walletHistory.setTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
-
             walletHistoryService.save(walletHistory);
-
+            
             return "Payment failed for paymentIntentId " + paymentIntentId;
         } else {
             throw new Exception("Could not find wallet history information for the paymentIntentId " + paymentIntentId);
         }
-    }
-
-    private boolean validatePaymentIntentId(String paymentIntentId) {
-        Optional<WalletHistory> walletHistory = walletHistoryService.findByTransactionId(paymentIntentId);
-
-        if (walletHistory.isPresent()) {
-            return false;
-        }
-
-        return true;
     }
 
     public ResponseEntity<?> chargeCustomer(PaymentDetailsRequest paymentDetailsRequest) {

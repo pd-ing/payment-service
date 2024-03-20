@@ -1,16 +1,28 @@
 package com.pding.paymentservice.stripe;
 
 import com.stripe.Stripe;
+import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
 import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Price;
+import com.stripe.model.Product;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
+import com.stripe.param.PriceListParams;
+import com.stripe.param.ProductListParams;
+import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.stripe.param.checkout.SessionCreateParams.Mode.PAYMENT;
 
 @Component
 public class StripeClient {
@@ -22,36 +34,48 @@ public class StripeClient {
         Stripe.apiKey = secretKey;
     }
 
-    public Customer createCustomer(String token, String email) throws Exception {
-        Map<String, Object> customerParams = new HashMap<String, Object>();
-        customerParams.put("email", email);
-        customerParams.put("source", token);
-        return Customer.create(customerParams);
-    }
-
-    private Customer getCustomer(String id) throws Exception {
-        return Customer.retrieve(id);
-    }
-
-    public Charge chargeNewCard(String token, double amount) throws Exception {
+    public StripeClientResponse createStripeSession(String productId, String successUrl, String cancelUrl) throws Exception {
         Stripe.apiKey = secretKey;
-        Map<String, Object> chargeParams = new HashMap<String, Object>();
-        chargeParams.put("amount", (int) (amount * 100));
-        chargeParams.put("currency", "USD");
-        chargeParams.put("source", token);
-        Charge charge = Charge.create(chargeParams);
-        return charge;
+
+        Product product = getProduct(productId);
+        String priceId = getPriceIdForProduct(product.getId());
+
+        SessionCreateParams.Builder builder = new SessionCreateParams.Builder();
+        builder.setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .addLineItem(new SessionCreateParams.LineItem.Builder()
+                        .setQuantity(1L)
+                        .setPrice(priceId)
+                        .build())
+                .setMode(PAYMENT);
+
+        Map<String, Object> params = builder.build().toMap();
+        Session session = Session.create(params);
+        session.getPaymentIntent();
+        return new StripeClientResponse(product, session);
     }
 
-    public Charge chargeCustomerCard(String customerId, int amount) throws Exception {
-        String sourceCard = getCustomer(customerId).getDefaultSource();
-        Map<String, Object> chargeParams = new HashMap<String, Object>();
-        chargeParams.put("amount", amount);
-        chargeParams.put("currency", "USD");
-        chargeParams.put("customer", customerId);
-        chargeParams.put("source", sourceCard);
-        Charge charge = Charge.create(chargeParams);
-        return charge;
+    // Retrieve a Stripe product by its ID
+    private Product getProduct(String productId) throws StripeException {
+        Stripe.apiKey = secretKey;
+        return Product.retrieve(productId);
+    }
+
+    private String getPriceIdForProduct(String productId) throws StripeException {
+        Stripe.apiKey = secretKey;
+
+        PriceListParams params = PriceListParams.builder()
+                .setProduct(productId)
+                .build();
+
+        List<Price> prices = Price.list(params).getData();
+
+        if (!prices.isEmpty()) {
+            return prices.get(0).getId();
+        } else {
+            throw new RuntimeException("No prices found for the product ID: " + productId);
+        }
     }
 
     public boolean isPaymentIntentIDPresentInStripe(String paymentIntentId) throws Exception {

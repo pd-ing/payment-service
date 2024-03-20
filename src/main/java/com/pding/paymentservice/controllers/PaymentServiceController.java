@@ -6,6 +6,8 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.service.PaymentService;
+import com.pding.paymentservice.stripe.StripeClient;
+import com.pding.paymentservice.stripe.StripeClientResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -21,7 +23,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -34,6 +40,8 @@ public class PaymentServiceController {
     @Autowired
     PdLogger pdLogger;
 
+    @Autowired
+    StripeClient stripeClient;
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
@@ -54,19 +62,24 @@ public class PaymentServiceController {
         return paymentService.chargeCustomer(paymentDetailsRequest);
     }
 
-    @PostMapping("/startPaymentToBuyTrees")
-    public ResponseEntity<?> startPayment(@Valid @RequestBody PaymentDetailsRequest paymentDetailsRequest, BindingResult result) {
-        if (result.hasErrors()) {
-            // Here, we're just grabbing the first error, but you might want to send all of them.
-            ObjectError error = result.getAllErrors().get(0);
-            return ResponseEntity.badRequest().body(
-                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
-            );
-        }
 
+    @PostMapping("/startPaymentToBuyTrees")
+    public ResponseEntity<?> startPaymentToBuyTreesController(@RequestParam(value = "productId") String productId, @RequestParam(value = "successUrl") String successUrl, @RequestParam(value = "cancelUrl") String cancelUrl) {
         try {
+            StripeClientResponse stripeClientResponse = stripeClient.createStripeSession(productId, successUrl, cancelUrl);
+            String trees = stripeClientResponse.getProduct().getMetadata().get("trees");
+
+            PaymentDetailsRequest paymentDetailsRequest = new PaymentDetailsRequest();
+            paymentDetailsRequest.setTrees(new BigDecimal(Integer.parseInt(trees)));
+            paymentDetailsRequest.setPurchasedDate(LocalDateTime.now());
+            paymentDetailsRequest.setPaymentMethod(String.join(", ", stripeClientResponse.getSession().getPaymentMethodTypes()));
+            paymentDetailsRequest.setCurrency(stripeClientResponse.getSession().getCurrency());
+            paymentDetailsRequest.setDescription("Started payment to buy " + trees + " trees");
+            paymentDetailsRequest.setTransactionId(stripeClientResponse.getSession().getPaymentIntent());
+
             String response = paymentService.startPaymentToBuyTrees(paymentDetailsRequest);
-            return ResponseEntity.ok().body(new GenericStringResponse(null, response));
+
+            return ResponseEntity.ok().body(new GenericStringResponse(null, stripeClientResponse.getSession().getUrl()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.START_PAYMENT, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
