@@ -44,15 +44,16 @@ public class WebhookController {
             );
             pdLogger.logInfo("Webhook", "Callback Successfull for  " + event.getType());
 
-            String paymentIntentId = getPaymentIntentId(event);
-
+            PaymentIntent paymentIntent = getPaymentIntentId(event);
+            String paymentIntentId = paymentIntent.getId();
+            String sessionId = paymentIntent.getMetadata().get("session_id");
             // Handle different types of events. We have configured stripe to listen to these events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    paymentService.completePaymentToBuyTrees(paymentIntentId);
+                    paymentService.completePaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 case "payment_intent.payment_failed":
-                    paymentService.failPaymentToBuyTrees(paymentIntentId);
+                    paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 default:
                     pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("New event type (" + event.getType() + ") recieved in webhook, which we have not configured to listen "));
@@ -65,15 +66,13 @@ public class WebhookController {
         }
     }
 
-    private String getPaymentIntentId(Event event) {
+    private PaymentIntent getPaymentIntentId(Event event) {
         String paymentIntentId = null;
         if ("payment_intent.succeeded".equals(event.getType()) ||
                 "payment_intent.payment_failed".equals(event.getType())) {
 
-            PaymentIntent paymentIntent = (PaymentIntent) event.getData().getObject();
-            paymentIntentId = paymentIntent.getId();
-            return paymentIntentId;
+            return (PaymentIntent) event.getData().getObject();
         }
-        return "";
+        return null;
     }
 }

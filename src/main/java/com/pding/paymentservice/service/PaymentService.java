@@ -104,8 +104,8 @@ public class PaymentService {
     }
 
     @Transactional
-    public String completePaymentToBuyTrees(String paymentIntentId) throws Exception {
-        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+    public String completePaymentToBuyTrees(String paymentIntentId, String sessionId) throws Exception {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(sessionId);
 
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
@@ -117,17 +117,18 @@ public class PaymentService {
 
             String description = walletHistory.getDescription() + ", Completed payment successfully";
             walletHistory.setDescription(description);
+            walletHistory.setTransactionId(paymentIntentId);
             walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
             walletHistoryService.save(walletHistory);
             return "Payment started successfully for paymentIntentId " + paymentIntentId;
         } else {
-            throw new Exception("Could not find wallet history information for the paymentIntentId " + paymentIntentId);
+            throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
         }
     }
 
     @Transactional
-    public String failPaymentToBuyTrees(String paymentIntentId) throws Exception {
-        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+    public String failPaymentToBuyTrees(String paymentIntentId, String sessionId) throws Exception {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(sessionId);
 
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
@@ -136,12 +137,13 @@ public class PaymentService {
 
             String description = walletHistory.getDescription() + ", payment failed";
             walletHistory.setDescription(description);
+            walletHistory.setTransactionId(paymentIntentId);
             walletHistory.setTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
             walletHistoryService.save(walletHistory);
-            
+
             return "Payment failed for paymentIntentId " + paymentIntentId;
         } else {
-            throw new Exception("Could not find wallet history information for the paymentIntentId " + paymentIntentId);
+            throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
         }
     }
 

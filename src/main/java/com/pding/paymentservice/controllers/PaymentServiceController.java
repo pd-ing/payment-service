@@ -75,7 +75,7 @@ public class PaymentServiceController {
             paymentDetailsRequest.setPaymentMethod(String.join(", ", stripeClientResponse.getSession().getPaymentMethodTypes()));
             paymentDetailsRequest.setCurrency(stripeClientResponse.getSession().getCurrency());
             paymentDetailsRequest.setDescription("Started payment to buy " + trees + " trees");
-            paymentDetailsRequest.setTransactionId(stripeClientResponse.getSession().getPaymentIntent());
+            paymentDetailsRequest.setTransactionId(stripeClientResponse.getSession().getId());
 
             String response = paymentService.startPaymentToBuyTrees(paymentDetailsRequest);
 
