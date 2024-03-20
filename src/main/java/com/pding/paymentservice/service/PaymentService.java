@@ -90,7 +90,7 @@ public class PaymentService {
             Wallet wallet = walletService.fetchWalletByUserId(userId).get();
 
             String transactionStatus = TransactionType.PAYMENT_STARTED.getDisplayName();
-            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, paymentDetailsRequest.getTrees(), paymentDetailsRequest.getLeafs(), paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionId(), transactionStatus,
+            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, paymentDetailsRequest.getTrees(), new BigDecimal(0), paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionId(), transactionStatus,
                     paymentDetailsRequest.getAmount(), paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(), paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
 
             ledgerService.saveToLedger(wallet.getId(), paymentDetailsRequest.getTrees(), new BigDecimal(0), TransactionType.PAYMENT_STARTED);
@@ -111,7 +111,7 @@ public class PaymentService {
             WalletHistory walletHistory = walletHistoryOptional.get();
 
 
-            Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), walletHistory.getPurchasedLeafs(), walletHistory.getPurchaseDate());
+            Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), walletHistory.getPurchaseDate());
 
             ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED);
 
