@@ -109,7 +109,9 @@ public class PaymentService {
 
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
-
+            if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED)) {
+                return "Payment is already completed for the paymentIntentId" + paymentIntentId;
+            }
 
             Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), walletHistory.getPurchaseDate());
 
@@ -120,7 +122,7 @@ public class PaymentService {
             walletHistory.setTransactionId(paymentIntentId);
             walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
             walletHistoryService.save(walletHistory);
-            return "Payment started successfully for paymentIntentId " + paymentIntentId;
+            return "Payment completed successfully for paymentIntentId " + paymentIntentId;
         } else {
             throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
         }
@@ -133,6 +135,9 @@ public class PaymentService {
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
 
+            if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED)) {
+                return "Payment is already failed for the paymentIntentId" + paymentIntentId;
+            }
             ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED);
 
             String description = walletHistory.getDescription() + ", payment failed";

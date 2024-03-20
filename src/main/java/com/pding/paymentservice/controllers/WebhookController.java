@@ -52,19 +52,20 @@ public class WebhookController {
             String paymentIntentId = paymentIntent.getId();
             String sessionId = stripeClient.getSessionId(paymentIntentId);
 
+            String message = "";
             // Handle different types of events. We have configured stripe to listen to these events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    paymentService.completePaymentToBuyTrees(paymentIntentId, sessionId);
+                    message = paymentService.completePaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 case "payment_intent.payment_failed":
-                    paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
+                    message = paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 default:
                     pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("New event type (" + event.getType() + ") recieved in webhook, which we have not configured to listen "));
                     break;
             }
-            return new ResponseEntity<>("Webhook processed successfully for the paymentIntentId:" + paymentIntentId, HttpStatus.OK);
+            return new ResponseEntity<>(message, HttpStatus.OK);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, e);
             return new ResponseEntity<>("Webhook processing failed with following exception " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
