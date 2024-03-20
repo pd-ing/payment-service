@@ -46,7 +46,9 @@ public class WebhookController {
 
             PaymentIntent paymentIntent = getPaymentIntentId(event);
             String paymentIntentId = paymentIntent.getId();
-            String sessionId = paymentIntent.getMetadata().get("session_id");
+            String sessionId = paymentIntent.getMetadata().get("checkout_session_id");
+            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("SessionId is " + sessionId));
+            
             // Handle different types of events. We have configured stripe to listen to these events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
