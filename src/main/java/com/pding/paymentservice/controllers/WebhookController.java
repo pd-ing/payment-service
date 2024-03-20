@@ -37,39 +37,43 @@ public class WebhookController {
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
         try {
-            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" + "Callback recieved for type " + payload));
             Event event = Webhook.constructEvent(
                     payload,
                     signatureHeader,
                     secretKey
             );
-            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK , EventType:" + event.getType() + ",nCallback recieved for type " + payload));
-            pdLogger.logInfo("WEBHOOK", "Callback Successfull for  " + event.getType());
-            // Extract Payment Intent ID
-            String paymentIntentId = null;
+            pdLogger.logInfo("Webhook", "Callback Successfull for  " + event.getType());
 
-            if ("payment_intent.succeeded".equals(event.getType()) ||
-                    "payment_intent.payment_failed".equals(event.getType())) {
+            String paymentIntentId = getPaymentIntentId(event);
 
-                PaymentIntent paymentIntent = (PaymentIntent) event.getData().getObject();
-                paymentIntentId = paymentIntent.getId();
-            }
-
-            // Handle different types of events
+            // Handle different types of events. We have configured stripe to listen to these events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    //paymentService.completePaymentToBuyTrees(paymentIntentId);
+                    paymentService.completePaymentToBuyTrees(paymentIntentId);
                     break;
                 case "payment_intent.payment_failed":
-                    //paymentService.failPaymentToBuyTrees(paymentIntentId);
+                    paymentService.failPaymentToBuyTrees(paymentIntentId);
                     break;
                 default:
+                    pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("New event type (" + event.getType() + ") recieved in webhook, which we have not configured to listen "));
                     break;
             }
-            return new ResponseEntity<>("Success", HttpStatus.OK);
+            return new ResponseEntity<>("Webhook processed successfully for the paymentIntentId:" + paymentIntentId, HttpStatus.OK);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, e);
-            return new ResponseEntity<>("Webhook processing failed", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Webhook processing failed with following exception " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private String getPaymentIntentId(Event event) {
+        String paymentIntentId = null;
+        if ("payment_intent.succeeded".equals(event.getType()) ||
+                "payment_intent.payment_failed".equals(event.getType())) {
+
+            PaymentIntent paymentIntent = (PaymentIntent) event.getData().getObject();
+            paymentIntentId = paymentIntent.getId();
+            return paymentIntentId;
+        }
+        return "";
     }
 }
