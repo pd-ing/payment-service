@@ -4,6 +4,7 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.service.EarningService;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.WithdrawalService;
+import com.pding.paymentservice.stripe.StripeClient;
 import com.stripe.model.PaymentIntent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,9 @@ public class WebhookController {
     @Autowired
     PdLogger pdLogger;
 
+    @Autowired
+    StripeClient stripeClient;
+
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
@@ -46,9 +50,8 @@ public class WebhookController {
 
             PaymentIntent paymentIntent = getPaymentIntentId(event);
             String paymentIntentId = paymentIntent.getId();
-            String sessionId = paymentIntent.getMetadata().get("checkout_session_id");
-            pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("SessionId is " + sessionId));
-            
+            String sessionId = stripeClient.getSessionId(paymentIntentId);
+
             // Handle different types of events. We have configured stripe to listen to these events
             switch (event.getType()) {
                 case "payment_intent.succeeded":

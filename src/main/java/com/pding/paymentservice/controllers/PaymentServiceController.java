@@ -8,6 +8,7 @@ import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.stripe.StripeClientResponse;
+import com.stripe.model.PaymentIntent;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;

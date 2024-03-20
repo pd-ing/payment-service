@@ -12,8 +12,15 @@ import com.stripe.net.RequestOptions;
 import com.stripe.param.PriceListParams;
 import com.stripe.param.ProductListParams;
 import com.stripe.param.checkout.SessionCreateParams;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -82,5 +89,25 @@ public class StripeClient {
         Stripe.apiKey = secretKey;
         PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
         return paymentIntent.getStatus().equals("succeeded");
+    }
+
+    public String getSessionId(String paymentIntentId) throws Exception {
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+
+        // Build the request
+        Request request = new Request.Builder()
+                .url("https://api.stripe.com/v1/checkout/sessions?payment_intent=" + paymentIntentId)
+                .method("GET", null) // No need for a request body in a GET request
+                .addHeader("Authorization", "Bearer " + secretKey)
+                .build();
+
+        // Execute the request
+        Response response = client.newCall(request).execute();
+        String responseBody = response.body().string();
+        JSONObject jsonObject = new JSONObject(responseBody);
+        JSONArray dataArray = jsonObject.getJSONArray("data");
+        JSONObject dataObject = dataArray.getJSONObject(0);
+        String sessionId = dataObject.getString("id");
+        return sessionId;
     }
 }
