@@ -159,7 +159,6 @@ public class EarningService {
         }
     }
 
-
     void deductTreesAndLeafs(String userId, BigDecimal treesToDeduct, BigDecimal leafsToDeduct) {
         deductTreesFromEarning(userId, treesToDeduct);
         deductLeafsFromEarning(userId, leafsToDeduct);

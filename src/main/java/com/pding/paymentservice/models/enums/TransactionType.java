@@ -17,9 +17,11 @@ public enum TransactionType {
 
     PAYMENT_COMPLETED("paymentCompleted"),
 
-    PAYMENT_FAILED("paymentFailed");
+    PAYMENT_FAILED("paymentFailed"),
 
+    ADD_TREES_FROM_BACKEND("addTreesFromBackend"),
 
+    REMOVE_TREES_FROM_BACKEND("removeTreesFromBackend");
 
     private final String displayName;
 
