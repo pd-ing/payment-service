@@ -13,6 +13,8 @@ public enum TransactionType {
     AUDIO_CALL("audioCall"),
     VIDEO_CALL("videoCall"),
 
+    TEXT_MESSAGE("textMessage"),
+
     PAYMENT_STARTED("paymentStarted"),
 
     PAYMENT_COMPLETED("paymentCompleted"),
