@@ -110,4 +110,18 @@ public class StripeClient {
         String sessionId = dataObject.getString("id");
         return sessionId;
     }
+
+    public Session getSessionDetails(String sessionId) throws Exception {
+        Stripe.apiKey = secretKey;
+        return Session.retrieve(sessionId);
+    }
+
+    public Boolean isSessionCompleteOrExpired(Session session) {
+        return (session.getStatus().equals("expired") || session.getStatus().equals("complete"));
+    }
+
+    public Boolean isPaymentDone(Session session) {
+        return (session.getPaymentStatus().equals("paid"));
+    }
+
 }

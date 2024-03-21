@@ -9,6 +9,7 @@ import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.stripe.StripeClientResponse;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -99,6 +100,27 @@ public class PaymentServiceController {
             );
         }
         return paymentService.chargeCustomerV2(paymentDetailsRequest);
+    }
+
+
+    @PostMapping("/clearPendingPayment")
+    ResponseEntity<?> clearPendingPayments(@RequestParam(value = "sessionId") String sessionId) {
+        try {
+            Session session = stripeClient.getSessionDetails(sessionId);
+            if (stripeClient.isSessionCompleteOrExpired(session)) {
+                if (stripeClient.isPaymentDone(session)) {
+                    paymentService.completePaymentToBuyTrees(session.getPaymentIntent(), session.getId());
+                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Payment marked as completed for sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
+                } else {
+                    // Passing sessionId as paymentIntentId as, whenever payment Fails at that time sessionId is not generated.
+                    paymentService.failPaymentToBuyTrees(session.getId(), session.getId());
+                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Payment marked as failed for sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
+                }
+            }
+            return ResponseEntity.ok().body(new GenericStringResponse(null, "Did not updated the payment status as session is not expired or completed, sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
+        } catch (Exception e) {
+            return ResponseEntity.ok().body(new GenericStringResponse(null, "Error occured while updating payment status for sessionId:" + sessionId));
+        }
     }
 
     // Handle MissingServletRequestParameterException --
