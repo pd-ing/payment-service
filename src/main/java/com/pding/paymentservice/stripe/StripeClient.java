@@ -77,7 +77,7 @@ public class StripeClient {
                 .build();
 
         List<Price> prices = Price.list(params).getData();
-
+        
         if (!prices.isEmpty()) {
             return prices.get(0).getId();
         } else {

@@ -1,14 +1,23 @@
 package com.pding.paymentservice.payload.response.admin.userTabs;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Status {
     BigDecimal totalTreesCharged;
     BigDecimal currentHoldingTrees;
-    BigDecimal treesConsumed;
-    BigDecimal mom;
-    BigDecimal treesSpendInVideoPurchase;
+    BigDecimal totalTreesSpendInVideoPurchase;
     BigDecimal totalTreesDonated;
-    BigDecimal totalVideosPurchased;
+    BigDecimal totalTreesSpent;
     BigDecimal treesAddedInCurrentMonth;
+    BigDecimal mom;
+    BigDecimal totalVideosPurchased;
 }
