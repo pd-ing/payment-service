@@ -77,12 +77,20 @@ public class StripeClient {
                 .build();
 
         List<Price> prices = Price.list(params).getData();
-        
-        if (!prices.isEmpty()) {
-            return prices.get(0).getId();
-        } else {
+
+
+        if (prices.isEmpty()) {
             throw new RuntimeException("No prices found for the product ID: " + productId);
         }
+
+        for (Price price : prices) {
+            // Check if the price is active
+            if (price.getActive()) {
+                return price.getId();
+            }
+        }
+
+        throw new RuntimeException("No active price found for the product ID: " + productId);
     }
 
     public boolean isPaymentIntentIDPresentInStripe(String paymentIntentId) throws Exception {
