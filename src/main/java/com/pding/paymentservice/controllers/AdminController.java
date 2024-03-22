@@ -1,12 +1,12 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
-import com.pding.paymentservice.payload.response.WalletHistoryResponse;
 import com.pding.paymentservice.service.AdminService;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.WithdrawalService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,12 +53,12 @@ public class AdminController {
     }
 
     @PostMapping(value = "/admin/addTrees")
-    public ResponseEntity<?> addTreesFromBackend(@RequestParam(value = "userId") String userId, @RequestParam(value = "trees") BigDecimal trees) {
+    public ResponseEntity<?> addTreesFromBackend(@Valid @RequestBody AddOrRemoveTreesRequest addOrRemoveTreesRequest) {
         try {
-            if (trees.compareTo(BigDecimal.ZERO) < 0) {
+            if (addOrRemoveTreesRequest.getTrees().compareTo(BigDecimal.ZERO) < 0) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
             }
-            String strResponse = adminService.addTreesFromBackend(userId, trees);
+            String strResponse = adminService.addTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
             return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -65,12 +66,12 @@ public class AdminController {
     }
 
     @PostMapping(value = "/admin/removeTrees")
-    public ResponseEntity<?> removeTreesFromBackend(@RequestParam(value = "userId") String userId, @RequestParam(value = "trees") BigDecimal trees) {
+    public ResponseEntity<?> removeTreesFromBackend(@Valid @RequestBody AddOrRemoveTreesRequest addOrRemoveTreesRequest) {
         try {
-            if (trees.compareTo(BigDecimal.ZERO) < 0) {
+            if (addOrRemoveTreesRequest.getTrees().compareTo(BigDecimal.ZERO) < 0) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
             }
-            String strResponse = adminService.removeTreesFromBackend(userId, trees);
+            String strResponse = adminService.removeTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
             return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

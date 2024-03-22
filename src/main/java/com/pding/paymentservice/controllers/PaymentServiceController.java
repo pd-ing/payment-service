@@ -1,14 +1,15 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.payload.request.ClearPendingPaymentRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
+import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.stripe.StripeClientResponse;
-import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -66,9 +67,9 @@ public class PaymentServiceController {
 
 
     @PostMapping("/startPaymentToBuyTrees")
-    public ResponseEntity<?> startPaymentToBuyTreesController(@RequestParam(value = "productId") String productId, @RequestParam(value = "successUrl") String successUrl, @RequestParam(value = "cancelUrl") String cancelUrl) {
+    public ResponseEntity<?> startPaymentToBuyTreesController(@Valid @RequestBody PaymentInitFromBackendRequest paymentInitFromBackend) {
         try {
-            StripeClientResponse stripeClientResponse = stripeClient.createStripeSession(productId, successUrl, cancelUrl);
+            StripeClientResponse stripeClientResponse = stripeClient.createStripeSession(paymentInitFromBackend.getProductId(), paymentInitFromBackend.getSuccessUrl(), paymentInitFromBackend.getFailureUrl());
             String trees = stripeClientResponse.getProduct().getMetadata().get("trees");
 
             PaymentDetailsRequest paymentDetailsRequest = new PaymentDetailsRequest();
@@ -104,7 +105,8 @@ public class PaymentServiceController {
 
 
     @PostMapping("/clearPendingPayment")
-    ResponseEntity<?> clearPendingPayments(@RequestParam(value = "sessionId") String sessionId) {
+    ResponseEntity<?> clearPendingPayments(@Valid @RequestBody ClearPendingPaymentRequest clearPendingPaymentRequest) {
+        String sessionId = clearPendingPaymentRequest.getSessionId();
         try {
             Session session = stripeClient.getSessionDetails(sessionId);
             if (stripeClient.isSessionCompleteOrExpired(session)) {
