@@ -1,5 +1,7 @@
 package com.pding.paymentservice.stripe;
 
+import com.pding.paymentservice.repository.WalletRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.stripe.param.checkout.SessionCreateParams.Mode.PAYMENT;
@@ -35,6 +38,12 @@ import static com.stripe.param.checkout.SessionCreateParams.Mode.PAYMENT;
 public class StripeClient {
     @Value("${stripe.secret.key}")
     private String secretKey;
+
+    @Autowired
+    WalletRepository walletRepository;
+
+    @Autowired
+    AuthHelper authHelper;
 
     @Autowired
     StripeClient() {
@@ -47,6 +56,12 @@ public class StripeClient {
         Product product = getProduct(productId);
         String priceId = getPriceIdForProduct(product.getId());
 
+        String userId = authHelper.getUserId();
+        Optional<String> userIdOptional = walletRepository.findEmailById(userId);
+        if (!userIdOptional.isPresent()) {
+            throw new Exception("No emailId found for the userId " + userId);
+        }
+
         SessionCreateParams.Builder builder = new SessionCreateParams.Builder();
         builder.setSuccessUrl(successUrl)
                 .setCancelUrl(cancelUrl)
@@ -55,8 +70,8 @@ public class StripeClient {
                         .setQuantity(1L)
                         .setPrice(priceId)
                         .build())
-                .setMode(PAYMENT);
-
+                .setMode(PAYMENT)
+                .setCustomerEmail(userIdOptional.get());
         Map<String, Object> params = builder.build().toMap();
         Session session = Session.create(params);
         session.getPaymentIntent();
