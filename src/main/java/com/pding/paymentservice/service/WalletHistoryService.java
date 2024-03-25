@@ -51,7 +51,7 @@ public class WalletHistoryService {
     public Optional<WalletHistory> findByTransactionId(String transactionId) {
         return walletHistoryRepository.findByTransactionId(transactionId);
     }
-    
+
     public void createWalletHistoryEntry(String walletID, String userId,
                                          BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
                                          String transactionID, String transactionStatus, BigDecimal amount,
