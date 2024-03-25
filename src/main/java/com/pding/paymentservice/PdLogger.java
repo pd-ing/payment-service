@@ -92,6 +92,8 @@ public class PdLogger {
 
         CALL_CHARGE(Priority.p1),
 
+        START_PAYMENT(Priority.p0),
+
         CALL_DETAILS_HISTORY_FOR_PD(Priority.p1),
         CALL_DETAILS_HISTORY_FOR_USER(Priority.p1),
         TOP_CALLER_LIST_FOR_PD(Priority.p1),

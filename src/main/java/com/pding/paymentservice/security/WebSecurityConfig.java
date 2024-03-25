@@ -59,12 +59,17 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/pendingWithDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/admin/allWithDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/admin/balanceTrees").permitAll()
+                                .requestMatchers("/api/payment/admin/addTrees").permitAll()
+                                .requestMatchers("/api/payment/admin/removeTrees").permitAll()
+                                .requestMatchers("/api/payment/admin/statusTab").permitAll()
                                 .requestMatchers("/api/payment/topEarners").permitAll()
                                 .requestMatchers("/api/payment/topFans").authenticated()
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
                                 .requestMatchers("/api/payment/v2/charge").authenticated()
+                                .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
+                                .requestMatchers("/api/payment/clearPendingPayment").permitAll()
 
 
                 );

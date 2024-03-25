@@ -158,6 +158,8 @@ public class CallChargeService {
             transactionType = TransactionType.AUDIO_CALL;
         } else if (callType.equals("video")) {
             transactionType = TransactionType.VIDEO_CALL;
+        } else if (callType.equals("message")) {
+            transactionType = TransactionType.TEXT_MESSAGE;
         } else {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid callType passed,Valid callTyle is audio or video"), null));
         }

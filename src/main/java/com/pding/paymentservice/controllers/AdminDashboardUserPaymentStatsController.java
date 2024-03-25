@@ -1,0 +1,78 @@
+package com.pding.paymentservice.controllers;
+
+import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
+import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.GenericListDataResponse;
+import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
+import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
+import com.pding.paymentservice.payload.response.admin.userTabs.Status;
+import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
+import com.pding.paymentservice.service.AdminService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
+
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RestController
+@RequestMapping("/api/payment/admin")
+public class AdminDashboardUserPaymentStatsController {
+    @Autowired
+    AdminDashboardUserPaymentStatsService adminDashboardUserPaymentStatsService;
+
+    @PostMapping(value = "/addTrees")
+    public ResponseEntity<?> addTreesFromBackend(@Valid @RequestBody AddOrRemoveTreesRequest addOrRemoveTreesRequest) {
+        try {
+            if (addOrRemoveTreesRequest.getTrees().compareTo(BigDecimal.ZERO) < 0) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
+            }
+            String strResponse = adminDashboardUserPaymentStatsService.addTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping(value = "/removeTrees")
+    public ResponseEntity<?> removeTreesFromBackend(@Valid @RequestBody AddOrRemoveTreesRequest addOrRemoveTreesRequest) {
+        try {
+            if (addOrRemoveTreesRequest.getTrees().compareTo(BigDecimal.ZERO) < 0) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
+            }
+            String strResponse = adminDashboardUserPaymentStatsService.removeTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+
+    @GetMapping(value = "/statusTab")
+    public ResponseEntity<?> getStatusTabDetailsController(@RequestParam(value = "userId") String userId) {
+        try {
+            Status status = adminDashboardUserPaymentStatsService.getStatusTabDetails(userId);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, status));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    // Handle MissingServletRequestParameterException --
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
+        String paramName = ex.getParameterName();
+        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
+    }
+}
