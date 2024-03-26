@@ -163,7 +163,7 @@ public class PaymentService {
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
 
-            if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED)) {
+            if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED.getDisplayName())) {
                 return "Payment is already failed for the paymentIntentId" + paymentIntentId;
             }
             ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED);
