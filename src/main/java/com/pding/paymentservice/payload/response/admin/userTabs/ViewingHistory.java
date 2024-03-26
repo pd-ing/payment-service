@@ -22,6 +22,5 @@ public class ViewingHistory {
 
     BigDecimal treesUsedForVideoPurchaseInLastMonth;
 
-    Page<VideoPurchaseHistoryForAdminDashboard> videoPurchaseHistoryForAdminDashboardList;
-
+    List<VideoPurchaseHistoryForAdminDashboard> videoPurchaseHistoryForAdminDashboardList;
 }
