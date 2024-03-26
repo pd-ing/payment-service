@@ -78,6 +78,23 @@ public class StripeClient {
         return new StripeClientResponse(product, session);
     }
 
+    // Method to check the status of a payment based on the payment intent ID
+    public String checkPaymentStatus(String paymentIntentId) {
+        try {
+            Stripe.apiKey = secretKey;
+
+            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+
+            String status = paymentIntent.getStatus();
+
+            // Return the status
+            return status;
+        } catch (Exception e) {
+            return "No payment status found for " + paymentIntentId;
+        }
+
+    }
+
     // Retrieve a Stripe product by its ID
     private Product getProduct(String productId) throws StripeException {
         Stripe.apiKey = secretKey;

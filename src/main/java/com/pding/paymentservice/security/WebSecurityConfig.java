@@ -70,6 +70,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 //.requestMatchers("/api/payment/v2/charge").authenticated()
                                 .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
                                 .requestMatchers("/api/payment/clearPendingPayment").permitAll()
+                                .requestMatchers("/api/payment/paymentsFailedInitiallyButSucceededLater").permitAll()
 
 
                 );

@@ -8,6 +8,8 @@ import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.repository.WalletHistoryRepository;
+import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,7 +38,12 @@ public class PaymentService {
     WalletService walletService;
 
     @Autowired
+    WalletRepository walletRepository;
+
+    @Autowired
     WalletHistoryService walletHistoryService;
+    @Autowired
+    WalletHistoryRepository walletHistoryRepository;
 
     @Autowired
     LedgerService ledgerService;
@@ -44,6 +53,7 @@ public class PaymentService {
 
     @Autowired
     AuthHelper authHelper;
+
 
     @Transactional
     public String chargeCustomer(String userId,
@@ -108,24 +118,42 @@ public class PaymentService {
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(sessionId);
 
         if (walletHistoryOptional.isPresent()) {
-            WalletHistory walletHistory = walletHistoryOptional.get();
-            if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED)) {
-                return "Payment is already completed for the paymentIntentId" + paymentIntentId;
-            }
-
-            Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), walletHistory.getPurchaseDate());
-
-            ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED);
-
-            String description = walletHistory.getDescription() + ", Completed payment successfully";
-            walletHistory.setDescription(description);
-            walletHistory.setTransactionId(paymentIntentId);
-            walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
-            walletHistoryService.save(walletHistory);
-            return "Payment completed successfully for paymentIntentId " + paymentIntentId;
+            return completePaymentAndGiveTreesToUser(walletHistoryOptional.get(), paymentIntentId);
         } else {
-            throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
+            Optional<WalletHistory> walletHistoryOptionalUsingPaymentIntentId = walletHistoryService.findByTransactionId(paymentIntentId);
+
+            if (walletHistoryOptionalUsingPaymentIntentId.isPresent()) {
+                WalletHistory walletHistoryUsingPaymentIntentId = walletHistoryOptionalUsingPaymentIntentId.get();
+                String stripePaymentStatus = stripeClient.checkPaymentStatus(paymentIntentId);
+
+                // Payment was successful on stripe in 2nd attempt however in our backend we marked as paymentFailed in 1st attempt
+                // This happens when user enter wrong cvv, in that case initially payment fails, webhook is called, and we mark payment as failed
+                // However when user will enter correct cvv the same payment will pass, and then we need to change the state on our backend and give the trees to the user
+                if (stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED.getDisplayName())) {
+                    return completePaymentAndGiveTreesToUser(walletHistoryUsingPaymentIntentId, paymentIntentId);
+                } else if (stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED.getDisplayName())) {
+                    return "Payment is already completed and user had been given trees";
+                }
+            }
+            throw new Exception("Could not find wallet history information for the sessionId " + sessionId + " , or for the PaymentIntentId " + paymentIntentId);
         }
+    }
+
+    private String completePaymentAndGiveTreesToUser(WalletHistory walletHistory, String paymentIntentId) {
+        if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED.getDisplayName())) {
+            return "Payment is already completed for the paymentIntentId" + paymentIntentId;
+        }
+
+        Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), walletHistory.getPurchaseDate());
+
+        ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED);
+
+        String description = walletHistory.getDescription() + ", Completed payment successfully";
+        walletHistory.setDescription(description);
+        walletHistory.setTransactionId(paymentIntentId);
+        walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
+        walletHistoryService.save(walletHistory);
+        return "Payment completed successfully for paymentIntentId " + paymentIntentId;
     }
 
     @Transactional
@@ -150,6 +178,41 @@ public class PaymentService {
         } else {
             throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
         }
+    }
+
+
+    @Transactional
+    public List<String> clearPaymentWhichFailedInitiallyButSucceededLater() {
+        List<String> result = new ArrayList<>();
+
+
+        List<WalletHistory> walletHistoryList = walletHistoryRepository.findByTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
+
+        for (WalletHistory walletHistory : walletHistoryList) {
+            result.add(clearPaymentAndGiveTress(walletHistory));
+        }
+
+        return result;
+    }
+
+    private String clearPaymentAndGiveTress(WalletHistory walletHistory) {
+        String transactionId = walletHistory.getTransactionId();
+
+        Optional<String> emailId = walletRepository.findEmailById(walletHistory.getUserId());
+
+        String stripePaymentStatus = stripeClient.checkPaymentStatus(transactionId);
+
+        if (stripePaymentStatus.equals("succeeded")) {
+            String paymentUpdateStatus = "";
+            try {
+                paymentUpdateStatus = completePaymentToBuyTrees(transactionId, transactionId);
+            } catch (Exception e) {
+                paymentUpdateStatus = e.getMessage();
+            }
+            return "UserId:" + walletHistory.getUserId() + " , Email :" + emailId.get() + " , StripePaymentStatus :" + stripePaymentStatus + ", BackendPaymentStatus:" + walletHistory.getTransactionStatus() + " PaymentIntentId:" + transactionId + " , ClearPaymentStatus : " + paymentUpdateStatus;
+        }
+
+        return "UserId:" + walletHistory.getUserId() + " , Email :" + emailId.get() + " , StripePaymentStatus :" + stripePaymentStatus + ", BackendPaymentStatus:" + walletHistory.getTransactionStatus() + " PaymentIntentId:" + transactionId + " , ClearPaymentStatus : Trees were not given to user as paymentIntent status was not succeeded ";
     }
 
     public ResponseEntity<?> chargeCustomer(PaymentDetailsRequest paymentDetailsRequest) {
