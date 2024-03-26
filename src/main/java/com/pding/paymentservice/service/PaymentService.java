@@ -189,7 +189,10 @@ public class PaymentService {
         List<WalletHistory> walletHistoryList = walletHistoryRepository.findByTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
 
         for (WalletHistory walletHistory : walletHistoryList) {
-            result.add(clearPaymentAndGiveTress(walletHistory));
+            String stripePaymentStatus = stripeClient.checkPaymentStatus(walletHistory.getTransactionStatus());
+            if (stripePaymentStatus.equals("succeeded")) {
+                result.add(clearPaymentAndGiveTress(walletHistory));
+            }
         }
 
         return result;
