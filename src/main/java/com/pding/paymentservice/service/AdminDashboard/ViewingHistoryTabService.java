@@ -5,6 +5,10 @@ import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminD
 import com.pding.paymentservice.repository.admin.StatusTabRepository;
 import com.pding.paymentservice.repository.admin.ViewingHistoryTabRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,7 +21,7 @@ public class ViewingHistoryTabService {
     @Autowired
     ViewingHistoryTabRepository viewingHistoryTabRepository;
 
-    public ViewingHistory getViewingHistory(String userId) {
+    public ViewingHistory getViewingHistory(String userId, int page, int size) {
         ViewingHistory viewingHistory = new ViewingHistory();
 
         BigDecimal totalTreesConsumedByUserInCurrentMonth = viewingHistoryTabRepository.totalTreesConsumedByUserInCurrentMonth(userId);
@@ -27,8 +31,9 @@ public class ViewingHistoryTabService {
         viewingHistory.setTotalVideosPurchasedInCurrentMonth(totalVideosPurchasedInCurrentMonth);
 
         List<VideoPurchaseHistoryForAdminDashboard> vphadList = new ArrayList<>();
-        List<Object[]> videoPurchaseHistoryForAdminDashboardObjectList = viewingHistoryTabRepository.findVideoPurchaseHistoryByUserId(userId);
-        for (Object innerObject : videoPurchaseHistoryForAdminDashboardObjectList) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> vphadPage = viewingHistoryTabRepository.findVideoPurchaseHistoryByUserId(userId, pageable);
+        for (Object innerObject : vphadPage.getContent()) {
             Object[] videoPurchaseHistory = (Object[]) innerObject;
 
             VideoPurchaseHistoryForAdminDashboard vphadObj = new VideoPurchaseHistoryForAdminDashboard();
@@ -41,7 +46,7 @@ public class ViewingHistoryTabService {
             vphadList.add(vphadObj);
         }
 
-        viewingHistory.setVideoPurchaseHistoryForAdminDashboardList(vphadList);
+        viewingHistory.setVideoPurchaseHistoryForAdminDashboardList(new PageImpl<>(vphadList, pageable, vphadPage.getTotalElements()));
         return viewingHistory;
     }
 }
