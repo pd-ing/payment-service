@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -69,6 +70,7 @@ public class PaymentServiceController {
     @PostMapping("/startPaymentToBuyTrees")
     public ResponseEntity<?> startPaymentToBuyTreesController(@Valid @RequestBody PaymentInitFromBackendRequest paymentInitFromBackend) {
         try {
+            String status = stripeClient.checkPaymentStatus("pi_3OyCCYBwTsYHxz2q17Rz7fE5");
             StripeClientResponse stripeClientResponse = stripeClient.createStripeSession(paymentInitFromBackend.getProductId(), paymentInitFromBackend.getSuccessUrl(), paymentInitFromBackend.getFailureUrl());
             String trees = stripeClientResponse.getProduct().getMetadata().get("trees");
 
@@ -122,6 +124,15 @@ public class PaymentServiceController {
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Did not updated the payment status as session is not expired or completed, sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
         } catch (Exception e) {
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Error occured while updating payment status for sessionId:" + sessionId));
+        }
+    }
+
+    @GetMapping("/paymentsFailedInitiallyButSucceededLater")
+    List<String> getPaymentsFailedInitiallyButSucceededLater() {
+        try {
+            return paymentService.clearPaymentWhichFailedInitiallyButSucceededLater();
+        } catch (Exception e) {
+            return null;
         }
     }
 

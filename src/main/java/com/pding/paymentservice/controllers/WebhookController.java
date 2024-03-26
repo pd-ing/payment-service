@@ -41,6 +41,7 @@ public class WebhookController {
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
                                                 @RequestHeader("Stripe-Signature") String signatureHeader) {
         try {
+            //pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("WEBHOOK" + "Callback recieved for type " + payload));
             Event event = Webhook.constructEvent(
                     payload,
                     signatureHeader,
@@ -62,7 +63,6 @@ public class WebhookController {
                     message = paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 default:
-                    pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, new Exception("New event type (" + event.getType() + ") recieved in webhook, which we have not configured to listen "));
                     break;
             }
             return new ResponseEntity<>(message, HttpStatus.OK);

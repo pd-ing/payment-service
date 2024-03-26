@@ -22,4 +22,7 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, St
 
     Optional<WalletHistory> findByTransactionId(String transactionId);
 
+    @Query("SELECT wh FROM WalletHistory wh WHERE wh.transactionStatus = ?1")
+    List<WalletHistory> findByTransactionStatus(String transactionStatus);
+
 }
