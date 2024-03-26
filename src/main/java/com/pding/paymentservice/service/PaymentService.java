@@ -133,6 +133,8 @@ public class PaymentService {
                     return completePaymentAndGiveTreesToUser(walletHistoryUsingPaymentIntentId, paymentIntentId);
                 } else if (stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED.getDisplayName())) {
                     return "Payment is already completed and user had been given trees";
+                } else if (stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals("success")) {
+                    return "Payment is already completed and user had been given trees, transactionStatus=" + walletHistoryUsingPaymentIntentId.getTransactionStatus();
                 }
             }
             throw new Exception("Could not find wallet history information for the sessionId " + sessionId + " , or for the PaymentIntentId " + paymentIntentId);
