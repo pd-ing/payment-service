@@ -70,7 +70,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
             setSentryUserScope(userRecord);
 
-            LoggedInUserRecord loggedInUserRecord = LoggedInUserRecord.fromUserRecord(userRecord);
+            LoggedInUserRecord loggedInUserRecord = LoggedInUserRecord.fromUserRecord(userRecord, request);
             loggedInUserRecord.setIdToken(idToken);
 
             UsernamePasswordAuthenticationToken authentication =
@@ -104,6 +104,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             scope.setExtra("httpQueryString", request.getQueryString());
             scope.setExtra("httpRequestParameters", extractRequestParameters(request));
             scope.setExtra("isIdTokenPresent", idToken == null || idToken.isEmpty() ? "false" : "true");
+            scope.setExtra("platform", request.getHeader("PDing-Platform"));
+            scope.setExtra("clientVersion", request.getHeader("PDing-ClientVersion"));
         });
     }
 

@@ -2,6 +2,7 @@ package com.pding.paymentservice.security;
 
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserRecord;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,7 +32,14 @@ public class LoggedInUserRecord {
 
     String idToken;
 
-    public static LoggedInUserRecord fromUserRecord(UserRecord record) {
+    String httpApiEndpoint;
+    String httpMethod;
+    String httpRemoteAddr;
+    String httpUserAgent;
+    String platform;
+    String clientVersion;
+
+    public static LoggedInUserRecord fromUserRecord(UserRecord record, HttpServletRequest request) {
         return LoggedInUserRecord.builder()
                 .uid(record.getUid())
                 .email(record.getEmail())
@@ -39,6 +47,12 @@ public class LoggedInUserRecord {
                 .emailVerified(record.isEmailVerified())
                 .disabled(record.isDisabled())
                 .providerIds(Arrays.stream(record.getProviderData()).map(UserInfo::getProviderId).collect(Collectors.toList()))
+                .httpApiEndpoint(request.getRequestURI())
+                .httpMethod(request.getMethod())
+                .httpRemoteAddr(request.getRemoteAddr())
+                .httpUserAgent(request.getHeader("User-Agent"))
+                .platform(request.getHeader("PDing-Platform"))
+                .clientVersion(request.getHeader("PDing-ClientVersion"))
                 .build();
 
     }
