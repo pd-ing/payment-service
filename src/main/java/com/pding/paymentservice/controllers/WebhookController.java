@@ -57,10 +57,10 @@ public class WebhookController {
             // Handle different types of events. We have configured stripe to listen to these events
             switch (event.getType()) {
                 case "payment_intent.succeeded":
-                    paymentService.completePaymentToBuyTrees(paymentIntentId, sessionId);
+                    message = paymentService.completePaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 case "payment_intent.payment_failed":
-                    paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
+                    message = paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 default:
                     break;
