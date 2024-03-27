@@ -1,4 +1,4 @@
-package com.pding.paymentservice.payload.response.Pagination;
+package com.pding.paymentservice.payload.response.custompagination;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import lombok.AllArgsConstructor;
