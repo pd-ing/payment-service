@@ -4,6 +4,7 @@ import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.VideoPurchaseHistoryForAdminDashboard;
 import com.pding.paymentservice.repository.admin.StatusTabRepository;
 import com.pding.paymentservice.repository.admin.ViewingHistoryTabRepository;
+import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -21,6 +22,9 @@ public class ViewingHistoryTabService {
     @Autowired
     ViewingHistoryTabRepository viewingHistoryTabRepository;
 
+    @Autowired
+    TokenSigner tokenSigner;
+
     public ViewingHistory getViewingHistory(String userId, int page, int size) {
         ViewingHistory viewingHistory = new ViewingHistory();
 
@@ -36,10 +40,15 @@ public class ViewingHistoryTabService {
         for (Object innerObject : vphadPage.getContent()) {
             Object[] videoPurchaseHistory = (Object[]) innerObject;
 
+            String thumbnailPath = "";
+            if (!videoPurchaseHistory[2].toString().isEmpty()) {
+                thumbnailPath = tokenSigner.signThumbnailUrl(videoPurchaseHistory[2].toString(), 5);
+            }
+
             VideoPurchaseHistoryForAdminDashboard vphadObj = new VideoPurchaseHistoryForAdminDashboard();
             vphadObj.setPurchasedDate(videoPurchaseHistory[0].toString());
             vphadObj.setVideoId(videoPurchaseHistory[1].toString());
-            vphadObj.setVideoThumbnail(videoPurchaseHistory[2].toString());
+            vphadObj.setVideoThumbnail(thumbnailPath);
             vphadObj.setVideoTitle(videoPurchaseHistory[3].toString());
             vphadObj.setPdProfileId(videoPurchaseHistory[4].toString());
             vphadObj.setVideoPrice(videoPurchaseHistory[5].toString());
