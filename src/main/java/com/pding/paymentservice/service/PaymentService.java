@@ -183,9 +183,11 @@ public class PaymentService {
             if (walletHistoryOptionalUsingPaymentIntentId.isPresent()) {
                 WalletHistory walletHistoryUsingPaymentIntentId = walletHistoryOptionalUsingPaymentIntentId.get();
                 String stripePaymentStatus = stripeClient.checkPaymentStatus(paymentIntentId);
-                
+
                 if (!stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED.getDisplayName())) {
                     return "Payment is already Failed and trees are not given to the user";
+                } else if (stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED.getDisplayName())) {
+                    return "Payment is already completed and user had been given trees";
                 }
             }
             throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
