@@ -70,12 +70,12 @@ public class PaymentServiceController {
     @PostMapping("/startPaymentToBuyTrees")
     public ResponseEntity<?> startPaymentToBuyTreesController(@Valid @RequestBody PaymentInitFromBackendRequest paymentInitFromBackend) {
         try {
-            String status = stripeClient.checkPaymentStatus("pi_3OyCCYBwTsYHxz2q17Rz7fE5");
             StripeClientResponse stripeClientResponse = stripeClient.createStripeSession(paymentInitFromBackend.getProductId(), paymentInitFromBackend.getSuccessUrl(), paymentInitFromBackend.getFailureUrl());
             String trees = stripeClientResponse.getProduct().getMetadata().get("trees");
 
             PaymentDetailsRequest paymentDetailsRequest = new PaymentDetailsRequest();
             paymentDetailsRequest.setTrees(new BigDecimal(Integer.parseInt(trees)));
+            paymentDetailsRequest.setAmount(new BigDecimal(stripeClientResponse.getSession().getAmountTotal()));
             paymentDetailsRequest.setPurchasedDate(LocalDateTime.now());
             paymentDetailsRequest.setPaymentMethod(String.join(", ", stripeClientResponse.getSession().getPaymentMethodTypes()));
             paymentDetailsRequest.setCurrency(stripeClientResponse.getSession().getCurrency());
