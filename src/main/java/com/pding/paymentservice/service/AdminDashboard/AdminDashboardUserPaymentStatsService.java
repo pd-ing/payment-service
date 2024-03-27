@@ -3,6 +3,7 @@ package com.pding.paymentservice.service.AdminDashboard;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
+import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.LedgerService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
@@ -29,6 +30,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Autowired
     StatusTabService statusTabService;
+
+    @Autowired
+    ViewingHistoryTabService viewingHistoryTabService;
 
     @Transactional
     public String addTreesFromBackend(String userId, BigDecimal purchasedTrees) throws Exception {
@@ -72,5 +76,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     public Status getStatusTabDetails(String userId) {
         return statusTabService.getStatusTabDetails(userId);
+    }
+
+    public ViewingHistory getViewingHistory(String userId, int page, int size) {
+        return viewingHistoryTabService.getViewingHistory(userId, page, size);
     }
 }
