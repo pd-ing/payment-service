@@ -32,7 +32,7 @@ public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
 
     @Query(value = "(SELECT " +
             "  vp.last_update_date as last_update_date, " +
-            "  'video purchase' as type, " +
+            "  'video_purchase' as type, " +
             "  COALESCE(u.profile_id, '') as pd_profile_id, " +
             "  vp.trees_consumed as amount " +
             "FROM " +
