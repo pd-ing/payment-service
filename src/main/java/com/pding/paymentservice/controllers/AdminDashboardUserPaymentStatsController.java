@@ -5,8 +5,10 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
+import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,11 +60,25 @@ public class AdminDashboardUserPaymentStatsController {
 
     @GetMapping(value = "/statusTab")
     public ResponseEntity<?> getStatusTabDetailsController(@RequestParam(value = "userId") String userId) {
+        Status status = null;
         try {
-            Status status = adminDashboardUserPaymentStatsService.getStatusTabDetails(userId);
+            status = adminDashboardUserPaymentStatsService.getStatusTabDetails(userId);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, status));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), status));
+        }
+    }
+
+
+    @GetMapping(value = "/viewingHistoryTab")
+    public ResponseEntity<?> getViewingHistoryTabDetailsController(@RequestParam(value = "userId") String userId, @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+        ViewingHistory viewingHistory = null;
+        try {
+            viewingHistory = adminDashboardUserPaymentStatsService.getViewingHistory(userId, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, viewingHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), viewingHistory));
         }
     }
 

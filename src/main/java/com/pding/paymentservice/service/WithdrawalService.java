@@ -174,21 +174,23 @@ public class WithdrawalService {
             String nickname = "";
             String linkedStripeId = "";
             String profilePicture = "";
+            String pdType = "";
             if (publicUserWithStripeIdNet != null) {
                 email = publicUserWithStripeIdNet.getEmail();
                 nickname = publicUserWithStripeIdNet.getNickname();
                 linkedStripeId = publicUserWithStripeIdNet.getLinkedStripeId();
-            }
+                if (publicUserWithStripeIdNet.getProfilePicture() != null) {
+                    try {
+                        profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(publicUserWithStripeIdNet.getProfilePicture()), 8);
+                    } catch (Exception e) {
+                        pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
+                        e.printStackTrace();
 
-            if (publicUserWithStripeIdNet.getProfilePicture() != null) {
-                try {
-                    profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(publicUserWithStripeIdNet.getProfilePicture()), 8);
-                } catch (Exception e) {
-                    pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
-                    e.printStackTrace();
-
+                    }
                 }
+                pdType = publicUserWithStripeIdNet.getPdType();
             }
+
             WithdrawalResponseWithStripeId response = new WithdrawalResponseWithStripeId(
                     withdrawal.getId(),
                     withdrawal.getPdUserId(),
@@ -201,7 +203,8 @@ public class WithdrawalService {
                     nickname,
                     linkedStripeId,
                     profilePicture,
-                    publicUserWithStripeIdNet.getPdType()
+                    pdType
+
             );
             responseList.add(response);
         }

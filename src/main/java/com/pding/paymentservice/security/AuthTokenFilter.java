@@ -44,6 +44,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/removeTrees",
             "/api/payment/admin/statusTab",
             "/api/payment/clearPendingAndStalePayments",
+            "/api/payment/clearPendingPayment",
+            "/api/payment/admin/viewingHistoryTab",
             "/api/payment/paymentsFailedInitiallyButSucceededLater"
     );
 
