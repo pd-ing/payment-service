@@ -10,8 +10,7 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.net.PublicUserNet;
-import com.pding.paymentservice.payload.response.GenericListDataResponse;
-import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 
 import com.pding.paymentservice.security.AuthHelper;

@@ -63,8 +63,6 @@ public class PdLogger {
 
         CHARGE(Priority.p0),
 
-        START_PAYMENT(Priority.p0),
-
         BUY_VIDEO(Priority.p0),
 
         IS_VIDEO_PURCHASED(Priority.p0),
@@ -93,6 +91,8 @@ public class PdLogger {
         VIDEO_EARNING_AND_SALES(Priority.p1),
 
         CALL_CHARGE(Priority.p1),
+
+        START_PAYMENT(Priority.p0),
 
         CALL_DETAILS_HISTORY_FOR_PD(Priority.p1),
         CALL_DETAILS_HISTORY_FOR_USER(Priority.p1),

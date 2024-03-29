@@ -3,17 +3,27 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.PdLogger.EVENT;
 import com.pding.paymentservice.models.WalletHistory;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.WalletHistoryResponse;
 import com.pding.paymentservice.repository.WalletHistoryRepository;
+import com.pding.paymentservice.repository.WalletRepository;
+import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +36,13 @@ public class WalletHistoryService {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    StripeClient stripeClient;
+
+
+    @Autowired
+    WalletRepository walletRepository;
 
     public void recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
                                       LocalDateTime purchasedDate,
@@ -40,12 +57,14 @@ public class WalletHistoryService {
         return walletHistoryRepository.findByWalletId(walletId);
     }
 
-    public List<WalletHistory> fetchWalletHistoryByUserId(String userId) {
-        return walletHistoryRepository.findByUserId(userId);
+    public Page<WalletHistory> fetchWalletHistoryByUserId(String userId, int page, int size) {
+        List<String> statuses = Arrays.asList("paymentCompleted", "success");
+        Pageable pageable = PageRequest.of(page, size);
+        return walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, statuses, pageable);
     }
 
-    public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, String userId) {
-        return walletHistoryRepository.findByTransactionIdAndUserId(transactionId, userId);
+    public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionID, String userId) {
+        return walletHistoryRepository.findByTransactionIdAndUserId(transactionID, userId);
     }
 
     public Optional<WalletHistory> findByTransactionId(String transactionId) {
@@ -62,21 +81,9 @@ public class WalletHistoryService {
         log.info("Wallet history table updated");
     }
 
+
     public void save(WalletHistory walletHistory) {
         walletHistoryRepository.save(walletHistory);
-    }
-
-    public ResponseEntity<?> getHistory(String userId) {
-        if (userId == null || userId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
-        }
-        try {
-            List<WalletHistory> walletHistory = fetchWalletHistoryByUserId(userId);
-            return ResponseEntity.ok().body(new WalletHistoryResponse(null, walletHistory));
-        } catch (Exception e) {
-            pdLogger.logException(EVENT.WALLET_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
     }
 
 }

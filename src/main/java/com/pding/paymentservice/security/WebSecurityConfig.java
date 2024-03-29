@@ -33,7 +33,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                                .requestMatchers("/api/payment/charge").authenticated()
+                                //.requestMatchers("/api/payment/charge").authenticated()
                                 .requestMatchers("/api/payment/test").authenticated()
                                 .requestMatchers("/api/payment/wallet").authenticated()
                                 .requestMatchers("/api/payment/walletHistory").authenticated()
@@ -68,9 +68,11 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
-                                .requestMatchers("/api/payment/v2/charge").authenticated()
+                                //.requestMatchers("/api/payment/v2/charge").authenticated()
                                 .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
                                 .requestMatchers("/api/payment/clearPendingPayment").permitAll()
+                                .requestMatchers("/api/payment/paymentsFailedInitiallyButSucceededLater").permitAll()
+                                .requestMatchers("/api/payment/treeSpentHistory").authenticated()
 
 
                 );

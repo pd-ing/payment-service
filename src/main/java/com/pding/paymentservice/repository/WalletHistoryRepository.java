@@ -2,6 +2,8 @@ package com.pding.paymentservice.repository;
 
 
 import com.pding.paymentservice.models.WalletHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -21,5 +23,10 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, St
     Optional<WalletHistory> findByTransactionIdAndUserId(String transactionId, String userId);
 
     Optional<WalletHistory> findByTransactionId(String transactionId);
+
+    @Query("SELECT wh FROM WalletHistory wh WHERE wh.transactionStatus = ?1")
+    List<WalletHistory> findByTransactionStatus(String transactionStatus);
+
+    Page<WalletHistory> findByUserIdAndTransactionStatusIn(String userId, List<String> statuses, Pageable pageable);
 
 }

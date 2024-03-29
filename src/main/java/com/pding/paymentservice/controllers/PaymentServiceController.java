@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -74,6 +75,7 @@ public class PaymentServiceController {
 
             PaymentDetailsRequest paymentDetailsRequest = new PaymentDetailsRequest();
             paymentDetailsRequest.setTrees(new BigDecimal(Integer.parseInt(trees)));
+            paymentDetailsRequest.setAmount(new BigDecimal(stripeClientResponse.getSession().getAmountTotal()));
             paymentDetailsRequest.setPurchasedDate(LocalDateTime.now());
             paymentDetailsRequest.setPaymentMethod(String.join(", ", stripeClientResponse.getSession().getPaymentMethodTypes()));
             paymentDetailsRequest.setCurrency(stripeClientResponse.getSession().getCurrency());
@@ -124,6 +126,16 @@ public class PaymentServiceController {
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Error occured while updating payment status for sessionId:" + sessionId));
         }
     }
+
+    @GetMapping("/paymentsFailedInitiallyButSucceededLater")
+    List<String> getPaymentsFailedInitiallyButSucceededLater() {
+        try {
+            return paymentService.clearPaymentWhichFailedInitiallyButSucceededLater();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)

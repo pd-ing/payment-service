@@ -13,8 +13,8 @@ import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
-import com.pding.paymentservice.payload.response.Pagination.PaginationInfoWithGenericList;
-import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
+import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
+import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.models.VideoEarningsAndSales;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
@@ -303,7 +303,7 @@ public class VideoPurchaseService {
     private PaginationInfoWithGenericList<VideoPurchaserInfo> loadPurchaseListOfSeller(String videoId, int page, int size) {
         try {
             PageRequest pageRequest = PageRequest.of(page, size);
-            Page<VideoPurchase> pageData =  videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest);
+            Page<VideoPurchase> pageData = videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest);
 
             return convertToResponse(pageData);
         } catch (Exception ex) {
