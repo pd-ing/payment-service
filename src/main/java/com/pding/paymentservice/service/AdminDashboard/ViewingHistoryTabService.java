@@ -34,10 +34,28 @@ public class ViewingHistoryTabService {
         viewingHistory.setTreesUsedForVideoPurchaseInLastMonth(totalTreesConsumedByUserInCurrentMonth);
         viewingHistory.setTotalVideosPurchasedInCurrentMonth(totalVideosPurchasedInCurrentMonth);
 
-        List<VideoPurchaseHistoryForAdminDashboard> vphadList = new ArrayList<>();
+
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> vphadPage = viewingHistoryTabRepository.findVideoPurchaseHistoryByUserId(userId, pageable);
-        for (Object innerObject : vphadPage.getContent()) {
+        List<VideoPurchaseHistoryForAdminDashboard> vphadList = createVideoPurchaseHistoryList(vphadPage.getContent());
+        viewingHistory.setVideoPurchaseHistoryForAdminDashboardList(new PageImpl<>(vphadList, pageable, vphadPage.getTotalElements()));
+        return viewingHistory;
+    }
+
+    public ViewingHistory searchVideo(String userId, String videoTitle, int page, int size) {
+        ViewingHistory viewingHistory = new ViewingHistory();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> vphadPage = viewingHistoryTabRepository.findVideoPurchaseHistoryByUserIdAndVideoTitle(userId, videoTitle, pageable);
+        List<VideoPurchaseHistoryForAdminDashboard> vphadList = createVideoPurchaseHistoryList(vphadPage.getContent());
+        viewingHistory.setVideoPurchaseHistoryForAdminDashboardList(new PageImpl<>(vphadList, pageable, vphadPage.getTotalElements()));
+
+        return viewingHistory;
+    }
+
+    private List<VideoPurchaseHistoryForAdminDashboard> createVideoPurchaseHistoryList(List<Object[]> vphadPage) {
+        List<VideoPurchaseHistoryForAdminDashboard> vphadList = new ArrayList<>();
+        for (Object innerObject : vphadPage) {
             Object[] videoPurchaseHistory = (Object[]) innerObject;
 
             String thumbnailPath = "";
@@ -54,8 +72,6 @@ public class ViewingHistoryTabService {
             vphadObj.setVideoPrice(videoPurchaseHistory[5].toString());
             vphadList.add(vphadObj);
         }
-
-        viewingHistory.setVideoPurchaseHistoryForAdminDashboardList(new PageImpl<>(vphadList, pageable, vphadPage.getTotalElements()));
-        return viewingHistory;
+        return vphadList;
     }
 }

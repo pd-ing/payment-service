@@ -67,5 +67,21 @@ public interface ViewingHistoryTabRepository extends JpaRepository<VideoPurchase
             countQuery = "SELECT COUNT(*) FROM video_purchase vp WHERE vp.user_id = ?1",
             nativeQuery = true)
     Page<Object[]> findVideoPurchaseHistoryByUserId(String userId, Pageable pageable);
+
+    @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
+            "COALESCE(vp.video_id, ''), " +
+            "COALESCE(vt.path, ''), " +
+            "COALESCE(v.title, ''), " +
+            "COALESCE(u.profile_id, ''), " +
+            "COALESCE(vp.trees_consumed, '') " +
+            "FROM video_purchase vp " +
+            "LEFT JOIN video_thumbnail vt ON vp.video_id = vt.video_id " +
+            "LEFT JOIN videos v ON vp.video_id = v.video_id " +
+            "LEFT JOIN users u ON v.user_id = u.id " +
+            "WHERE vp.user_id = ?1 " +
+            "AND v.title LIKE %?2%",
+            countQuery = "SELECT COUNT(*) FROM video_purchase vp LEFT JOIN videos v ON vp.video_id = v.video_id WHERE vp.user_id = ?1 AND v.title LIKE %?2%",
+            nativeQuery = true)
+    Page<Object[]> findVideoPurchaseHistoryByUserIdAndVideoTitle(String userId, String videoTitle, Pageable pageable);
 }
 

@@ -81,4 +81,8 @@ public class AdminDashboardUserPaymentStatsService {
     public ViewingHistory getViewingHistory(String userId, int page, int size) {
         return viewingHistoryTabService.getViewingHistory(userId, page, size);
     }
+
+    public ViewingHistory searchVideo(String userId, String videoTitle, int page, int size) {
+        return viewingHistoryTabService.searchVideo(userId, videoTitle, page, size);
+    }
 }
