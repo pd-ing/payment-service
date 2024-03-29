@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,15 +36,14 @@ public class GiftHistoryTabService {
         for (Object innerObject : dhadPage.getContent()) {
             Object[] giftDonationHistory = (Object[]) innerObject;
             DonationHistoryForAdminDashboard dhadObj = new DonationHistoryForAdminDashboard();
-            dhadObj.se(giftDonationHistory[0].toString());
-            dhadObj.setVideoId(giftDonationHistory[1].toString());
-            dhadObj.setVideoTitle(giftDonationHistory[3].toString());
-            dhadObj.setPdProfileId(giftDonationHistory[4].toString());
-            dhadObj.setVideoPrice(giftDonationHistory[5].toString());
+            dhadObj.setDateTime(giftDonationHistory[0].toString());
+            dhadObj.setPdProfileId(giftDonationHistory[1].toString());
+            dhadObj.setTreesOrLeafs(giftDonationHistory[2].toString());
+            dhadObj.setAmount(giftDonationHistory[3].toString());
             dhadList.add(dhadObj);
         }
 
-        giftHistory.setVideoPurchaseHistoryForAdminDashboardList(new PageImpl<>(dhadList, pageable, dhadPage.getTotalElements()));
-        return viewingHistory;
+        giftHistory.setDonationHistoryForAdminDashboardList(new PageImpl<>(dhadList, pageable, dhadPage.getTotalElements()));
+        return giftHistory;
     }
 }

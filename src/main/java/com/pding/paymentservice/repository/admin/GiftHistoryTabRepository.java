@@ -18,8 +18,8 @@ public interface GiftHistoryTabRepository extends JpaRepository<VideoPurchase, S
     BigDecimal totalTreesDonatedByUserInCurrentMonth(@Param("userId") String userId);
 
     @Query(value = "SELECT COALESCE(d.last_update_date, ''), " +
-            "COALESCE('Tree', ''), " +
             "COALESCE(u.profile_id, ''), " +
+            "COALESCE('Tree', ''), " +
             "COALESCE(d.donated_trees, '') " +
             "FROM donation d " +
             "LEFT JOIN users u ON d.donor_user_id = u.id " +
