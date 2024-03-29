@@ -6,12 +6,14 @@ import com.pding.paymentservice.models.WalletHistory;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
+import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.repository.WalletHistoryRepository;
 import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
+import com.stripe.model.checkout.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -194,11 +196,11 @@ public class PaymentService {
         }
     }
 
+    //This API was used 1 time, when the case where payment initially fails and later succeeded cases was not handled
 
     @Transactional
     public List<String> clearPaymentWhichFailedInitiallyButSucceededLater() {
         List<String> result = new ArrayList<>();
-
 
         List<WalletHistory> walletHistoryList = walletHistoryRepository.findByTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
 
@@ -210,6 +212,66 @@ public class PaymentService {
         }
 
         return result;
+    }
+
+    // This API will clear payments where Users were charged money but trees were not given,
+    // This API will also mark update the statuses of the payments which users started but never completed.
+    @Transactional
+    public List<ClearPendingAndStalePaymentsResponse> clearPendingAndStalePayments(Long days) throws Exception {
+        List<ClearPendingAndStalePaymentsResponse> cpaspList = new ArrayList<>();
+        LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+
+        List<Object[]> objects = walletHistoryRepository.findPendingTransactions(startDate);
+
+        for (Object innerObject : objects) {
+            Object[] data = (Object[]) innerObject;
+            String userId = data[0].toString();
+            String emailId = data[1].toString();
+            String sessionId = data[2].toString();
+            String purchasedDate = data[3].toString();
+
+            ClearPendingAndStalePaymentsResponse cpaspObj = new ClearPendingAndStalePaymentsResponse();
+            cpaspObj.setUserId(userId);
+            cpaspObj.setEmailId(emailId);
+            cpaspObj.setSessionId(sessionId);
+            cpaspObj.setPurchasedDate(purchasedDate);
+
+            String result = "";
+
+            Session session = null;
+            try {
+                session = stripeClient.getSessionDetails(sessionId);
+                if (stripeClient.isSessionCompleteOrExpired(session)) {
+                    if (stripeClient.isPaymentDone(session)) {
+                        result = completePaymentToBuyTrees(session.getPaymentIntent(), session.getId());
+
+
+                        cpaspObj.setPaymentIntentId(session.getPaymentIntent());
+                        cpaspObj.setStripeSessionPaymentStatus(stripeClient.isPaymentDone(session));
+                        cpaspObj.setBackendPaymentStatus(result);
+
+
+                    } else {
+                        // Passing sessionId as paymentIntentId as, whenever payment Fails at that time sessionId is not generated.
+                        result = failPaymentToBuyTrees(session.getId(), session.getId());
+
+                        cpaspObj.setPaymentIntentId(session.getPaymentIntent());
+                        cpaspObj.setStripeSessionPaymentStatus(stripeClient.isPaymentDone(session));
+                        cpaspObj.setBackendPaymentStatus(result);
+                    }
+                } else {
+                    cpaspObj.setPaymentIntentId(session.getPaymentIntent());
+                    cpaspObj.setStripeSessionPaymentStatus(stripeClient.isPaymentDone(session));
+                    cpaspObj.setBackendPaymentStatus("Stripe session is not expired or completed yet, It means user has started the payment but not completed yet, If he dosent do the payment within 24hrs of the purchaseDate, then Session will expire and after that run this API again to update the status,If user completes the payment then No action will be needed");
+                }
+            } catch (Exception e) {
+                cpaspObj.setPaymentIntentId("");
+                cpaspObj.setStripeSessionPaymentStatus(false);
+                cpaspObj.setBackendPaymentStatus("Cannot find Stripe session for sessionId " + sessionId + ", This means the payment was done using the OLD PAYMENT METHOD, where payment init was done from FE, NO ACTION NEEDED FOR THIS RECORD");
+            }
+            cpaspList.add(cpaspObj);
+        }
+        return cpaspList;
     }
 
     private String clearPaymentAndGiveTress(WalletHistory walletHistory) {

@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ClearPendingPaymentRequest {
-    @NotNull(message = "sessionId cannot be null.")
-    String sessionId;
+    Long days;
 }
