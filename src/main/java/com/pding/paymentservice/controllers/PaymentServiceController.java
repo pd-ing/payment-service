@@ -4,9 +4,11 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.request.ClearPendingPaymentRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
+import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.stripe.StripeClientResponse;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -106,24 +109,16 @@ public class PaymentServiceController {
     }
 
 
-    @PostMapping("/clearPendingPayment")
-    ResponseEntity<?> clearPendingPayments(@Valid @RequestBody ClearPendingPaymentRequest clearPendingPaymentRequest) {
-        String sessionId = clearPendingPaymentRequest.getSessionId();
+    @PostMapping("/clearPendingAndStalePayments/{days}")
+    ResponseEntity<?> clearPendingPayments(@PathVariable Long days) {
+        if (days == null || days == 0 || days < 0) {
+            days = 14L;
+        }
         try {
-            Session session = stripeClient.getSessionDetails(sessionId);
-            if (stripeClient.isSessionCompleteOrExpired(session)) {
-                if (stripeClient.isPaymentDone(session)) {
-                    paymentService.completePaymentToBuyTrees(session.getPaymentIntent(), session.getId());
-                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Payment marked as completed for sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
-                } else {
-                    // Passing sessionId as paymentIntentId as, whenever payment Fails at that time sessionId is not generated.
-                    paymentService.failPaymentToBuyTrees(session.getId(), session.getId());
-                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Payment marked as failed for sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
-                }
-            }
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Did not updated the payment status as session is not expired or completed, sessionId:" + sessionId + " , PaymentIntentId:" + session.getPaymentIntent()));
+            List<ClearPendingAndStalePaymentsResponse> responses = paymentService.clearPendingAndStalePayments(days);
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, responses));
         } catch (Exception e) {
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Error occured while updating payment status for sessionId:" + sessionId));
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
