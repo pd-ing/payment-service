@@ -28,23 +28,24 @@ public class PaymentHistoryTabService {
 
         BigDecimal numberOfTreesChargedInCurrentMonth = paymentHistoryTabRepository.numberOfTreesChargedInCurrentMonth(userId);
         paymentHistory.setNumberOfTreesChargedInCurrentMonth(numberOfTreesChargedInCurrentMonth);
+        String userStripeID = paymentHistoryTabRepository.userStripeID(userId);
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> phadPage = paymentHistoryTabRepository.findPayentHistoryByUserId(userId, pageable);
-        List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent());
+        List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
         paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
         return paymentHistory;
     }
 
-    private List<PaymentHistoryForAdminDashboard> createPaymentHistoryList(List<Object[]> phadPage) {
+    private List<PaymentHistoryForAdminDashboard> createPaymentHistoryList(List<Object[]> phadPage, String userStripeID) {
         List<PaymentHistoryForAdminDashboard> phadList = new ArrayList<>();
         for (Object innerObject : phadPage) {
             Object[] paymemtHistory = (Object[]) innerObject;
             PaymentHistoryForAdminDashboard phadObj = new PaymentHistoryForAdminDashboard();
-            phadObj.setStripeId(paymemtHistory[0].toString());
-            phadObj.setPurchaseDate(paymemtHistory[1].toString());
-            phadObj.setTreeOrLeaf(paymemtHistory[2] != null ? "Tree" : paymemtHistory[3] != null? "Leaf" : " ");
-            phadObj.setAmount(paymemtHistory[2] != null? paymemtHistory[2].toString() : paymemtHistory[3].toString());
-            phadObj.setAmountInDollarsWithTax(paymemtHistory[4].toString());
+            phadObj.setStripeId(userStripeID);
+            phadObj.setPurchaseDate(paymemtHistory[0].toString());
+            phadObj.setTreeOrLeaf(paymemtHistory[1] != null ? "Tree" : paymemtHistory[2] != null? "Leaf" : " ");
+            phadObj.setAmount(paymemtHistory[1] != null? paymemtHistory[1].toString() : paymemtHistory[2].toString());
+            phadObj.setAmountInDollarsWithTax(paymemtHistory[3].toString());
             phadList.add(phadObj);
         }
         return phadList;

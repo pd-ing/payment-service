@@ -18,7 +18,11 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
     BigDecimal numberOfTreesChargedInCurrentMonth(@Param("userId") String userId);
 
     @Query(value = "SELECT COALESCE(ISNULL(u.linked_stripe_id,'Stripe ID not set'), ''), " +
-            "COALESCE(wh.purchase_date, ''), " +
+            "FROM users" +
+            "WHERE user_id = :userId ", nativeQuery = true)
+    String userStripeID(@Param("userId") String userId);
+
+    @Query(value = "SELECT COALESCE(wh.purchase_date, ''), " +
             "COALESCE(wh.purchased_trees, ''), " +
             "COALESCE(wh.purchased_leafs, ''), " +
             "COALESCE(wh.amount, ''), " +
