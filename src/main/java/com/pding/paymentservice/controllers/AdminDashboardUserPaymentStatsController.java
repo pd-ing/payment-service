@@ -3,7 +3,6 @@ package com.pding.paymentservice.controllers;
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
-import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
