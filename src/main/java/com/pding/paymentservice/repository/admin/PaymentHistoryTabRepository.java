@@ -28,7 +28,8 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
             "COALESCE(wh.amount, '') " +
             "FROM wallet_history wh " +
             "LEFT JOIN users u ON wh.user_id = u.id " +
-            "WHERE wh.user_id = ?1",
+            "WHERE wh.user_id = ?1 " +
+            "ORDER BY wh.purchase_date DESC",
             countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE wh.user_id = ?1",
             nativeQuery = true)
     Page<Object[]> findPayentHistoryByUserId(String userId, Pageable pageable);
