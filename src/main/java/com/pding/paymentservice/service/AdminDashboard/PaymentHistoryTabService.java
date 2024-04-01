@@ -38,13 +38,18 @@ public class PaymentHistoryTabService {
 
     private List<PaymentHistoryForAdminDashboard> createPaymentHistoryList(List<Object[]> phadPage, String userStripeID) {
         List<PaymentHistoryForAdminDashboard> phadList = new ArrayList<>();
+        Double purchasedTrees = null;
+        Double purchasedLeafs = null;
+        final String DEFAULT_STRIPE_ID = "Stripe ID not set";
         for (Object innerObject : phadPage) {
             Object[] paymentHistory = (Object[]) innerObject;
             PaymentHistoryForAdminDashboard phadObj = new PaymentHistoryForAdminDashboard();
-            phadObj.setStripeId(userStripeID);
+            purchasedTrees = Double.parseDouble(paymentHistory[1].toString());
+            purchasedLeafs = Double.parseDouble(paymentHistory[2].toString());
+            phadObj.setStripeId(userStripeID == null ? DEFAULT_STRIPE_ID : userStripeID);
             phadObj.setPurchaseDate(paymentHistory[0].toString());
-            phadObj.setTreeOrLeaf((paymentHistory[2] != null && Integer.parseInt(paymentHistory[2].toString()) > 0) ? "Leaf" : (paymentHistory[1] != null && Integer.parseInt(paymentHistory[1].toString()) > 0) ? "Tree" : " ");
-            phadObj.setAmount(paymentHistory[2] != null && Integer.parseInt(paymentHistory[2].toString()) > 0 ? paymentHistory[2].toString() : (paymentHistory[1] != null && Integer.parseInt(paymentHistory[1].toString()) > 0) ? paymentHistory[1].toString() : "0.00");
+            phadObj.setTreeOrLeaf(purchasedLeafs > 0 ? "Leaf" : purchasedTrees > 0 ? "Tree" : " ");
+            phadObj.setAmount(purchasedLeafs > 0 ? paymentHistory[2].toString() : paymentHistory[1].toString());
             phadObj.setAmountInDollarsWithTax(paymentHistory[3].toString());
             phadList.add(phadObj);
         }
