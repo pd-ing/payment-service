@@ -11,21 +11,21 @@ import java.math.BigDecimal;
 
 public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory, String> {
 
-    @Query(value = "SELECT COALESCE(SUM(purchased_trees), 0) FROM  wallet_history" +
+    @Query(value = "SELECT COALESCE(SUM(purchased_trees), 0) FROM  wallet_history " +
             "WHERE user_id = :userId " +
             "AND YEAR(purchase_date) = YEAR(CURRENT_DATE) " +
             "AND MONTH(purchase_date) = MONTH(CURRENT_DATE)", nativeQuery = true)
     BigDecimal numberOfTreesChargedInCurrentMonth(@Param("userId") String userId);
 
-    @Query(value = "SELECT COALESCE(ISNULL(u.linked_stripe_id,'Stripe ID not set'), ''), " +
-            "FROM users" +
-            "WHERE user_id = :userId ", nativeQuery = true)
+    @Query(value = "SELECT COALESCE(u.linked_stripe_id,'Stripe ID not set') " +
+            "FROM users u " +
+            "WHERE id = :userId ", nativeQuery = true)
     String userStripeID(@Param("userId") String userId);
 
     @Query(value = "SELECT COALESCE(wh.purchase_date, ''), " +
             "COALESCE(wh.purchased_trees, ''), " +
             "COALESCE(wh.purchased_leafs, ''), " +
-            "COALESCE(wh.amount, ''), " +
+            "COALESCE(wh.amount, '') " +
             "FROM wallet_history wh " +
             "LEFT JOIN users u ON wh.user_id = u.id " +
             "WHERE wh.user_id = ?1",

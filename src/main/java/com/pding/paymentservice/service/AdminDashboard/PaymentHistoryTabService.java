@@ -39,13 +39,13 @@ public class PaymentHistoryTabService {
     private List<PaymentHistoryForAdminDashboard> createPaymentHistoryList(List<Object[]> phadPage, String userStripeID) {
         List<PaymentHistoryForAdminDashboard> phadList = new ArrayList<>();
         for (Object innerObject : phadPage) {
-            Object[] paymemtHistory = (Object[]) innerObject;
+            Object[] paymentHistory = (Object[]) innerObject;
             PaymentHistoryForAdminDashboard phadObj = new PaymentHistoryForAdminDashboard();
             phadObj.setStripeId(userStripeID);
-            phadObj.setPurchaseDate(paymemtHistory[0].toString());
-            phadObj.setTreeOrLeaf(paymemtHistory[1] != null ? "Tree" : paymemtHistory[2] != null? "Leaf" : " ");
-            phadObj.setAmount(paymemtHistory[1] != null? paymemtHistory[1].toString() : paymemtHistory[2].toString());
-            phadObj.setAmountInDollarsWithTax(paymemtHistory[3].toString());
+            phadObj.setPurchaseDate(paymentHistory[0].toString());
+            phadObj.setTreeOrLeaf((paymentHistory[2] != null && Integer.parseInt(paymentHistory[2].toString()) > 0) ? "Leaf" : (paymentHistory[1] != null && Integer.parseInt(paymentHistory[1].toString()) > 0) ? "Tree" : " ");
+            phadObj.setAmount(paymentHistory[2] != null && Integer.parseInt(paymentHistory[2].toString()) > 0 ? paymentHistory[2].toString() : (paymentHistory[1] != null && Integer.parseInt(paymentHistory[1].toString()) > 0) ? paymentHistory[1].toString() : "0.00");
+            phadObj.setAmountInDollarsWithTax(paymentHistory[3].toString());
             phadList.add(phadObj);
         }
         return phadList;
