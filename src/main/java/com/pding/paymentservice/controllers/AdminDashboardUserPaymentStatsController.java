@@ -3,7 +3,9 @@ package com.pding.paymentservice.controllers;
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
 import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
@@ -96,6 +98,19 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), viewingHistory));
         }
     }
+
+    @GetMapping(value = "/giftHistoryTab")
+    public ResponseEntity<?> getGiftHistoryTabDetailsController(@RequestParam(value = "userId") String userId, @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                @RequestParam(defaultValue = "10") @Min(1) int size) {
+        GiftHistory giftHistory = null;
+        try {
+            giftHistory = adminDashboardUserPaymentStatsService.getGiftHistoryTabDetails(userId, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, giftHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), giftHistory));
+        }
+    }
+
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
