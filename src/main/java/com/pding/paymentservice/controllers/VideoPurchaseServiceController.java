@@ -62,9 +62,10 @@ public class VideoPurchaseServiceController {
     @PostMapping(value = "/videoPurchaseReplacement")
     public ResponseEntity<?> videoPurchaseReplacement(
             @RequestParam(value = "videoId") String videoId,
+            @RequestParam(value = "ownerUserId", required = false) String ownerUserId,
             @RequestParam(value = "userEmails") String userEmails
     ) {
-        return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, userEmails);
+        return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, ownerUserId, userEmails);
     }
 
     // Handle MissingServletRequestParameterException --

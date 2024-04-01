@@ -77,13 +77,18 @@ public class VideoPurchaseService {
         return video;
     }
 
-    public ResponseEntity<?> createVideoPurchaseReplacementFromEmail(String videoId, String emails) {
+    public ResponseEntity<?> createVideoPurchaseReplacementFromEmail(String videoId, String ownerUserId, String emails) {
         try {
-            String ownerId = authHelper.getUserId();
+            String ownerId;
+            if (ownerUserId == null) {
+                ownerId = authHelper.getUserId();
+            } else {
+                ownerId = ownerUserId;
+            }
             List<String> validEmails = Arrays.stream(emails.split(","))
                     .filter(e -> emailValidator.isValidEmail(e))
                     .toList();
-            List<String> userIds = userServiceNetworkManager.getUsersListFlux(validEmails)
+            List<String> userIds = userServiceNetworkManager.getUsersListByEmailFlux(validEmails)
                     .map(PublicUserNet::getId) // Transform PublicUserNet to its id
                     .collect(Collectors.toList()) // Collect ids into a List
                     .block();
