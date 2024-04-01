@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,7 @@ public class WalletHistoryService {
 
     public Page<WalletHistory> fetchWalletHistoryByUserId(String userId, int page, int size) {
         List<String> statuses = Arrays.asList("paymentCompleted", "success");
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("purchaseDate"));
         return walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, statuses, pageable);
     }
 
@@ -86,6 +87,6 @@ public class WalletHistoryService {
     public void save(WalletHistory walletHistory) {
         walletHistoryRepository.save(walletHistory);
     }
-    
+
 
 }
