@@ -24,7 +24,7 @@ public interface GiftHistoryTabRepository extends JpaRepository<VideoPurchase, S
             "FROM donation d " +
             "LEFT JOIN users u ON d.donor_user_id = u.id " +
             "WHERE d.donor_user_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM donation d WHERE d.user_id = ?1",
+            countQuery = "SELECT COUNT(*) FROM donation d WHERE d.donor_user_id = ?1",
             nativeQuery = true)
     Page<Object[]> findDonationHistoryByUserId(String userId, Pageable pageable);
 }
