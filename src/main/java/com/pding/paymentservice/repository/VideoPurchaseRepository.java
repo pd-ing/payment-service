@@ -2,6 +2,7 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.VideoEarningsAndSales;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +14,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Repository
 public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, String> {
@@ -74,4 +74,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     List<Object[]> findUserIdAndTreesByVideoId(@Param("videoId") String videoId);
 
     Page<VideoPurchase> findAllByVideoIdOrderByLastUpdateDateDesc(String videoId, Pageable pageable);
+
+    @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId")
+    BigDecimal getTotalTreesConsumedByUserId(@Param("userId") String userId);
 }

@@ -33,7 +33,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                                .requestMatchers("/api/payment/charge").authenticated()
+                                //.requestMatchers("/api/payment/charge").authenticated()
                                 .requestMatchers("/api/payment/test").authenticated()
                                 .requestMatchers("/api/payment/wallet").authenticated()
                                 .requestMatchers("/api/payment/walletHistory").authenticated()
@@ -48,6 +48,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/topDonorsList").permitAll()
                                 .requestMatchers("/api/payment/webhook").permitAll()
                                 .requestMatchers("/api/payment/videoEarningAndSales").permitAll()
+                                .requestMatchers("/api/payment/videoPurchaseReplacement").permitAll()
                                 .requestMatchers("/api/payment/buyCall").authenticated()
                                 .requestMatchers("/api/payment/callHistoryForPd").authenticated()
                                 .requestMatchers("/api/payment/callHistoryForUser").authenticated()
@@ -65,14 +66,17 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/statusTab").permitAll()
                                 .requestMatchers("/api/payment/admin/viewingHistoryTab").permitAll()
                                 .requestMatchers("/api/payment/admin/giftHistoryTab").permitAll()
+                                .requestMatchers("/api/payment/admin/viewingHistoryTabSearchVideo").permitAll()
                                 .requestMatchers("/api/payment/topEarners").permitAll()
                                 .requestMatchers("/api/payment/topFans").authenticated()
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
-                                .requestMatchers("/api/payment/v2/charge").authenticated()
+                                //.requestMatchers("/api/payment/v2/charge").authenticated()
                                 .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
-                                .requestMatchers("/api/payment/clearPendingPayment").permitAll()
+                                .requestMatchers("/api/payment/clearPendingAndStalePayments/**").permitAll()
+                                .requestMatchers("/api/payment/paymentsFailedInitiallyButSucceededLater").permitAll()
+                                .requestMatchers("/api/payment/treeSpentHistory").authenticated()
 
 
                 );

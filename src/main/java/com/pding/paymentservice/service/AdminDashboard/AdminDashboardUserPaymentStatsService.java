@@ -86,6 +86,10 @@ public class AdminDashboardUserPaymentStatsService {
         return viewingHistoryTabService.getViewingHistory(userId, page, size);
     }
 
+    public ViewingHistory searchVideo(String userId, String videoTitle, int page, int size) {
+        return viewingHistoryTabService.searchVideo(userId, videoTitle, page, size);
+    }
+
     public GiftHistory getGiftHistoryTabDetails(String userId, int page, int size) {
         return giftHistoryTabService.getGiftHistoryTabDetails(userId, page, size);
     }

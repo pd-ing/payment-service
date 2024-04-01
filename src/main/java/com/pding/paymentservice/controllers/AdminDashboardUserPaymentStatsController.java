@@ -2,7 +2,6 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.Pagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
@@ -10,9 +9,9 @@ import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
 import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
-import com.pding.paymentservice.service.AdminService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -80,6 +79,20 @@ public class AdminDashboardUserPaymentStatsController {
         ViewingHistory viewingHistory = null;
         try {
             viewingHistory = adminDashboardUserPaymentStatsService.getViewingHistory(userId, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, viewingHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), viewingHistory));
+        }
+    }
+
+    @GetMapping(value = "/viewingHistoryTabSearchVideo")
+    public ResponseEntity<?> getViewingHistoryTabDetailsSearchVideoController(@RequestParam(value = "userId") @NotBlank String userId,
+                                                                              @RequestParam(value = "videoTitle") @NotBlank String videoTitle,
+                                                                              @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                              @RequestParam(defaultValue = "10") @Min(1) int size) {
+        ViewingHistory viewingHistory = null;
+        try {
+            viewingHistory = adminDashboardUserPaymentStatsService.searchVideo(userId, videoTitle, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, viewingHistory));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), viewingHistory));

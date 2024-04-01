@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,5 +36,8 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             "ORDER BY totalDonatedTrees DESC " +
             "LIMIT :limit")
     List<Object[]> findTopDonorUserAndDonatedTreesByPdUserID(@Param("pdUserId") String pdUserId, @Param("limit") Long limit);
+
+    @Query(value = "SELECT COALESCE(SUM(d.donatedTrees), 0) FROM Donation d WHERE d.donorUserId = :userId")
+    BigDecimal getTotalDonatedTreesByDonorUserId(@Param("userId") String userId);
 
 }
