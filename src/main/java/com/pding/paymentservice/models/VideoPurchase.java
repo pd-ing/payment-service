@@ -32,12 +32,24 @@ public class VideoPurchase {
 
     private String videoOwnerUserId;
 
+    private Boolean isReplacementOfDeletedVideo;
+
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
         this.userId = userId;
         this.videoId = videoId;
         this.treesConsumed = treesConsumed;
         this.lastUpdateDate = LocalDateTime.now();
         this.videoOwnerUserId = videoOwnerUserId;
+        this.isReplacementOfDeletedVideo = false;
+    }
+
+    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, Boolean isReplacementOfDeletedVideo) {
+        this.userId = userId;
+        this.videoId = videoId;
+        this.treesConsumed = treesConsumed;
+        this.lastUpdateDate = LocalDateTime.now();
+        this.videoOwnerUserId = videoOwnerUserId;
+        this.isReplacementOfDeletedVideo = isReplacementOfDeletedVideo;
     }
 
 }
