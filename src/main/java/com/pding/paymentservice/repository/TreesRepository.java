@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
@@ -56,4 +57,6 @@ public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
                     "UNION ALL SELECT d.last_update_date FROM donation d WHERE d.donor_user_id = :userId) AS total",
             nativeQuery = true)
     Page<Object[]> getTreesSpentHistory(String userId, Pageable pageable);
+
+    
 }

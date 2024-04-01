@@ -1,4 +1,4 @@
-package com.pding.paymentservice.payload.response.generic;
+package com.pding.paymentservice.payload.response.TreeSpentHistory;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TreeSpentHistory {
+public class TreeSpentHistoryRecord {
     private String lastUpdateDate;
     private String type;
     private String pdProfileId;
