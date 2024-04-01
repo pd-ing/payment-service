@@ -59,6 +59,14 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.videoEarningAndSales(videoIds);
     }
 
+    @PostMapping(value = "/videoPurchaseReplacement")
+    public ResponseEntity<?> videoPurchaseReplacement(
+            @RequestParam(value = "videoId") String videoId,
+            @RequestParam(value = "userEmails") String userEmails
+    ) {
+        return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, userEmails);
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
