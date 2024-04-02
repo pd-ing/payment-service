@@ -4,6 +4,7 @@ import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
+import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
 import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
@@ -95,6 +96,18 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, viewingHistory));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), viewingHistory));
+        }
+    }
+
+    @GetMapping(value = "/paymentHistoryTab")
+    public ResponseEntity<?> getPaymentHistoryTabDetailsController(@RequestParam(value = "userId") String userId, @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+        PaymentHistory paymentHistory = null;
+        try {
+            paymentHistory = adminDashboardUserPaymentStatsService.getPaymentHistory(userId, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, paymentHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), paymentHistory));
         }
     }
 
