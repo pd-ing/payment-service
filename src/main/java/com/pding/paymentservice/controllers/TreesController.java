@@ -3,9 +3,12 @@ package com.pding.paymentservice.controllers;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
-import com.pding.paymentservice.payload.response.generic.TreeSpentHistory;
+import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryRecord;
+import com.pding.paymentservice.repository.TreesRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.TreesService;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -32,6 +36,9 @@ public class TreesController {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    AuthHelper authHelper;
 
     @GetMapping(value = "/topFans")
     public ResponseEntity<?> getTopFans(@RequestParam(value = "limit") Long limit) {
@@ -52,12 +59,14 @@ public class TreesController {
     public ResponseEntity<?> getTreeSpentHistory(@RequestParam(defaultValue = "0") @Min(value = 0, message = "Page number must be greater than or equal to 0") int page,
                                                  @RequestParam(defaultValue = "10") @Min(value = 1, message = "Page size must be greater than or equal to 1") int size) {
         try {
-            Page<TreeSpentHistory> publicUserNetList = treesService.getTreeSpentHistory(page, size);
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, publicUserNetList));
+            Page<TreeSpentHistoryRecord> publicUserNetList = treesService.getTreeSpentHistory(page, size);
+            String userId = authHelper.getUserId();
+            BigDecimal totalTreesSpent = treesService.totalTreesSpentByUserOnVideo(userId).add(treesService.totalTreesSpentByUserOnDonation(userId));
+            return ResponseEntity.ok().body(new TreeSpentHistoryResponse(null, totalTreesSpent, publicUserNetList));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.TOP_FAN_LIST, e);
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(errorResponse, null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TreeSpentHistoryResponse(errorResponse, new BigDecimal(0), null));
         }
     }
 

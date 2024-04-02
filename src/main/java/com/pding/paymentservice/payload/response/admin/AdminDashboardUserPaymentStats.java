@@ -5,6 +5,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.Status;
 import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class AdminDashboardUserPaymentStats {
     Status status;
     ViewingHistory viewingHistory;
     PaymentHistory paymentHistory;
+    GiftHistory giftHistory;
 
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, Status status) {
         this.errorResponse = errorResponse;
@@ -33,5 +35,10 @@ public class AdminDashboardUserPaymentStats {
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, PaymentHistory paymentHistory) {
         this.errorResponse = errorResponse;
         this.paymentHistory = paymentHistory;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, GiftHistory giftHistory) {
+        this.errorResponse = errorResponse;
+        this.giftHistory = giftHistory;
     }
 }
