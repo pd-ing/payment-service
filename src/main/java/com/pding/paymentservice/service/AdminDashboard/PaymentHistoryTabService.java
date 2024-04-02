@@ -25,16 +25,27 @@ public class PaymentHistoryTabService {
 
     public PaymentHistory getPaymentHistory(String userId, int page, int size) {
         PaymentHistory paymentHistory = new PaymentHistory();
-
         BigDecimal numberOfTreesChargedInCurrentMonth = paymentHistoryTabRepository.numberOfTreesChargedInCurrentMonth(userId);
         paymentHistory.setNumberOfTreesChargedInCurrentMonth(numberOfTreesChargedInCurrentMonth);
         String userStripeID = paymentHistoryTabRepository.userStripeID(userId);
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> phadPage = paymentHistoryTabRepository.findPayentHistoryByUserId(userId, pageable);
+        Page<Object[]> phadPage = paymentHistoryTabRepository.findPaymentHistoryByUserId(userId, pageable);
         List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
         paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
         return paymentHistory;
     }
+
+    public PaymentHistory getPaymentHistoryAllUsers(int page, int size) {
+        PaymentHistory paymentHistory = new PaymentHistory();
+        paymentHistory.setNumberOfTreesChargedInCurrentMonth(BigDecimal.valueOf(0.0)); // Default value
+        String userStripeID = ""; //Keep empty for all users
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(pageable);
+        List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
+        paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
+        return paymentHistory;
+    }
+
 
     private List<PaymentHistoryForAdminDashboard> createPaymentHistoryList(List<Object[]> phadPage, String userStripeID) {
         List<PaymentHistoryForAdminDashboard> phadList = new ArrayList<>();
@@ -47,6 +58,7 @@ public class PaymentHistoryTabService {
             purchasedTrees = Double.parseDouble(paymentHistory[1].toString());
             purchasedLeafs = Double.parseDouble(paymentHistory[2].toString());
             phadObj.setStripeId(userStripeID == null ? DEFAULT_STRIPE_ID : userStripeID);
+            phadObj.setEmail(paymentHistory[4].toString());
             phadObj.setPurchaseDate(paymentHistory[0].toString());
             phadObj.setTreeOrLeaf(purchasedLeafs > 0 ? "Leaf" : purchasedTrees > 0 ? "Tree" : " ");
             phadObj.setAmount(purchasedLeafs > 0 ? paymentHistory[2].toString() : paymentHistory[1].toString());

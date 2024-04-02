@@ -15,7 +15,9 @@ import java.time.LocalDateTime;
 public class PaymentHistoryForAdminDashboard {
     String purchaseDate;
 
-    String stripeId;
+    String stripeId = "";
+
+    String email  = ""; //Default value of email set to empty
 
     String treeOrLeaf;
 

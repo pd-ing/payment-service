@@ -11,6 +11,7 @@ import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -120,6 +121,18 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, giftHistory));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), giftHistory));
+        }
+    }
+
+    @GetMapping(value = "/paymentHistoryAllUsersTab")
+    public ResponseEntity<?> getPaymentHistoryForAllUsersTabDetailsController(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size) {
+        PaymentHistory paymentHistory = null;
+        try {
+            paymentHistory = adminDashboardUserPaymentStatsService.getPaymentHistoryForAllUsers(page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, paymentHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), paymentHistory));
         }
     }
 

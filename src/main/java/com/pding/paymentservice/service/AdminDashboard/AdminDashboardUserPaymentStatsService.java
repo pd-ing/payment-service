@@ -98,6 +98,10 @@ public class AdminDashboardUserPaymentStatsService {
         return paymentHistoryTabService.getPaymentHistory(userId, page, size);
     }
 
+    public PaymentHistory getPaymentHistoryForAllUsers(int page, int size) {
+        return paymentHistoryTabService.getPaymentHistoryAllUsers(page, size);
+    }
+
 
     public GiftHistory getGiftHistoryTabDetails(String userId, int page, int size) {
         return giftHistoryTabService.getGiftHistoryTabDetails(userId, page, size);

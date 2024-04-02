@@ -23,16 +23,27 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
     String userStripeID(@Param("userId") String userId);
 
     @Query(value = "SELECT COALESCE(wh.purchase_date, ''), " +
-            "COALESCE(wh.purchased_trees, ''), " +
-            "COALESCE(wh.purchased_leafs, ''), " +
-            "COALESCE(wh.amount, '') " +
+            "COALESCE(wh.purchased_trees, '0.0'), " +
+            "COALESCE(wh.purchased_leafs, '0.0'), " +
+            "COALESCE(wh.amount, '0.0') " +
             "FROM wallet_history wh " +
-            "LEFT JOIN users u ON wh.user_id = u.id " +
             "WHERE wh.user_id = ?1 " +
-            "ORDER BY wh.purchase_date",
+            "ORDER BY wh.purchase_date DESC",
             countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE wh.user_id = ?1",
             nativeQuery = true)
-    Page<Object[]> findPayentHistoryByUserId(String userId, Pageable pageable);
+    Page<Object[]> findPaymentHistoryByUserId(String userId, Pageable pageable);
+
+    @Query(value = "SELECT COALESCE(wh.purchase_date, ''), " +
+            "COALESCE(wh.purchased_trees, '0.0'), " +
+            "COALESCE(wh.purchased_leafs, '0.0'), " +
+            "COALESCE(wh.amount, '0.0'), " +
+            "COALESCE(u.email, '') " +
+            "FROM wallet_history wh " +
+            "LEFT JOIN users u ON wh.user_id = u.id " +
+            "ORDER BY wh.purchase_date DESC",
+            countQuery = "SELECT COUNT(*) FROM wallet_history wh",
+            nativeQuery = true)
+    Page<Object[]> getPaymentHistoryForAllUsers(Pageable pageable);
 
 }
 
