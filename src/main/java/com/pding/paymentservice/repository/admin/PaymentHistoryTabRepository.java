@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory, String> {
 
@@ -40,10 +41,14 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
             "COALESCE(u.email, '') " +
             "FROM wallet_history wh " +
             "LEFT JOIN users u ON wh.user_id = u.id " +
-            "ORDER BY wh.purchase_date DESC",
-            countQuery = "SELECT COUNT(*) FROM wallet_history wh",
+            "WHERE (:startDate IS NULL OR wh.purchase_date >= :startDate) " +
+            "AND (:endDate IS NULL OR wh.purchase_date <= :endDate) ",
+            countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE (:startDate IS NULL OR wh.purchase_date >= :startDate) "+
+                         "AND (:endDate IS NULL OR wh.purchase_date <= :endDate)",
             nativeQuery = true)
-    Page<Object[]> getPaymentHistoryForAllUsers(Pageable pageable);
+    Page<Object[]> getPaymentHistoryForAllUsers(@Param("startDate") String startDate,
+                                                @Param("endDate") String endDate,
+                                                String sortBy, Pageable pageable);
 
 }
 

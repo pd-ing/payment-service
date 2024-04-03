@@ -5,13 +5,11 @@ import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminD
 import com.pding.paymentservice.repository.admin.PaymentHistoryTabRepository;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,12 +33,13 @@ public class PaymentHistoryTabService {
         return paymentHistory;
     }
 
-    public PaymentHistory getPaymentHistoryAllUsers(int page, int size) {
+    public PaymentHistory getPaymentHistoryAllUsers(LocalDate startDate, LocalDate endDate, int sortOrder, int page, int size) {
         PaymentHistory paymentHistory = new PaymentHistory();
         paymentHistory.setNumberOfTreesChargedInCurrentMonth(BigDecimal.valueOf(0.0)); // Default value
         String userStripeID = ""; //Keep empty for all users
+        String sortBy = ( sortOrder == 0 ? "DESC" : "ASC");
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(pageable);
+        Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate == null ? null :startDate.toString(), endDate == null ? null : endDate.toString(), sortBy, pageable);
         List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
         paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
         return paymentHistory;

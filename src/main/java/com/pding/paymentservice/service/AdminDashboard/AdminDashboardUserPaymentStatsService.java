@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -98,8 +99,8 @@ public class AdminDashboardUserPaymentStatsService {
         return paymentHistoryTabService.getPaymentHistory(userId, page, size);
     }
 
-    public PaymentHistory getPaymentHistoryForAllUsers(int page, int size) {
-        return paymentHistoryTabService.getPaymentHistoryAllUsers(page, size);
+    public PaymentHistory getPaymentHistoryForAllUsers(LocalDate startDate, LocalDate endDate, int sortOrder, int page, int size) {
+        return paymentHistoryTabService.getPaymentHistoryAllUsers(startDate, endDate, sortOrder, page, size);
     }
 
 
