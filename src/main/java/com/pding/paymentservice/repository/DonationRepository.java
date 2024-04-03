@@ -1,6 +1,8 @@
 package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.Donation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +14,11 @@ import java.util.stream.Collectors;
 public interface DonationRepository extends JpaRepository<Donation, String> {
     List<Donation> findByDonorUserId(String donorUserId);
 
-    List<Donation> findByPdUserId(String pdUserId);
+    @Query(value = "SELECT u.email AS donor_email, d.donated_trees, d.last_update_date " +
+            "FROM donation d " +
+            "JOIN users u ON d.donor_user_id = u.id " +
+            "WHERE d.pd_user_id = ?1 ORDER BY d.last_update_date ASC", countQuery = "SELECT count(d.id) FROM Donation d WHERE d.pd_user_id = ?1", nativeQuery = true)
+    Page<Object[]> findByPdUserId(String pdUserId, Pageable pageable);
 
     @Query("SELECT d.donorUserId, SUM(d.donatedTrees) as totalDonatedTrees " +
             "FROM Donation d " +
