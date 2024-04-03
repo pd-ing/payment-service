@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -213,14 +214,12 @@ public class DonationService {
         }
     }
 
-    public ResponseEntity<?> getTopDonors(String pdUserId, Long limit) {
+    public ResponseEntity<?> getTopDonors(Long limit) {
         if (limit == null || limit <= 0 || limit > 30) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "limit parameter is invalid or not passed. Please pass limit between 1-30"));
         }
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
         try {
+            String pdUserId = authHelper.getUserId();
             List<PublicUserNet> publicUserNetList = getTopDonorsInfo(pdUserId, limit);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
         } catch (Exception e) {

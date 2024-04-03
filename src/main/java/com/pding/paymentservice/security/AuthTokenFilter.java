@@ -35,7 +35,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private JwtUtils jwtUtils;
 
     List<String> permitAllEndpoints = Arrays.asList(
-            "/api/payment/topDonorsList",
             "/api/payment/webhook",
             "/api/payment/videoEarningAndSales",
             "/api/payment/topEarners",
