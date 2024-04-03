@@ -22,6 +22,10 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     List<VideoPurchase> getVideoPurchaseByUserId(String userId);
 
+    Page<VideoPurchase> findByUserId(String userId, Pageable pageable);
+
+    Page<VideoPurchase> findByUserIdAndVideoOwnerUserId(String userId, String videoOwnerUserId, Pageable pageable);
+
 
     @Query("SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId")
     BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserId);

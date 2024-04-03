@@ -24,6 +24,8 @@ import com.pding.paymentservice.util.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -270,6 +272,28 @@ public class VideoPurchaseService {
         try {
             List<VideoPurchase> videoTransactions = getAllTransactionsForUser(userId);
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> getVideoTransactions(String pdId, int page, int size, int sort) {
+        try {
+            String userId = authHelper.getUserId();
+            Page<VideoPurchase> videoTransactions = Page.empty();
+            if (sort == 0 || sort == 1) {
+                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
+                if (pdId == null) {
+                    videoTransactions = videoPurchaseRepository.findByUserId(userId, pageable);
+                } else {
+                    videoTransactions = videoPurchaseRepository.findByUserIdAndVideoOwnerUserId(userId, pdId, pageable);
+                }
+            } else if (sort == 2) {
+
+            }
+
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
