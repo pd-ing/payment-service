@@ -51,8 +51,8 @@ public class DonationServiceController {
     }
 
     @GetMapping(value = "/topDonorsList")
-    public ResponseEntity<?> getDonationHistoryForPd(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "limit") Long limit) {
-        return donationService.getTopDonors(pdUserId, limit);
+    public ResponseEntity<?> getDonationHistoryForPd(@RequestParam(value = "limit") Long limit) {
+        return donationService.getTopDonors(limit);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
