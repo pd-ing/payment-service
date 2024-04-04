@@ -37,17 +37,14 @@ public class PaymentHistoryTabService {
         PaymentHistory paymentHistory = new PaymentHistory();
         paymentHistory.setNumberOfTreesChargedInCurrentMonth(BigDecimal.valueOf(0.0)); // Default value
         String userStripeID = ""; //Keep empty for all users
-        String sortBy = "asc";
         Pageable pageable;
         if(sortOrder == 0){
             pageable = PageRequest.of(page, size, Sort.by("purchase_date").ascending());
         }
         else{
-            sortBy = "desc";
             pageable = PageRequest.of(page, size, Sort.by("purchase_date").descending());
         }
-        // Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate, endDate, pageable);
-         Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate, endDate, sortBy, pageable);
+         Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate, endDate, pageable);
         List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
         paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
         return paymentHistory;
