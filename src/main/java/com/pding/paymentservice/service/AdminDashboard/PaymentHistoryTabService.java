@@ -39,7 +39,7 @@ public class PaymentHistoryTabService {
         String userStripeID = ""; //Keep empty for all users
         String sortBy = ( sortOrder == 0 ? "DESC" : "ASC");
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate == null ? null :startDate.toString(), endDate == null ? null : endDate.toString(), sortBy, pageable);
+        Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate, endDate, pageable);
         List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
         paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
         return paymentHistory;

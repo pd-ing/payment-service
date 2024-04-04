@@ -42,13 +42,12 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
             "FROM wallet_history wh " +
             "LEFT JOIN users u ON wh.user_id = u.id " +
             "WHERE (:startDate IS NULL OR wh.purchase_date >= :startDate) " +
-            "AND (:endDate IS NULL OR wh.purchase_date <= :endDate) ",
+            "AND (:endDate IS NULL OR wh.purchase_date <= :endDate) " +
+            "ORDER BY wh.purchase_date DESC",
             countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE (:startDate IS NULL OR wh.purchase_date >= :startDate) "+
                          "AND (:endDate IS NULL OR wh.purchase_date <= :endDate)",
             nativeQuery = true)
-    Page<Object[]> getPaymentHistoryForAllUsers(@Param("startDate") String startDate,
-                                                @Param("endDate") String endDate,
-                                                String sortBy, Pageable pageable);
+    Page<Object[]> getPaymentHistoryForAllUsers(LocalDate startDate, LocalDate endDate, Pageable pageable);
 
 }
 
