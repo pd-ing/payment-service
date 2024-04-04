@@ -35,10 +35,15 @@ public class EarningServiceController {
     @GetMapping(value = "/getPurchaserOfVideo")
     public ResponseEntity<?> purchaserListOfVideo(
             @RequestParam String videoId,
+            @RequestParam(required = false) String userIds,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size
     ) {
-        return videoPurchaseService.loadPurchaseListOfSellerResponse(videoId, page, size);
+        if (userIds == null || userIds.isEmpty()) {
+            return videoPurchaseService.loadPurchaseListOfSellerResponse(videoId, page, size);
+        } else {
+            return videoPurchaseService.loadPurchaseListOfSellerResponse(videoId, userIds, page, size);
+        }
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

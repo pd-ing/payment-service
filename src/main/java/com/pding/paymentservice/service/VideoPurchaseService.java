@@ -353,6 +353,16 @@ public class VideoPurchaseService {
         }
     }
 
+    public ResponseEntity<?> loadPurchaseListOfSellerResponse(String videoId, String onlyForTheseUsersList, int page, int size) {
+        try {
+            List<String> users = Arrays.stream(onlyForTheseUsersList.split(",")).toList().stream().map(String::trim).toList();
+            return ResponseEntity.ok(loadPurchaseListOfSellerOnlyForSomeUsers(videoId, users, page, size));
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
     private PaginationInfoWithGenericList<VideoPurchaserInfo> convertToResponse(Page<VideoPurchase> dataList) throws Exception {
         List<VideoPurchase> dataContent = dataList.getContent();
         Set<String> userIds = dataContent.stream().parallel().map(VideoPurchase::getUserId).collect(Collectors.toSet());
@@ -396,6 +406,18 @@ public class VideoPurchaseService {
             Page<VideoPurchase> pageData = videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest);
 
             return convertToResponse(pageData);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return null;
+        }
+    }
+
+    private List<VideoPurchaserInfo> loadPurchaseListOfSellerOnlyForSomeUsers(String videoId, List<String> onlyForTheseUsersList, int page, int size) {
+        try {
+            PageRequest pageRequest = PageRequest.of(page, size);
+            Page<VideoPurchase> pageData = videoPurchaseRepository.findAllByVideoIdAndUserIdInOrderByLastUpdateDateDesc(videoId, onlyForTheseUsersList, pageRequest);
+
+            return convertToResponse(pageData).getContent();
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return null;

@@ -79,6 +79,8 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     Page<VideoPurchase> findAllByVideoIdOrderByLastUpdateDateDesc(String videoId, Pageable pageable);
 
+    Page<VideoPurchase> findAllByVideoIdAndUserIdInOrderByLastUpdateDateDesc(String videoId, List<String> onlyTheseUsersList, Pageable pageable);
+
     @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId")
     BigDecimal getTotalTreesConsumedByUserId(@Param("userId") String userId);
 }
