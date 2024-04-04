@@ -130,7 +130,7 @@ public class AdminDashboardUserPaymentStatsController {
     @GetMapping(value = "/paymentHistoryAllUsersTab")
     public ResponseEntity<?> getPaymentHistoryForAllUsersTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                               @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                                                                              @RequestParam(defaultValue = "1") @Min(0) @Max(1) int sortOrder,
+                                                                              @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
                                                                               @RequestParam(defaultValue = "0") @Min(0) int page,
                                                                               @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size) {
         PaymentHistory paymentHistory = null;
