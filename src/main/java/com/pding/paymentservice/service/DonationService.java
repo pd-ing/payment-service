@@ -12,6 +12,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.donation.DonationHistoryResponse;
+import com.pding.paymentservice.payload.response.donation.DonationHistoryWithVideoStatsResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.repository.DonationRepository;
@@ -98,6 +99,30 @@ public class DonationService {
             donation.setUserEmailId(giftDonationHistory[0].toString());
             donation.setDonatedTrees(giftDonationHistory[1].toString());
             donation.setLastUpdateDate(giftDonationHistory[2].toString());
+
+            donationList.add(donation);
+        }
+        return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
+    }
+
+    public Page<DonationHistoryWithVideoStatsResponse> pdDonationHistoryWithVideoStats(String pdUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").ascending());
+
+        List<DonationHistoryWithVideoStatsResponse> donationList = new ArrayList<>();
+        Long totalVideosUploadedByUser = donationRepository.countTotalVideosUploadedByPdUserId(pdUserId);
+        Page<Object[]> donationPage = donationRepository.findDonationHistoryWithVideoStatsByPdUserId(pdUserId, pageable);
+
+        for (Object innerObject : donationPage.getContent()) {
+
+            Object[] giftDonationHistory = (Object[]) innerObject;
+
+            DonationHistoryWithVideoStatsResponse donation = new DonationHistoryWithVideoStatsResponse();
+            donation.setUserEmailId(giftDonationHistory[0].toString());
+            donation.setDonatedTrees(giftDonationHistory[1].toString());
+            donation.setLastUpdateDate(giftDonationHistory[2].toString());
+            donation.setTotalVideosWatchedByUser(giftDonationHistory[3].toString());
+            donation.setTotalVideosUploadedByPD(totalVideosUploadedByUser.toString());
+            donation.setRecentDonation(giftDonationHistory[4].toString());
 
             donationList.add(donation);
         }

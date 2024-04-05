@@ -10,6 +10,7 @@ import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.donation.DonationHistoryResponse;
+import com.pding.paymentservice.payload.response.donation.DonationHistoryWithVideoStatsResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.security.AuthHelper;
@@ -98,6 +99,19 @@ public class DonationServiceController {
         try {
             String pdUserId = authHelper.getUserId();
             Page<DonationHistoryResponse> userDonationHistory = donationService.pdDonationHistory(pdUserId, page, size);
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, userDonationHistory));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.DONATION_HISTORY_FOR_PD, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping(value = "/donationHistoryWithVideoStatsForPd")
+    public ResponseEntity<?> getDonationHistoryWithVideoStatsForPd(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+        try {
+            String pdUserId = authHelper.getUserId();
+            Page<DonationHistoryWithVideoStatsResponse> userDonationHistory = donationService.pdDonationHistoryWithVideoStats(pdUserId, page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, userDonationHistory));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.DONATION_HISTORY_FOR_PD, e);
