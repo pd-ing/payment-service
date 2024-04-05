@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
+import com.pding.paymentservice.payload.request.PaymentHistoryAllUsersRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
@@ -11,8 +12,10 @@ import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -120,6 +124,24 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, giftHistory));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), giftHistory));
+        }
+    }
+
+    @GetMapping(value = "/paymentHistoryAllUsersTab")
+    public ResponseEntity<?> getPaymentHistoryForAllUsersTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                                              @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                                              @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                              @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size) {
+        PaymentHistory paymentHistory = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            paymentHistory = adminDashboardUserPaymentStatsService.getPaymentHistoryForAllUsers(startDate, endDate, sortOrder, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, paymentHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), paymentHistory));
         }
     }
 

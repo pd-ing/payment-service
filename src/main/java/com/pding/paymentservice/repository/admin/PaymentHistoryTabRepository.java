@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory, String> {
 
@@ -25,14 +26,29 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
     @Query(value = "SELECT COALESCE(wh.purchase_date, ''), " +
             "COALESCE(wh.purchased_trees, '0.0'), " +
             "COALESCE(wh.purchased_leafs, '0.0'), " +
-            "COALESCE(wh.amount, '0.0') " +
+            "COALESCE(wh.amount, '0.0'), " +
+            "' ' AS email " + //return empty email in this case
             "FROM wallet_history wh " +
             "LEFT JOIN users u ON wh.user_id = u.id " +
             "WHERE wh.user_id = ?1 " +
             "ORDER BY wh.purchase_date",
             countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE wh.user_id = ?1",
             nativeQuery = true)
-    Page<Object[]> findPayentHistoryByUserId(String userId, Pageable pageable);
+    Page<Object[]> findPaymentHistoryByUserId(String userId, Pageable pageable);
+
+    @Query(value = "SELECT COALESCE(wh.purchase_date, ''), " +
+            "COALESCE(wh.purchased_trees, '0.0'), " +
+            "COALESCE(wh.purchased_leafs, '0.0'), " +
+            "COALESCE(wh.amount, '0.0'), " +
+            "COALESCE(u.email, '') " +
+            "FROM wallet_history wh " +
+            "LEFT JOIN users u ON wh.user_id = u.id " +
+            "WHERE (:startDate IS NULL OR wh.purchase_date >= :startDate) " +
+            "AND (:endDate IS NULL OR wh.purchase_date <= :endDate) ",
+            countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE (:startDate IS NULL OR wh.purchase_date >= :startDate) "+
+                    "AND (:endDate IS NULL OR wh.purchase_date <= :endDate)",
+            nativeQuery = true)
+    Page<Object[]> getPaymentHistoryForAllUsers(LocalDate startDate, LocalDate endDate, Pageable pageable);
 
 }
 

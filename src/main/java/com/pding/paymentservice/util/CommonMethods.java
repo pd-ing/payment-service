@@ -78,12 +78,17 @@ public class CommonMethods {
     }
 
     public static String calculateFeeAndTax(String amountPaid) {
-        BigDecimal totalAmount = new BigDecimal(amountPaid).divide(new BigDecimal("100"));
-        BigDecimal taxAmount = totalAmount.divide(new BigDecimal("11"), 0, BigDecimal.ROUND_DOWN);
-        BigDecimal baseAmount = totalAmount.subtract(taxAmount);
-        String result = baseAmount.setScale(0) + "$ + VAT " + taxAmount + "$";
+        try {
+            BigDecimal totalAmount = new BigDecimal(amountPaid).divide(new BigDecimal("100"));
+            BigDecimal taxAmount = totalAmount.divide(new BigDecimal("11"), 0, BigDecimal.ROUND_DOWN);
+            BigDecimal baseAmount = totalAmount.subtract(taxAmount);
+            String result = baseAmount.setScale(0) + "$ + VAT " + taxAmount + "$";
 
-        return result;
+            return result;
+        } catch (Exception e) {
+            return amountPaid + " in cents/dollars";
+        }
+
     }
 
 }
