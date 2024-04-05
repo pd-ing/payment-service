@@ -43,6 +43,16 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.getVideoTransactions(authHelper.getUserId());
     }
 
+    @GetMapping(value = "/videoPurchaseHistoryOfUser")
+    public ResponseEntity<?> getVideoTransactionsPageable(
+            @RequestParam(value = "creatorUserId", required = false) String creatorUserId,
+            @RequestParam(value = "sort", defaultValue = "1") int sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int pageSize
+    ) {
+        return videoPurchaseService.getVideoTransactions(creatorUserId, page, pageSize, sort);
+    }
+
 //    @GetMapping(value = "/treesEarned")
 //    public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserId") String videoOwnerUserId) {
 //        return videoPurchaseService.getTreesEarned(videoOwnerUserId);

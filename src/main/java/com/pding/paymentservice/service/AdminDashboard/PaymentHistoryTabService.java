@@ -3,6 +3,7 @@ package com.pding.paymentservice.service.AdminDashboard;
 import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.PaymentHistoryForAdminDashboard;
 import com.pding.paymentservice.repository.admin.PaymentHistoryTabRepository;
+import com.pding.paymentservice.util.CommonMethods;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -20,6 +21,7 @@ public class PaymentHistoryTabService {
 
     @Autowired
     TokenSigner tokenSigner;
+
 
     public PaymentHistory getPaymentHistory(String userId, int page, int size) {
         PaymentHistory paymentHistory = new PaymentHistory();
@@ -65,9 +67,10 @@ public class PaymentHistoryTabService {
             phadObj.setPurchaseDate(paymentHistory[0].toString());
             phadObj.setTreeOrLeaf(purchasedLeafs > 0 ? "Leaf" : purchasedTrees > 0 ? "Tree" : " ");
             phadObj.setAmount(purchasedLeafs > 0 ? paymentHistory[2].toString() : paymentHistory[1].toString());
-            phadObj.setAmountInDollarsWithTax(paymentHistory[3].toString());
+            phadObj.setAmountInDollarsWithTax(CommonMethods.calculateFeeAndTax(paymentHistory[3].toString()));
             phadList.add(phadObj);
         }
         return phadList;
     }
+
 }

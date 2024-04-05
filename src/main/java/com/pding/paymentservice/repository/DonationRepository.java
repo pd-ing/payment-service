@@ -1,6 +1,8 @@
 package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.Donation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +14,25 @@ import java.util.stream.Collectors;
 public interface DonationRepository extends JpaRepository<Donation, String> {
     List<Donation> findByDonorUserId(String donorUserId);
 
-    List<Donation> findByPdUserId(String pdUserId);
+    @Query(value = "SELECT u.email AS donor_email, d.donated_trees, d.last_update_date " +
+            "FROM donation d " +
+            "JOIN users u ON d.donor_user_id = u.id " +
+            "WHERE d.pd_user_id = ?1 ORDER BY d.last_update_date ASC", countQuery = "SELECT count(d.id) FROM Donation d WHERE d.pd_user_id = ?1", nativeQuery = true)
+    Page<Object[]> findByPdUserId(String pdUserId, Pageable pageable);
+
+    @Query(value = "SELECT u.email AS donor_email, d.donated_trees, d.last_update_date, " +
+            "(SELECT COUNT(vp.id) FROM video_purchase vp WHERE vp.user_id = d.donor_user_id AND vp.video_owner_user_id = d.pd_user_id) AS total_videos_purchased, " +
+            "(SELECT d2.donated_trees FROM donation d2 WHERE d2.donor_user_id = d.donor_user_id AND d2.pd_user_id = d.pd_user_id ORDER BY d2.last_update_date DESC LIMIT 1) AS recent_donation " +
+            "FROM donation d " +
+            "JOIN users u ON d.donor_user_id = u.id " +
+            "WHERE d.pd_user_id = ?1 " +
+            "ORDER BY d.last_update_date ASC",
+            countQuery = "SELECT COUNT(d.id) FROM donation d WHERE d.pd_user_id = ?1",
+            nativeQuery = true)
+    Page<Object[]> findDonationHistoryWithVideoStatsByPdUserId(String pdUserId, Pageable pageable);
+
+    @Query(value = "SELECT COUNT(*) FROM videos v WHERE v.user_id = ?1", nativeQuery = true)
+    Long countTotalVideosUploadedByPdUserId(String pdUserId);
 
     @Query("SELECT d.donorUserId, SUM(d.donatedTrees) as totalDonatedTrees " +
             "FROM Donation d " +

@@ -29,6 +29,7 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
             "COALESCE(wh.amount, '0.0'), " +
             "' ' AS email " + //return empty email in this case
             "FROM wallet_history wh " +
+            "LEFT JOIN users u ON wh.user_id = u.id " +
             "WHERE wh.user_id = ?1 " +
             "ORDER BY wh.purchase_date",
             countQuery = "SELECT COUNT(*) FROM wallet_history wh WHERE wh.user_id = ?1",

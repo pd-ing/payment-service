@@ -10,7 +10,11 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
+import com.pding.paymentservice.payload.response.donation.DonationHistoryResponse;
+import com.pding.paymentservice.payload.response.donation.DonationHistoryWithVideoStatsResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
+import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 
 import com.pding.paymentservice.security.AuthHelper;
@@ -18,12 +22,19 @@ import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +86,47 @@ public class DonationService {
         return donationRepository.findByDonorUserId(userId);
     }
 
-    public List<Donation> pdDonationHistory(String pdUserId) {
-        return donationRepository.findByPdUserId(pdUserId);
+    public Page<DonationHistoryResponse> pdDonationHistory(String pdUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").ascending());
+
+        List<DonationHistoryResponse> donationList = new ArrayList<>();
+        Page<Object[]> donationPage = donationRepository.findByPdUserId(pdUserId, pageable);
+        for (Object innerObject : donationPage.getContent()) {
+
+            Object[] giftDonationHistory = (Object[]) innerObject;
+
+            DonationHistoryResponse donation = new DonationHistoryResponse();
+            donation.setUserEmailId(giftDonationHistory[0].toString());
+            donation.setDonatedTrees(giftDonationHistory[1].toString());
+            donation.setLastUpdateDate(giftDonationHistory[2].toString());
+
+            donationList.add(donation);
+        }
+        return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
+    }
+
+    public Page<DonationHistoryWithVideoStatsResponse> pdDonationHistoryWithVideoStats(String pdUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").ascending());
+
+        List<DonationHistoryWithVideoStatsResponse> donationList = new ArrayList<>();
+        Long totalVideosUploadedByUser = donationRepository.countTotalVideosUploadedByPdUserId(pdUserId);
+        Page<Object[]> donationPage = donationRepository.findDonationHistoryWithVideoStatsByPdUserId(pdUserId, pageable);
+
+        for (Object innerObject : donationPage.getContent()) {
+
+            Object[] giftDonationHistory = (Object[]) innerObject;
+
+            DonationHistoryWithVideoStatsResponse donation = new DonationHistoryWithVideoStatsResponse();
+            donation.setUserEmailId(giftDonationHistory[0].toString());
+            donation.setDonatedTrees(giftDonationHistory[1].toString());
+            donation.setLastUpdateDate(giftDonationHistory[2].toString());
+            donation.setTotalVideosWatchedByUser(giftDonationHistory[3].toString());
+            donation.setTotalVideosUploadedByPD(totalVideosUploadedByUser.toString());
+            donation.setRecentDonation(giftDonationHistory[4].toString());
+
+            donationList.add(donation);
+        }
+        return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
     }
 
     public List<PublicUserNet> getTopDonorsInfo(String pdUserId, Long limit) throws Exception {
@@ -160,73 +210,4 @@ public class DonationService {
         }
     }
 
-
-    public ResponseEntity<?> donateToPdV2(BigDecimal trees, String pdUserId) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "PdUserId parameter is required."));
-        }
-        if (trees == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
-        }
-
-        try {
-            //Set userId from token
-            String userId = authHelper.getUserId();
-            Donation donation = createDonationTransaction(userId, trees, pdUserId);
-            return ResponseEntity.ok().body(new DonationResponse(null, donation));
-        } catch (WalletNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        } catch (InsufficientTreesException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (InvalidAmountException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.DONATE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-    public ResponseEntity<?> getDonationHistoryForUser(String userId) {
-        if (userId == null || userId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
-        }
-        try {
-            List<Donation> userDonationHistory = userDonationHistory(userId);
-
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.DONATION_HISTORY_FOR_USER, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-    public ResponseEntity<?> getDonationHistoryForPd(String pdUserId) {
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
-        try {
-            List<Donation> userDonationHistory = pdDonationHistory(pdUserId);
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, userDonationHistory));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.DONATION_HISTORY_FOR_PD, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-    public ResponseEntity<?> getTopDonors(String pdUserId, Long limit) {
-        if (limit == null || limit <= 0 || limit > 30) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "limit parameter is invalid or not passed. Please pass limit between 1-30"));
-        }
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
-        try {
-            List<PublicUserNet> publicUserNetList = getTopDonorsInfo(pdUserId, limit);
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.TOP_DONOR_LIST, e);
-            ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(errorResponse, null));
-        }
-    }
 }

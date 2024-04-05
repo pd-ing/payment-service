@@ -24,6 +24,8 @@ import com.pding.paymentservice.util.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -276,6 +278,28 @@ public class VideoPurchaseService {
         }
     }
 
+    public ResponseEntity<?> getVideoTransactions(String pdId, int page, int size, int sort) {
+        try {
+            String userId = authHelper.getUserId();
+            Page<VideoPurchase> videoTransactions = Page.empty();
+            if (sort == 0 || sort == 1) {
+                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
+                if (pdId == null) {
+                    videoTransactions = videoPurchaseRepository.findByUserId(userId, pageable);
+                } else {
+                    videoTransactions = videoPurchaseRepository.findByUserIdAndVideoOwnerUserId(userId, pdId, pageable);
+                }
+            } else if (sort == 2) {
+
+            }
+
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList()));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
     public ResponseEntity<?> getTreesEarned(String videoOwnerUserId) {
         if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserID parameter is required."));
@@ -329,6 +353,16 @@ public class VideoPurchaseService {
         }
     }
 
+    public ResponseEntity<?> loadPurchaseListOfSellerResponse(String videoId, String onlyForTheseUsersList, int page, int size) {
+        try {
+            List<String> users = Arrays.stream(onlyForTheseUsersList.split(",")).toList().stream().map(String::trim).toList();
+            return ResponseEntity.ok(loadPurchaseListOfSellerOnlyForSomeUsers(videoId, users, page, size));
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
     private PaginationInfoWithGenericList<VideoPurchaserInfo> convertToResponse(Page<VideoPurchase> dataList) throws Exception {
         List<VideoPurchase> dataContent = dataList.getContent();
         Set<String> userIds = dataContent.stream().parallel().map(VideoPurchase::getUserId).collect(Collectors.toSet());
@@ -372,6 +406,18 @@ public class VideoPurchaseService {
             Page<VideoPurchase> pageData = videoPurchaseRepository.findAllByVideoIdOrderByLastUpdateDateDesc(videoId, pageRequest);
 
             return convertToResponse(pageData);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return null;
+        }
+    }
+
+    private List<VideoPurchaserInfo> loadPurchaseListOfSellerOnlyForSomeUsers(String videoId, List<String> onlyForTheseUsersList, int page, int size) {
+        try {
+            PageRequest pageRequest = PageRequest.of(page, size);
+            Page<VideoPurchase> pageData = videoPurchaseRepository.findAllByVideoIdAndUserIdInOrderByLastUpdateDateDesc(videoId, onlyForTheseUsersList, pageRequest);
+
+            return convertToResponse(pageData).getContent();
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return null;
