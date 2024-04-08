@@ -20,6 +20,7 @@ import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 @Service
 @Slf4j
@@ -281,16 +283,33 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> getAllWithDrawTransactions(int page, int size) {
+    public ResponseEntity<?> getAllWithDrawTransactions(int page, int size, int sortOrder) {
         try {
             String pdUserId = authHelper.getUserId();
 
-            PageRequest pageRequest = PageRequest.of(page, size);
+            // Define custom sorting comparator, To show all the data with status as complete first and then rest of the data
+            Comparator<Withdrawal> customComparator = (w1, w2) -> {
+                if (w1.getStatus() == WithdrawalStatus.COMPLETE && w2.getStatus() != WithdrawalStatus.COMPLETE) {
+                    return -1; // w1 comes before w2
+                } else if (w1.getStatus() != WithdrawalStatus.COMPLETE && w2.getStatus() == WithdrawalStatus.COMPLETE) {
+                    return 1; // w2 comes before w1
+                } else {
+                    // If both have the same status or both are not "complete", sort by created date
+                    return w1.getCreatedDate().compareTo(w2.getCreatedDate());
+                }
+            };
+
+            // Define sorting criteria based on createdDate
+            Sort sort = sortOrder == 0 ?
+                    Sort.by(Sort.Direction.ASC, "createdDate") :
+                    Sort.by(Sort.Direction.DESC, "createdDate");
+            PageRequest pageRequest = PageRequest.of(page, size, sort);
 
             Page<Withdrawal> withdrawalPage = withdrawalRepository.findAll(pageRequest);
 
-            List<Withdrawal> withdrawalList = withdrawalPage.getContent();
-
+            //List<Withdrawal> withdrawalList = withdrawalPage.getContent();
+            List<Withdrawal> withdrawalList = new ArrayList<>(withdrawalPage.getContent());
+            withdrawalList.sort(customComparator);
             List<WithdrawalResponseWithStripeId> withdrawalResponseWithStripeIds = createWithDrawResponseWithStripeId(withdrawalList);
 
             // Create a PaginationInfo object with embedded response list

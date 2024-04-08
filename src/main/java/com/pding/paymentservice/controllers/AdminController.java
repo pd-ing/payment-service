@@ -7,6 +7,7 @@ import com.pding.paymentservice.service.AdminService;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.WithdrawalService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,8 +39,9 @@ public class AdminController {
 
     @GetMapping(value = "/admin/allWithDrawTransactions")
     public ResponseEntity<?> allWithDrawTransactions(@RequestParam(defaultValue = "0") @Min(0) int page,
-                                                     @RequestParam(defaultValue = "10") @Min(1) int size) {
-        return withdrawalService.getAllWithDrawTransactions(page, size);
+                                                     @RequestParam(defaultValue = "10") @Min(1) int size,
+                                                     @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder) {
+        return withdrawalService.getAllWithDrawTransactions(page, size, sortOrder);
     }
 
     @GetMapping(value = "/admin/pendingWithDrawTransactions")
@@ -51,7 +53,7 @@ public class AdminController {
     public ResponseEntity<?> balanceTrees() {
         return adminService.balanceTrees();
     }
-    
+
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
