@@ -213,10 +213,11 @@ public class PaymentService {
             String transactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
             Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
             if (walletHistoryRefundEntryOptional.isPresent()) {
+                WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
                 String description = walletHistory.getDescription() + ", Refund completed successfully";
-                walletHistory.setDescription(description);
-                walletHistory.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
-                walletHistoryService.save(walletHistory);
+                walletHistoryRefundRecord.setDescription(description);
+                walletHistoryRefundRecord.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
+                walletHistoryService.save(walletHistoryRefundRecord);
             } else {
                 walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
                         walletHistory.getUserId(),
