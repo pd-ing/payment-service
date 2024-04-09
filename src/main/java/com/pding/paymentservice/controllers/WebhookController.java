@@ -8,6 +8,7 @@ import com.pding.paymentservice.service.WithdrawalService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.stripe.model.Charge;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Refund;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import com.stripe.model.Event;
 import com.stripe.net.Webhook;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -43,6 +45,8 @@ public class WebhookController {
 
     @Autowired
     WalletHistoryService walletHistoryService;
+
+    Long valueOfOneTreeInCents = 11L;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
@@ -78,10 +82,17 @@ public class WebhookController {
                 case "charge.refunded":
                     Charge charge = (Charge) event.getData().getObject();
                     paymentIntentId = charge.getPaymentIntent();
-                    Long valueOfOneTreeInCents = 11L;
                     Long amountToRefundInCents = charge.getAmountRefunded();
-                    Long treesToRefund = amountToRefundInCents / valueOfOneTreeInCents;
+                    long treesToRefund = amountToRefundInCents / valueOfOneTreeInCents;
                     message = paymentService.completeRefundTrees(new BigDecimal(amountToRefundInCents), new BigDecimal(treesToRefund), paymentIntentId);
+                    break;
+                case "charge.refund.updated":
+                    Refund refund = (Refund) event.getData().getObject();
+                    long treesToAdd = (refund.getAmount() / valueOfOneTreeInCents);
+                    String transactionId = treesToAdd + "_trees_refunded_for_" + refund.getPaymentIntent();
+                    if (refund.getStatus().equals("canceled")) {
+                        message = paymentService.cancelRefundTrees(new BigDecimal(treesToAdd), transactionId);
+                    }
                     break;
                 default:
                     break;

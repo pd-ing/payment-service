@@ -231,8 +231,28 @@ public class PaymentService {
         }
     }
 
-    //This API was used 1 time, when the case where payment initially fails and later succeeded cases was not handled
 
+    @Transactional
+    public String cancelRefundTrees(BigDecimal treeToAdd, String paymentIntentId) {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+
+            String description = walletHistory.getDescription() + ", Refund cancelled";
+            walletHistory.setDescription(description);
+            walletHistory.setTransactionStatus(TransactionType.REFUND_CANCELLED.getDisplayName());
+            walletHistoryService.save(walletHistory);
+
+            walletService.addToWallet(walletHistory.getUserId(), treeToAdd, new BigDecimal(0), LocalDateTime.now());
+            ledgerService.saveToLedger(walletHistory.getWalletId(), treeToAdd, new BigDecimal(0), TransactionType.REFUND_CANCELLED, walletHistory.getUserId());
+
+            return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesAddedBack:" + treeToAdd;
+        } else {
+            throw new RuntimeException("Cancelling Refund failed because record not found in wallet history for transactionId:" + paymentIntentId);
+        }
+    }
+
+    //This API was used 1 time, when the case where payment initially fails and later succeeded cases was not handled
     @Transactional
     public List<String> clearPaymentWhichFailedInitiallyButSucceededLater() {
         List<String> result = new ArrayList<>();
