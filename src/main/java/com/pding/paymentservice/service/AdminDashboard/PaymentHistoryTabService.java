@@ -1,7 +1,9 @@
 package com.pding.paymentservice.service.AdminDashboard;
 
 import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.PaymentHistoryForAdminDashboard;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.VideoPurchaseHistoryForAdminDashboard;
 import com.pding.paymentservice.repository.admin.PaymentHistoryTabRepository;
 import com.pding.paymentservice.util.CommonMethods;
 import com.pding.paymentservice.util.TokenSigner;
@@ -48,6 +50,15 @@ public class PaymentHistoryTabService {
         }
          Page<Object[]> phadPage = paymentHistoryTabRepository.getPaymentHistoryForAllUsers(startDate, endDate, pageable);
         List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), userStripeID);
+        paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
+        return paymentHistory;
+    }
+
+    public PaymentHistory searchByEmail(String searchString, int page, int size) {
+        PaymentHistory paymentHistory = new PaymentHistory();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> phadPage = paymentHistoryTabRepository.findPaymentHistoryByEmailId(searchString, pageable);
+        List<PaymentHistoryForAdminDashboard> phadList = createPaymentHistoryList(phadPage.getContent(), "");
         paymentHistory.setPaymentHistoryForAdminDashboardList(new PageImpl<>(phadList, pageable, phadPage.getTotalElements()));
         return paymentHistory;
     }

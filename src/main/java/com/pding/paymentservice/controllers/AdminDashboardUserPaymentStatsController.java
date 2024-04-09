@@ -145,6 +145,18 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/paymentHistoryTabSearchByEmail")
+    public ResponseEntity<?> getPaymentHistoryAllUsersTabDetailsSearchEmailController(@RequestParam(value = "searchString") @NotBlank String searchString,
+                                                                              @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                              @RequestParam(defaultValue = "10") @Min(1) int size) {
+        PaymentHistory paymentHistory = null;
+        try {
+            paymentHistory = adminDashboardUserPaymentStatsService.searchPaymentHistoryByEmail(searchString, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, paymentHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), paymentHistory));
+        }
+    }
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
