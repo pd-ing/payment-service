@@ -1,6 +1,6 @@
 package com.pding.paymentservice.payload.response;
 
-import com.pding.paymentservice.models.VideoEarningsAndSales;
+import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

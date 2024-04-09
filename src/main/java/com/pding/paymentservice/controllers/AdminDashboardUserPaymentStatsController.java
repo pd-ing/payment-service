@@ -1,9 +1,8 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
-import com.pding.paymentservice.payload.request.PaymentHistoryAllUsersRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;

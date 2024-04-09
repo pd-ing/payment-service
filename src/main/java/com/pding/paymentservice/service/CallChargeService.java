@@ -10,7 +10,7 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.payload.response.GenericStringResponse;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.repository.CallRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;

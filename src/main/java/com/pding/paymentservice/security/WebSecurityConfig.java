@@ -82,6 +82,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/clearPendingAndStalePayments/**").permitAll()
                                 .requestMatchers("/api/payment/paymentsFailedInitiallyButSucceededLater").permitAll()
                                 .requestMatchers("/api/payment/treeSpentHistory").authenticated()
+                                .requestMatchers("/api/payment/updateRewardSettings").authenticated()
+                                .requestMatchers("/api/payment/getRewardSettings").authenticated()
 
 
                 );
