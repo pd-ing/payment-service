@@ -21,6 +21,8 @@ public enum TransactionType {
 
     PAYMENT_FAILED("paymentFailed"),
 
+    REFUND_COMPLETED("refundCompleted"),
+
     ADD_TREES_FROM_BACKEND("addTreesFromBackend"),
 
     REMOVE_TREES_FROM_BACKEND("removeTreesFromBackend");

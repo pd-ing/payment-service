@@ -76,7 +76,7 @@ public class DonationService {
         Donation donation = donationRepository.save(transaction);
 
         earningService.addTreesToEarning(PdUserId, treesToDonate);
-        ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION);
+        ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION, userId);
 
         return donation;
     }
