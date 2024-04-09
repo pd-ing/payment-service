@@ -214,7 +214,7 @@ public class PaymentService {
             Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(transactionId);
             if (walletHistoryRefundEntryOptional.isPresent()) {
                 WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
-                String description = walletHistory.getDescription() + ", Refund completed successfully";
+                String description = walletHistoryRefundRecord.getDescription() + ", Refund completed successfully";
                 walletHistoryRefundRecord.setDescription(description);
                 walletHistoryRefundRecord.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
                 walletHistoryService.save(walletHistoryRefundRecord);
