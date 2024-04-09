@@ -209,19 +209,30 @@ public class PaymentService {
                         ", treesInWallet:" + userWallet.getTrees() + " , refundRequestAmtInTrees:" + treesToRefund);
             }
 
-            walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
-                    walletHistory.getUserId(),
-                    treesToRefund,
-                    new BigDecimal(0),
-                    LocalDateTime.now(),
-                    treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId(),
-                    TransactionType.REFUND_COMPLETED.getDisplayName(),
-                    amountInCents,
-                    "Refunded through stripe",
-                    walletHistory.getCurrency(),
-                    "Refund completed successfully",
-                    walletHistory.getIpAddress()
-            );
+
+            String transactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
+            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+            if (walletHistoryRefundEntryOptional.isPresent()) {
+                String description = walletHistory.getDescription() + ", Refund completed successfully";
+                walletHistory.setDescription(description);
+                walletHistory.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
+                walletHistoryService.save(walletHistory);
+            } else {
+                walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
+                        walletHistory.getUserId(),
+                        treesToRefund,
+                        new BigDecimal(0),
+                        LocalDateTime.now(),
+                        transactionId,
+                        TransactionType.REFUND_COMPLETED.getDisplayName(),
+                        amountInCents,
+                        "Refunded through stripe",
+                        walletHistory.getCurrency(),
+                        "Refund completed successfully",
+                        walletHistory.getIpAddress()
+                );
+            }
+
             walletService.deductTreesFromWallet(walletHistory.getUserId(), treesToRefund);
             ledgerService.saveToLedger(walletHistory.getWalletId(), treesToRefund, new BigDecimal(0), TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
 
