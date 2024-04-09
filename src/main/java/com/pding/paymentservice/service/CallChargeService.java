@@ -61,7 +61,7 @@ public class CallChargeService {
         callRepository.save(callDetails);
 
         earningService.addLeafsToEarning(pddUserId, leafsToCharge);
-        ledgerService.saveToLedger(callDetails.getId(), new BigDecimal(0), leafsToCharge, callType);
+        ledgerService.saveToLedger(callDetails.getId(), new BigDecimal(0), leafsToCharge, callType, userId);
 
         return "Leafs charge was successful";
     }

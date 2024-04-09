@@ -48,9 +48,13 @@ public class Ledger {
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType; // "Purchase", "Donation", "Withdrawal", etc.
 
+    private String userId;
+
     // referenceId can be walletId, videoId, withdrawId, donationId, earningId
-    public Ledger(String referenceId, BigDecimal treesTransacted, BigDecimal leafsTransacted, TransactionType transactionType) {
+    public Ledger(String referenceId, BigDecimal treesTransacted, BigDecimal leafsTransacted, TransactionType transactionType, String userId) {
         if (transactionType.equals(TransactionType.TREE_PURCHASE) || transactionType.equals(TransactionType.LEAF_PURCHASE)) {
+            this.walletId = referenceId;
+        } else if (transactionType.equals(TransactionType.PAYMENT_COMPLETED) || transactionType.equals(TransactionType.PAYMENT_FAILED) || transactionType.equals(TransactionType.REFUND_COMPLETED)) {
             this.walletId = referenceId;
         } else if (transactionType.equals(TransactionType.VIDEO_PURCHASE)) {
             this.videoId = referenceId;
@@ -66,7 +70,7 @@ public class Ledger {
         this.treesTransacted = treesTransacted;
         this.transactionType = transactionType;
         this.timestamp = LocalDateTime.now();
-
+        this.userId = userId;
     }
 }
 
