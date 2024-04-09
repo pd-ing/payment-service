@@ -211,7 +211,7 @@ public class PaymentService {
 
 
             String transactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
-            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(transactionId);
             if (walletHistoryRefundEntryOptional.isPresent()) {
                 WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
                 String description = walletHistory.getDescription() + ", Refund completed successfully";
