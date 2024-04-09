@@ -103,6 +103,9 @@ public class AdminDashboardUserPaymentStatsService {
         return paymentHistoryTabService.getPaymentHistoryAllUsers(startDate, endDate, sortOrder, page, size);
     }
 
+    public PaymentHistory searchPaymentHistoryByEmail(String searchString, int page, int size) {
+        return paymentHistoryTabService.searchByEmail(searchString, page, size);
+    }
 
     public GiftHistory getGiftHistoryTabDetails(String userId, int page, int size) {
         return giftHistoryTabService.getGiftHistoryTabDetails(userId, page, size);
