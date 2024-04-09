@@ -145,10 +145,10 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
-    @GetMapping(value = "/paymentHistoryTabSearchByEmail")
+    @GetMapping(value = "/paymentHistoryAllUsersSearchByEmail")
     public ResponseEntity<?> getPaymentHistoryAllUsersTabDetailsSearchEmailController(@RequestParam(value = "searchString") @NotBlank String searchString,
-                                                                              @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                                              @RequestParam(defaultValue = "10") @Min(1) int size) {
+                                                                                      @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                                      @RequestParam(defaultValue = "10") @Min(1) int size) {
         PaymentHistory paymentHistory = null;
         try {
             paymentHistory = adminDashboardUserPaymentStatsService.searchPaymentHistoryByEmail(searchString, page, size);
