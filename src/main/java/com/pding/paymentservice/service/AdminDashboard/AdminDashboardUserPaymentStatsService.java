@@ -54,7 +54,7 @@ public class AdminDashboardUserPaymentStatsService {
                 walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, new BigDecimal(0), LocalDateTime.now(), uuid.toString(), TransactionType.ADD_TREES_FROM_BACKEND.getDisplayName(),
                         new BigDecimal(0), "", "", "Added trees for the user using Admin dashbaord", "");
 
-                ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.ADD_TREES_FROM_BACKEND);
+                ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.ADD_TREES_FROM_BACKEND, userId);
 
                 return "Successfully added trees for the user";
             } else {
@@ -75,7 +75,7 @@ public class AdminDashboardUserPaymentStatsService {
             UUID uuid = UUID.randomUUID();
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, trees, new BigDecimal(0), LocalDateTime.now(), uuid.toString(), TransactionType.REMOVE_TREES_FROM_BACKEND.getDisplayName(),
                     new BigDecimal(0), "", "", "Removed trees for the user using Admin dashbaord", "");
-            ledgerService.saveToLedger(wallet.getId(), trees, new BigDecimal(0), TransactionType.REMOVE_TREES_FROM_BACKEND);
+            ledgerService.saveToLedger(wallet.getId(), trees, new BigDecimal(0), TransactionType.REMOVE_TREES_FROM_BACKEND, userId);
             return "Successfully removed trees for the user";
         } else {
             return "No wallet found for userId " + userId;

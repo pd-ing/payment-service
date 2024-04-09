@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -69,7 +70,7 @@ public class PaymentService {
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                     amount, paymentMethod, currency, description, ipAddress);
 
-            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.TREE_PURCHASE);
+            ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.TREE_PURCHASE, userId);
 
             return "Payment Details updated successfully.";
         } catch (Exception e) {
@@ -103,7 +104,7 @@ public class PaymentService {
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, paymentDetailsRequest.getTrees(), new BigDecimal(0), paymentDetailsRequest.getPurchasedDate(), paymentDetailsRequest.getTransactionId(), transactionStatus,
                     paymentDetailsRequest.getAmount(), paymentDetailsRequest.getPaymentMethod(), paymentDetailsRequest.getCurrency(), paymentDetailsRequest.getDescription(), paymentDetailsRequest.getIpAddress());
 
-            ledgerService.saveToLedger(wallet.getId(), paymentDetailsRequest.getTrees(), new BigDecimal(0), TransactionType.PAYMENT_STARTED);
+            ledgerService.saveToLedger(wallet.getId(), paymentDetailsRequest.getTrees(), new BigDecimal(0), TransactionType.PAYMENT_STARTED, userId);
 
             return "Payment started successfully for paymentIntentId " + paymentDetailsRequest.getTransactionId();
         } catch (Exception e) {
@@ -148,7 +149,7 @@ public class PaymentService {
 
         Wallet wallet = walletService.updateWalletForUser(walletHistory.getUserId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), walletHistory.getPurchaseDate());
 
-        ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED);
+        ledgerService.saveToLedger(wallet.getId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_COMPLETED, walletHistory.getUserId());
 
         String description = walletHistory.getDescription() + ", Completed payment successfully";
         walletHistory.setDescription(description);
@@ -168,7 +169,7 @@ public class PaymentService {
             if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED.getDisplayName())) {
                 return "Payment is already failed for the paymentIntentId" + paymentIntentId;
             }
-            ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED);
+            ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED, walletHistory.getUserId());
 
             String description = walletHistory.getDescription() + ", payment failed";
             walletHistory.setDescription(description);
@@ -194,8 +195,76 @@ public class PaymentService {
         }
     }
 
-    //This API was used 1 time, when the case where payment initially fails and later succeeded cases was not handled
 
+    @Transactional
+    public String completeRefundTrees(BigDecimal amountInCents, BigDecimal treesToRefund, String paymentIntentId) {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+
+            Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
+
+            if (userWallet.getTrees().compareTo(treesToRefund) < 0) {
+                throw new RuntimeException("Cannot complete the refund request, because of insufficient tree balance, For userId :" + walletHistory.getUserId() +
+                        ", treesInWallet:" + userWallet.getTrees() + " , refundRequestAmtInTrees:" + treesToRefund);
+            }
+
+
+            String transactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
+            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(transactionId);
+            if (walletHistoryRefundEntryOptional.isPresent()) {
+                WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
+                String description = walletHistoryRefundRecord.getDescription() + ", Refund completed successfully";
+                walletHistoryRefundRecord.setDescription(description);
+                walletHistoryRefundRecord.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
+                walletHistoryService.save(walletHistoryRefundRecord);
+            } else {
+                walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
+                        walletHistory.getUserId(),
+                        treesToRefund,
+                        new BigDecimal(0),
+                        LocalDateTime.now(),
+                        transactionId,
+                        TransactionType.REFUND_COMPLETED.getDisplayName(),
+                        amountInCents,
+                        "Refunded through stripe",
+                        walletHistory.getCurrency(),
+                        "Refund completed successfully",
+                        walletHistory.getIpAddress()
+                );
+            }
+
+            walletService.deductTreesFromWallet(walletHistory.getUserId(), treesToRefund);
+            ledgerService.saveToLedger(walletHistory.getWalletId(), treesToRefund, new BigDecimal(0), TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
+
+            return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesRefunded:" + treesToRefund;
+        } else {
+            throw new RuntimeException("Refund failed because record not found in wallet history for transactionId:" + paymentIntentId);
+        }
+    }
+
+
+    @Transactional
+    public String cancelRefundTrees(BigDecimal treeToAdd, String paymentIntentId) {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+
+            String description = walletHistory.getDescription() + ", Refund cancelled";
+            walletHistory.setDescription(description);
+            walletHistory.setTransactionStatus(TransactionType.REFUND_CANCELLED.getDisplayName());
+            walletHistoryService.save(walletHistory);
+
+            walletService.addToWallet(walletHistory.getUserId(), treeToAdd, new BigDecimal(0), LocalDateTime.now());
+            ledgerService.saveToLedger(walletHistory.getWalletId(), treeToAdd, new BigDecimal(0), TransactionType.REFUND_CANCELLED, walletHistory.getUserId());
+
+            return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesAddedBack:" + treeToAdd;
+        } else {
+            throw new RuntimeException("Cancelling Refund failed because record not found in wallet history for transactionId:" + paymentIntentId);
+        }
+    }
+
+    //This API was used 1 time, when the case where payment initially fails and later succeeded cases was not handled
     @Transactional
     public List<String> clearPaymentWhichFailedInitiallyButSucceededLater() {
         List<String> result = new ArrayList<>();
