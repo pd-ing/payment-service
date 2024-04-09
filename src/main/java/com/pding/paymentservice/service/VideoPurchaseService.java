@@ -16,7 +16,7 @@ import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
-import com.pding.paymentservice.models.VideoEarningsAndSales;
+import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
@@ -102,7 +102,7 @@ public class VideoPurchaseService {
             if (ids.isEmpty()) {
                 return ResponseEntity.ok("Added all users");
             } else {
-                return ResponseEntity.ok("Added all users except: "+ String.join(",", ids));
+                return ResponseEntity.ok("Added all users except: " + String.join(",", ids));
             }
 
         } catch (Exception ex) {
@@ -113,10 +113,9 @@ public class VideoPurchaseService {
     }
 
     /**
-     *
-     * @param videoId - video id
+     * @param videoId      - video id
      * @param videoOwnerId - owner of the video
-     * @param userIds - list of user ids
+     * @param userIds      - list of user ids
      * @return the failed user ids to add in the video purchase table as replacement.
      */
     public List<String> createVideoReplacements(String videoId, String videoOwnerId, List<String> userIds) {

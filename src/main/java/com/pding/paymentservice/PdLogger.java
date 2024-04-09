@@ -99,7 +99,12 @@ public class PdLogger {
         TOP_CALLER_LIST_FOR_PD(Priority.p1),
         TOP_CALLER_LIST(Priority.p1),
 
-        TOP_FAN_LIST(Priority.p1);
+        TOP_FAN_LIST(Priority.p1),
+
+        UPDATE_REWARD_SETTING(Priority.p1),
+        GET_REWARD_SETTING(Priority.p1);
+
+
         private final Priority priority;
 
         private EVENT(Priority priority) {

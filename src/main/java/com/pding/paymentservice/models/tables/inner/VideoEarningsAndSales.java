@@ -1,4 +1,4 @@
-package com.pding.paymentservice.models;
+package com.pding.paymentservice.models.tables.inner;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import lombok.AllArgsConstructor;

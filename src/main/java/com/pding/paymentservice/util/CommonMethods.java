@@ -88,7 +88,6 @@ public class CommonMethods {
         } catch (Exception e) {
             return amountPaid + " in cents/dollars";
         }
-
     }
-
+    
 }
