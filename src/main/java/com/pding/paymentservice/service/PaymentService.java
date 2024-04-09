@@ -222,10 +222,10 @@ public class PaymentService {
                     "Refund completed successfully",
                     walletHistory.getIpAddress()
             );
-            walletService.deductTreesFromWallet(walletHistory.getUserId(), walletHistory.getPurchasedTrees());
-            ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
+            walletService.deductTreesFromWallet(walletHistory.getUserId(), treesToRefund);
+            ledgerService.saveToLedger(walletHistory.getWalletId(), treesToRefund, new BigDecimal(0), TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
 
-            return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesRefunded:" + walletHistory.getPurchasedTrees();
+            return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesRefunded:" + treesToRefund;
         } else {
             throw new RuntimeException("Refund failed because record not found in wallet history for transactionId:" + paymentIntentId);
         }
