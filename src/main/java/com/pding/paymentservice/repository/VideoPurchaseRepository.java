@@ -115,7 +115,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             nativeQuery = true)
     Page<Object[]> searchSalesHistoryByUserId(String searchString, String userId, Pageable pageable);
 
-    @Query("SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId AND vt.lastUpdateDate >= DATE_SUB(:endDateTime, INTERVAL 24 HOUR)")
+    @Query(value ="SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId AND vt.lastUpdateDate >= DATE_SUB(:endDateTime, INTERVAL 24 HOUR)")
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
 }
