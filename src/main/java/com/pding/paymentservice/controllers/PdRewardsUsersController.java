@@ -32,11 +32,10 @@ public class PdRewardsUsersController {
     PdRewardsUsersService pdRewardsUsersService;
 
     @PostMapping(value = "/updateRewardSettings")
-    public ResponseEntity<?> updateRewardSettings(@Valid @RequestBody PdRewardUsersRequest pdRewardUsersRequest) {
+    public ResponseEntity<?> updateRewardSettings(@RequestBody PdRewardUsersRequest pdRewardUsersRequest) {
 
         try {
-            String rewardsForUsers = pdRewardUsersRequest.toJsonString();
-            String stringResponse = pdRewardsUsersService.updateRewardSettings(pdRewardUsersRequest.getDescription(), rewardsForUsers);
+            String stringResponse = pdRewardsUsersService.updateRewardSettings(pdRewardUsersRequest);
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, stringResponse));
         } catch (Exception e) {
