@@ -13,13 +13,18 @@ import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.PaymentHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
+import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
+import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
+import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.CommonMethods;
 import com.pding.paymentservice.util.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,6 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -147,6 +154,10 @@ public class VideoPurchaseService {
 
     public BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserID) {
         return videoPurchaseRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
+    }
+
+    public BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserID, LocalDateTime endDateTime) {
+        return videoPurchaseRepository.getDailyTreeRevenueByVideoOwner(videoOwnerUserID,endDateTime);
     }
 
     public Boolean isVideoPurchasedByUser(String userID, String videoID) {
@@ -422,5 +433,76 @@ public class VideoPurchaseService {
             return null;
         }
     }
+
+    public ResponseEntity<?> getSalesHistoryOfUser(String pdId, LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
+        try {
+            String userId = pdId == null? authHelper.getUserId() : pdId ;
+            List<VideoSalesHistoryRecord> shList = null;
+            if (sort == 0 || sort == 1) {
+                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+                if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+                }
+                if (userId == null) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId null; cannot get video sales history."));
+                } else {
+                    Page<Object[]> shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(userId, startDate, endDate, pageable);
+                    shList = createSalesHistoryList(shPage.getContent());
+                }
+            }
+            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, shList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> searchSalesHistoryOfUser( String searchString, int page, int size, int sort) {
+        try {
+            String userId = authHelper.getUserId();
+            List<VideoSalesHistoryRecord> shList = null;
+            if (sort == 0 || sort == 1) {
+                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+                Page<Object[]> shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
+                shList = createSalesHistoryList(shPage.getContent());
+            }
+            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, shList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    private List<VideoSalesHistoryRecord> createSalesHistoryList(List<Object[]> shPage) {
+        List<VideoSalesHistoryRecord> shList = new ArrayList<>();
+        for (Object innerObject : shPage) {
+            Object[] salesHistory = (Object[]) innerObject;
+            VideoSalesHistoryRecord shObj = new VideoSalesHistoryRecord();
+            shObj.setBuyerEmail(salesHistory[3].toString());
+            shObj.setVideoTitle(salesHistory[1].toString());
+            shObj.setAmount(salesHistory[2].toString());
+            shObj.setPurchaseDate(salesHistory[0].toString());
+            shList.add(shObj);
+        }
+        return shList;
+    }
+
+    public ResponseEntity<?> getDailyTreeRevenueOfUser(String userId, LocalDateTime endTime) {
+        if (userId == null || userId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new DailyTreeRevenueResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), new BigDecimal(0.0)));
+        }
+        if (endTime == null) {
+            return ResponseEntity.badRequest().body(new DailyTreeRevenueResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "end time is required."), new BigDecimal(0.0)));
+        }
+        try {
+
+            BigDecimal dailyTreeRevenue = getDailyTreeRevenueByVideoOwner(userId, endTime);
+            return ResponseEntity.ok().body(new DailyTreeRevenueResponse(null, dailyTreeRevenue));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DailyTreeRevenueResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
 
 }
