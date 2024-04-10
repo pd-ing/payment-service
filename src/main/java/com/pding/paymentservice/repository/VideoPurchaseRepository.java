@@ -113,9 +113,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             countQuery = "SELECT COUNT(*) FROM FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND " +
                     "u.email LIKE %?2%",
             nativeQuery = true)
-    Page<Object[]> searchSalesHistoryByUserId(String searchString, String userId, Pageable pageable);
+    Page<Object[]> searchSalesHistoryByUserId(String userId, String searchString, Pageable pageable);
 
-    @Query(value ="SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId AND vt.lastUpdateDate >= DATE_SUB(:endDateTime, INTERVAL 24 HOUR)")
+    @Query(value ="SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(:?2, INTERVAL 24 HOUR)", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
 }
