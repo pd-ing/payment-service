@@ -109,9 +109,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
             "WHERE vp.video_owner_user_id = :userId " +
-            "AND u.email LIKE %?2%",
+            "AND u.email LIKE %:searchString%",
             countQuery = "SELECT COUNT(*) FROM FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND " +
-                    "u.email LIKE %?2%",
+                    "u.email LIKE %:searchString%",
             nativeQuery = true)
     Page<Object[]> searchSalesHistoryByUserId(String userId, String searchString, Pageable pageable);
 

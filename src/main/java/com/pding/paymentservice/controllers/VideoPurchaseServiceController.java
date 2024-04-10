@@ -86,19 +86,18 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, ownerUserId, userEmails);
     }
 
-    @GetMapping(value = "/videoSalesHistoryOfUser")
+    @GetMapping(value = "/videoSalesHistoryOfPd")
     public ResponseEntity<?> getVideoSalesHistoryOfUser(
-            @RequestParam(value = "userId", required = false) String creatorUserId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size
     ) {
-        return videoPurchaseService.getSalesHistoryOfUser(creatorUserId, startDate, endDate, page, size, sortOrder);
+        return videoPurchaseService.getSalesHistoryOfUser(startDate, endDate, page, size, sortOrder);
     }
 
-    @GetMapping(value = "/searchVideoSalesHistoryOfUser")
+    @GetMapping(value = "/searchVideoSalesHistoryOfPd")
     public ResponseEntity<?> searchVideoSalesHistoryOfUser(@RequestParam(value = "searchString") @NotBlank String searchString,
                                                            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
                                                               @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -106,8 +105,8 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.searchSalesHistoryOfUser(searchString, page, size, sortOrder);
     }
 
-    @GetMapping(value = "/dailyTreeRevenueOfUser")
-    public ResponseEntity<?> getDailyTreeRevenueOfUser(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "endDate") LocalDateTime endTime) {
+    @GetMapping(value = "/dailyTreeRevenueOfPd")
+    public ResponseEntity<?> getDailyTreeRevenueOfUser(@RequestParam(value = "endDate") LocalDateTime endTime) {
         return videoPurchaseService.getDailyTreeRevenueOfUser(authHelper.getUserId(), endTime);
     }
 

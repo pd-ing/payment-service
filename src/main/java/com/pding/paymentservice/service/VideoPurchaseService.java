@@ -434,9 +434,9 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> getSalesHistoryOfUser(String pdId, LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
+    public ResponseEntity<?> getSalesHistoryOfUser(LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
         try {
-            String userId = pdId == null? authHelper.getUserId() : pdId ;
+            String userId = authHelper.getUserId();
             List<VideoSalesHistoryRecord> shList = null;
             if (sort == 0 || sort == 1) {
                 Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
