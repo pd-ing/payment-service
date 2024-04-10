@@ -19,24 +19,39 @@ public class PdRewardsUsersService {
     @Autowired
     PdRewardsUsersRepository pdRewardsUsersRepository;
 
-    public String updateRewardSettings(String description, String rewardForTopUsers) {
+    public String updateRewardSettings(PdRewardUsersRequest pdRewardUsersRequest) throws Exception {
         String pdUserId = authHelper.getUserId();
+
 
         Optional<PdRewardsUsers> pdRewardsUsersOptional = pdRewardsUsersRepository.findByPdUserId(pdUserId);
 
         PdRewardsUsers pdRewardsUsers = null;
         if (pdRewardsUsersOptional.isEmpty()) {
+
             pdRewardsUsers = new PdRewardsUsers();
-            pdRewardsUsers.setDescription(description);
-            pdRewardsUsers.setRewardForTopUsers(rewardForTopUsers);
+
+            pdRewardsUsers.setDescription(pdRewardUsersRequest.getDescription());
             pdRewardsUsers.setPdUserId(pdUserId);
             pdRewardsUsers.setLastUpdateDate(LocalDateTime.now());
 
+            PdRewardUsersRequest.PdRewardUsersJsonMapper pdRewardUsersJsonMapper = new PdRewardUsersRequest.PdRewardUsersJsonMapper();
+            pdRewardUsersJsonMapper = pdRewardUsersRequest.updatePdRewardsUsers(pdRewardUsersRequest, pdRewardUsersJsonMapper);
+            String rewardForTopUsers = pdRewardUsersRequest.toJsonString(pdRewardUsersJsonMapper);
+            pdRewardsUsers.setRewardForTopUsers(rewardForTopUsers);
+
+
         } else {
             pdRewardsUsers = pdRewardsUsersOptional.get();
-            pdRewardsUsers.setDescription(description);
-            pdRewardsUsers.setRewardForTopUsers(rewardForTopUsers);
+            if (pdRewardUsersRequest.getDescription() != null) {
+                pdRewardsUsers.setDescription(pdRewardUsersRequest.getDescription());
+            }
             pdRewardsUsers.setLastUpdateDate(LocalDateTime.now());
+
+            PdRewardUsersRequest.PdRewardUsersJsonMapper pdRewardUsersJsonMapper = PdRewardUsersRequest.getPdRewardUsersObjectFromJson(pdRewardsUsers.getRewardForTopUsers());
+            pdRewardUsersJsonMapper = pdRewardUsersRequest.updatePdRewardsUsers(pdRewardUsersRequest, pdRewardUsersJsonMapper);
+            String rewardForTopUsers = pdRewardUsersRequest.toJsonString(pdRewardUsersJsonMapper);
+            pdRewardsUsers.setRewardForTopUsers(rewardForTopUsers);
+
         }
         pdRewardsUsersRepository.save(pdRewardsUsers);
 
@@ -54,7 +69,8 @@ public class PdRewardsUsersService {
 
             return pdRewardUsersRequest;
         }
-        
+
         return null;
     }
+
 }

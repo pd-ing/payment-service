@@ -13,65 +13,78 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PdRewardUsersRequest {
-    @NotBlank(message = "Description cannot be null or empty")
     String description;
 
-    @NotBlank(message = "Reward text for number one fan cannot be null or empty")
     String rewardTextForNumberOneFan;
 
-    @NotBlank(message = "Reward text for number two fan cannot be null or empty")
     String rewardTextForNumberTwoFan;
 
-    @NotBlank(message = "Reward text for number three fan cannot be null or empty")
     String rewardTextForNumberThreeFan;
 
-    @NotBlank(message = "Reward text for number four to ten fans cannot be null or empty")
     String rewardTextForNumberFourToTenFans;
 
-    @NotBlank(message = "Reward text for number eleven to twenty fans cannot be null or empty")
     String rewardTextForNumberElevenToTwentyFans;
 
 
     // Method to convert object to JSON string
-    public String toJsonString() throws JsonProcessingException {
-        // Create ObjectMapper instance
+    public String toJsonString(PdRewardUsersJsonMapper pdRewardUsersJsonMapper) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-
-        // Create a new object excluding the description field
-        PdRewardUsersRewards pdRewardUsersRewards = PdRewardUsersRewards.builder()
-                .rewardTextForNumberOneFan(this.rewardTextForNumberOneFan)
-                .rewardTextForNumberTwoFan(this.rewardTextForNumberTwoFan)
-                .rewardTextForNumberThreeFan(this.rewardTextForNumberThreeFan)
-                .rewardTextForNumberFourToTenFans(this.rewardTextForNumberFourToTenFans)
-                .rewardTextForNumberElevenToTwentyFans(this.rewardTextForNumberElevenToTwentyFans)
-                .build();
-
-        // Convert object to JSON string and return
-        return objectMapper.writeValueAsString(pdRewardUsersRewards);
+        return objectMapper.writeValueAsString(pdRewardUsersJsonMapper);
     }
 
     public static PdRewardUsersRequest fromJsonString(String jsonString) throws JsonProcessingException {
-        // Create ObjectMapper instance
-        ObjectMapper objectMapper = new ObjectMapper();
-
         // Convert JSON string to object
-        PdRewardUsersRewards pdRewardUsersRewards = objectMapper.readValue(jsonString, PdRewardUsersRewards.class);
+        PdRewardUsersJsonMapper pdRewardUsersJsonMapper = getPdRewardUsersObjectFromJson(jsonString);
 
         // Create PdRewardUsersRequest object with the retrieved data
         return PdRewardUsersRequest.builder()
-                .rewardTextForNumberOneFan(pdRewardUsersRewards.getRewardTextForNumberOneFan())
-                .rewardTextForNumberTwoFan(pdRewardUsersRewards.getRewardTextForNumberTwoFan())
-                .rewardTextForNumberThreeFan(pdRewardUsersRewards.getRewardTextForNumberThreeFan())
-                .rewardTextForNumberFourToTenFans(pdRewardUsersRewards.getRewardTextForNumberFourToTenFans())
-                .rewardTextForNumberElevenToTwentyFans(pdRewardUsersRewards.getRewardTextForNumberElevenToTwentyFans())
+                .rewardTextForNumberOneFan(pdRewardUsersJsonMapper.getRewardTextForNumberOneFan())
+                .rewardTextForNumberTwoFan(pdRewardUsersJsonMapper.getRewardTextForNumberTwoFan())
+                .rewardTextForNumberThreeFan(pdRewardUsersJsonMapper.getRewardTextForNumberThreeFan())
+                .rewardTextForNumberFourToTenFans(pdRewardUsersJsonMapper.getRewardTextForNumberFourToTenFans())
+                .rewardTextForNumberElevenToTwentyFans(pdRewardUsersJsonMapper.getRewardTextForNumberElevenToTwentyFans())
                 .build();
+    }
+
+    public PdRewardUsersJsonMapper updatePdRewardsUsers(PdRewardUsersRequest pdRewardUsersRequest, PdRewardUsersJsonMapper pdRewardUsersJsonMapper) {
+        //Set text for #1 fan
+        if (pdRewardUsersRequest.getRewardTextForNumberOneFan() != null) {
+            pdRewardUsersJsonMapper.setRewardTextForNumberOneFan(pdRewardUsersRequest.getRewardTextForNumberOneFan());
+        }
+
+        //Set text for #2 fan
+        if (pdRewardUsersRequest.getRewardTextForNumberTwoFan() != null) {
+            pdRewardUsersJsonMapper.setRewardTextForNumberTwoFan(pdRewardUsersRequest.getRewardTextForNumberTwoFan());
+        }
+
+        //Set text for #3 fan
+        if (pdRewardUsersRequest.getRewardTextForNumberThreeFan() != null) {
+            pdRewardUsersJsonMapper.setRewardTextForNumberThreeFan(pdRewardUsersRequest.getRewardTextForNumberThreeFan());
+        }
+
+        //Set text for #4-10 fan
+        if (pdRewardUsersRequest.getRewardTextForNumberFourToTenFans() != null) {
+            pdRewardUsersJsonMapper.setRewardTextForNumberFourToTenFans(pdRewardUsersRequest.getRewardTextForNumberFourToTenFans());
+        }
+
+        //Set text for #11-20 fan
+        if (pdRewardUsersRequest.getRewardTextForNumberElevenToTwentyFans() != null) {
+            pdRewardUsersJsonMapper.setRewardTextForNumberElevenToTwentyFans(pdRewardUsersRequest.getRewardTextForNumberElevenToTwentyFans());
+        }
+
+        return pdRewardUsersJsonMapper;
+    }
+
+    public static PdRewardUsersJsonMapper getPdRewardUsersObjectFromJson(String jsonString) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(jsonString, PdRewardUsersJsonMapper.class);
     }
 
     @Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class PdRewardUsersRewards {
+    public static class PdRewardUsersJsonMapper {
         String rewardTextForNumberOneFan;
         String rewardTextForNumberTwoFan;
         String rewardTextForNumberThreeFan;
