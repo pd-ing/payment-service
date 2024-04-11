@@ -51,7 +51,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/viewingHistoryTabSearchVideo",
             "/api/payment/admin/paymentHistoryTab",
             "/api/payment/admin/paymentHistoryAllUsersTab",
-            "/api/payment/admin/paymentHistoryAllUsersSearchByEmail"
+            "/api/payment/admin/paymentHistoryAllUsersSearchByEmail",
+            "/api/payment/dailyTreeRevenueOfPd"
     );
 
     @Override

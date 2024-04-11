@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,4 +85,37 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId")
     BigDecimal getTotalTreesConsumedByUserId(@Param("userId") String userId);
+
+    @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
+            "COALESCE(v.title, ''), " +
+            "COALESCE(v.trees, ''), " +
+            "COALESCE(u.email, '') " +
+            "FROM video_purchase vp " +
+            "LEFT JOIN videos v ON vp.video_id = v.video_id " +
+            "LEFT JOIN users u ON vp.user_id = u.id " +
+            "WHERE vp.video_owner_user_id = :userId " +
+            "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
+            "AND (:endDate IS NULL OR vp.last_update_date <= :endDate) ",
+            countQuery = "SELECT COUNT(*) FROM FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND (:startDate IS NULL OR vp.last_update_date >= :startDate) "+
+                    "AND (:endDate IS NULL OR vp.last_update_date <= :endDate)",
+            nativeQuery = true)
+    Page<Object[]> getSalesHistoryByUserIdAndDates(String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
+            "COALESCE(v.title, ''), " +
+            "COALESCE(v.trees, ''), " +
+            "COALESCE(u.email, '') " +
+            "FROM video_purchase vp " +
+            "LEFT JOIN videos v ON vp.video_id = v.video_id " +
+            "LEFT JOIN users u ON vp.user_id = u.id " +
+            "WHERE vp.video_owner_user_id = :userId " +
+            "AND u.email LIKE %:searchString%",
+            countQuery = "SELECT COUNT(*) FROM FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND " +
+                    "u.email LIKE %:searchString%",
+            nativeQuery = true)
+    Page<Object[]> searchSalesHistoryByUserId(String userId, String searchString, Pageable pageable);
+
+    @Query(value ="SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR)", nativeQuery = true)
+    BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
+
 }

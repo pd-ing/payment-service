@@ -84,7 +84,9 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/treeSpentHistory").authenticated()
                                 .requestMatchers("/api/payment/updateRewardSettings").authenticated()
                                 .requestMatchers("/api/payment/getRewardSettings").authenticated()
-
+                                .requestMatchers("/api/payment/videoSalesHistoryOfPd").authenticated()
+                                .requestMatchers("/api/payment/dailyTreeRevenueOfPd").permitAll()
+                                .requestMatchers("/api/payment/searchVideoSalesHistoryOfPd").authenticated()
 
                 );
 
