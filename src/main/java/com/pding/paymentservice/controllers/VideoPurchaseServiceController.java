@@ -100,14 +100,14 @@ public class VideoPurchaseServiceController {
     @GetMapping(value = "/searchVideoSalesHistoryOfPd")
     public ResponseEntity<?> searchVideoSalesHistoryOfUser(@RequestParam(value = "searchString") @NotBlank String searchString,
                                                            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
-                                                              @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                              @RequestParam(defaultValue = "10") @Min(1) int size) {
+                                                           @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                           @RequestParam(defaultValue = "10") @Min(1) int size) {
         return videoPurchaseService.searchSalesHistoryOfUser(searchString, page, size, sortOrder);
     }
 
     @GetMapping(value = "/dailyTreeRevenueOfPd")
-    public ResponseEntity<?> getDailyTreeRevenueOfUser(@RequestParam(value = "endDate") LocalDateTime endTime) {
-        return videoPurchaseService.getDailyTreeRevenueOfUser(authHelper.getUserId(), endTime);
+    public ResponseEntity<?> getDailyTreeRevenueOfUser(@RequestParam(value = "endDate") LocalDateTime endDate) {
+        return videoPurchaseService.getDailyTreeRevenueOfUser(authHelper.getUserId(), endDate);
     }
 
 
