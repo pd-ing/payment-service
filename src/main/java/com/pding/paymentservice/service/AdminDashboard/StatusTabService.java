@@ -48,7 +48,7 @@ public class StatusTabService {
         }
         BigDecimal difference = treesAddedInCurrentMonth.subtract(treesAddedInLastMonth);
         BigDecimal momPercentage = new BigDecimal(0);
-        if (difference.intValue() != 0) {
+        if (difference.intValue() != 0 && treesAddedInLastMonth.intValue() != 0) {
             momPercentage = difference.divide(treesAddedInLastMonth, 4, RoundingMode.HALF_UP)
                     .multiply(new BigDecimal("100"));
         }
