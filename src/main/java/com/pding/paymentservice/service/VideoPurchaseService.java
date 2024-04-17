@@ -9,15 +9,10 @@ import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
-import com.pding.paymentservice.payload.response.BuyVideoResponse;
-import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
-import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
+import com.pding.paymentservice.payload.response.*;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
-import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
-import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
@@ -518,24 +513,11 @@ public class VideoPurchaseService {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
             }
 
-            for (PublicUserNet user : usersFlux) {
-                String profilePicture = null;
-                String coverImage = null;
+            List<UserLite> users = usersFlux.stream().map( userObj -> {
+                return UserLite.fromPublicUserNet(userObj, tokenSigner);
+            }).toList();
 
-                try {
-                    if (user.getProfilePicture() != null) {
-                        profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8);
-                    }
-                    if (user.getCoverImage() != null) {
-                        coverImage = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getCoverImage()), 8);
-                    }
-                } catch (Exception e) {}
-
-                user.setProfilePicture(profilePicture);
-                user.setCoverImage(coverImage);
-            }
-
-            Page<PublicUserNet> resData = new PageImpl<>(usersFlux, pageable, userIdsPage.getTotalElements());
+            Page<UserLite> resData = new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
 
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
 
