@@ -159,7 +159,7 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
-    @GetMapping(value = "/treeSummariesAllUsers")
+    @GetMapping(value = "/treeSummariesAllPd")
     public ResponseEntity<?> getTreeSummaryByUserTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                       @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                                                                       @RequestParam(required = false)  String searchString,
@@ -167,6 +167,9 @@ public class AdminDashboardUserPaymentStatsController {
                                                                       @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
         TreeSummaryGridResult treeSummaryGridResult = null;
         try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
             treeSummaryGridResult = adminDashboardUserPaymentStatsService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treeSummaryGridResult));
         } catch (Exception e) {

@@ -26,8 +26,8 @@ public class TreeSummaryTabService {
     public TreeSummaryGridResult getTreesSummaryForAllUsers(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         TreeSummaryGridResult treeSummaryGridResult = new TreeSummaryGridResult();
         Pageable pageable = PageRequest.of(page, size, Sort.by("email").ascending());
-        Page<Object[]> userPage = treeSummaryTabRepository.getTreesSummaryByUsers(startDate, endDate, searchString, pageable);
-        List<UserObject> userTreeSummaryList = createTreeSummaryList(userPage.getContent());
+        Page<Object[]> userPage = treeSummaryTabRepository.getTreesRevenueForPd(startDate, endDate, searchString, pageable);
+        List<UserObject> userTreeSummaryList = createTreeSummaryList(userPage.getContent(), startDate, endDate);
         treeSummaryGridResult.setUserObjects(new PageImpl<>(userTreeSummaryList, pageable, userPage.getTotalElements()));
         return treeSummaryGridResult;
     }
@@ -45,19 +45,29 @@ public class TreeSummaryTabService {
 
 
 
-    private List<UserObject> createTreeSummaryList(List<Object[]> userPage) {
+    private List<UserObject> createTreeSummaryList(List<Object[]> userPage, LocalDate startDate, LocalDate endDate) {
         List<UserObject> userList = new ArrayList<>();
         for (Object innerObject : userPage) {
+            BigDecimal totalTreesEarned;
+            BigDecimal totalTreesDonated;
+            BigDecimal totalTreesExchanged;
+            BigDecimal totalTreesUnexchanged;
+            String userId;
             Object[] treeSummaryByUser = (Object[]) innerObject;
             UserObject userObj = new UserObject();
+            userId = treeSummaryByUser[0].toString();
+            userObj.setNickName(treeSummaryByUser[1].toString());
+            userObj.setEmail(treeSummaryByUser[2].toString());
+            userObj.setPdType(treeSummaryByUser[3].toString());
+            totalTreesEarned = (BigDecimal) treeSummaryByUser[4];
+            totalTreesDonated = treeSummaryTabRepository.getTreesDonatedForPd(userId, startDate, endDate);
+            totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForPd(userId, startDate, endDate);
+            totalTreesUnexchanged = treeSummaryTabRepository.getTotalUnExchangedTreesForPd(userId, startDate, endDate);
             TreeSummary treeSummary = new TreeSummary();
-            treeSummary.setTotalTreeRevenue((BigDecimal) treeSummaryByUser[3]);
-            treeSummary.setTotalTreesExchanged((BigDecimal) treeSummaryByUser[4]);
-            treeSummary.setTotalUnexchangedTrees((BigDecimal) treeSummaryByUser[5]);
+            treeSummary.setTotalTreeRevenue(totalTreesEarned.add(totalTreesDonated));
+            treeSummary.setTotalTreesExchanged(totalTreesExchanged);
+            treeSummary.setTotalUnexchangedTrees(totalTreesUnexchanged);
             userObj.setTreeSummary(treeSummary);
-            userObj.setNickName(treeSummaryByUser[0].toString());
-            userObj.setEmail(treeSummaryByUser[1].toString());
-            userObj.setPdType(treeSummaryByUser[2].toString());
             userList.add(userObj);
         }
         return userList;
