@@ -3,6 +3,7 @@ package com.pding.paymentservice.repository.admin;
 import com.pding.paymentservice.models.WalletHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -25,12 +26,14 @@ public interface StatusTabRepository extends JpaRepository<WalletHistory, String
     //StatusTab : Field -> object[0] -> totalTreesSpendInVideoPurchase
     //            Field -> object[1] -> totalTreesDonated
     //            Field -> object[0]+object[1] = totalTreesSpent
-    @Query(value = "SELECT COALESCE(SUM(vp.trees_consumed), 0) AS totalTreesVideos, " +
-            "COALESCE(SUM(d.donated_trees), 0) AS totalTreesDonations " +
-            "FROM video_purchase vp " +
-            "LEFT JOIN donation d ON vp.user_id = d.donor_user_id " +
-            "WHERE vp.user_id = :userId", nativeQuery = true)
-    Object[] getTotalTreesSpentOnVideoAndDonationByUserId(String userId);
+    @Query(value = "SELECT "
+            + "(SELECT COALESCE(SUM(trees_consumed), 0) "
+            + " FROM video_purchase "
+            + " WHERE user_id = :userId) AS totalTreesVideos, "
+            + "(SELECT COALESCE(SUM(donated_trees), 0) "
+            + " FROM donation "
+            + " WHERE donor_user_id = :userId) AS totalDonatedTrees", nativeQuery = true)
+    Object[] getTotalTreesSpentOnVideoAndDonationByUserId(@Param("userId") String userId);
 
 
     //StatusTab : Field -> Object[0] treesAddedInCurrentMonth And
