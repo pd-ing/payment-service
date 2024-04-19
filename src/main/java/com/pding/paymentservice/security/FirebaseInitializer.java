@@ -26,6 +26,9 @@ public class FirebaseInitializer implements CommandLineRunner {
     @Value("${aws.param.firebaseKey}")
     private String firebaseKey;
 
+    @Value("${firebase.db.url}")
+    private String dbUrl;
+
     public String getFirebaseServiceAccount() {
         GetParameterResponse response = ssmClient.getParameter(
                 GetParameterRequest.builder()
@@ -44,6 +47,7 @@ public class FirebaseInitializer implements CommandLineRunner {
             InputStream inputStream = new ByteArrayInputStream(key.getBytes());
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(inputStream))
+                    .setDatabaseUrl(dbUrl)
                     .build();
 
             FirebaseApp.initializeApp(options);
