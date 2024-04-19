@@ -2,6 +2,8 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.TreeSummary;
+import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
@@ -156,6 +158,36 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), paymentHistory));
         }
     }
+
+    @GetMapping(value = "/treeSummariesAllPd")
+    public ResponseEntity<?> getTreeSummaryByUserTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                                      @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                                      @RequestParam(required = false)  String searchString,
+                                                                      @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                                      @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
+        TreeSummaryGridResult treeSummaryGridResult = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            treeSummaryGridResult = adminDashboardUserPaymentStatsService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treeSummaryGridResult));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), treeSummaryGridResult));
+        }
+    }
+
+    @GetMapping(value = "/treeSummariesTotals")
+    public ResponseEntity<?> getTreeSummaryDetailsController() {
+        TreeSummary treesSummaryTotals = null;
+        try {
+            treesSummaryTotals = adminDashboardUserPaymentStatsService.getTreesSummaryTotals();
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treesSummaryTotals));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), treesSummaryTotals));
+        }
+    }
+
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
