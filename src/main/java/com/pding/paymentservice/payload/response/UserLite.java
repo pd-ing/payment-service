@@ -35,7 +35,7 @@ public class UserLite {
 
         try {
             if (src.getProfilePicture() != null) {
-                profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(src.getProfilePicture()), 8);
+                profilePicture = tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(src.getProfilePicture()));
             }
         } catch (Exception e) {}
 

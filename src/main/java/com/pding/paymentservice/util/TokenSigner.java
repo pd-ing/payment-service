@@ -198,4 +198,9 @@ public class TokenSigner {
         return "/images/" + fileName;
     }
 
+    public String generateUnsignedImageUrl(String path) {
+        if (path == null) return null;
+        return getUrl(path);
+    }
+
 }
