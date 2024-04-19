@@ -508,6 +508,11 @@ public class VideoPurchaseService {
             Pageable pageable = PageRequest.of(page, size);
             Page<String> userIdsPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosArePurchasedByUser(userId, pageable);
 
+            if (userIdsPage.isEmpty()) {
+                Page<UserLite> resData = new PageImpl<>(List.of(), pageable, userIdsPage.getTotalElements());
+                return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+            }
+
             List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIdsPage.toSet()).blockFirst();
             if (usersFlux == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
