@@ -9,28 +9,20 @@ import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
-import com.pding.paymentservice.payload.response.BuyVideoResponse;
-import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
-import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
-import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.PaymentHistoryForAdminDashboard;
+import com.pding.paymentservice.payload.response.*;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
-import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
-import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
+import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
-import com.pding.paymentservice.util.CommonMethods;
 import com.pding.paymentservice.util.EmailValidator;
+import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -69,6 +61,9 @@ public class VideoPurchaseService {
 
     @Autowired
     private EmailValidator emailValidator;
+
+    @Autowired
+    private TokenSigner tokenSigner;
 
 
     @Transactional
@@ -501,6 +496,39 @@ public class VideoPurchaseService {
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DailyTreeRevenueResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    public ResponseEntity<?> getAllPdUserIdWhoseVideosArePurchasedByUser(int size, int page) {
+        try {
+            String userId = authHelper.getUserId();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Authenticated request. Invalid user"));
+            }
+            Pageable pageable = PageRequest.of(page, size);
+            Page<String> userIdsPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosArePurchasedByUser(userId, pageable);
+
+            if (userIdsPage.isEmpty()) {
+                Page<UserLite> resData = new PageImpl<>(List.of(), pageable, userIdsPage.getTotalElements());
+                return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+            }
+
+            List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIdsPage.toSet()).blockFirst();
+            if (usersFlux == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
+            }
+
+            List<UserLite> users = usersFlux.stream().map( userObj -> {
+                return UserLite.fromPublicUserNet(userObj, tokenSigner);
+            }).toList();
+
+            Page<UserLite> resData = new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
+
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
         }
     }
 

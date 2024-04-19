@@ -118,4 +118,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value ="SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR)", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
+    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1")
+    Page<String> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, Pageable pageable);
+
 }

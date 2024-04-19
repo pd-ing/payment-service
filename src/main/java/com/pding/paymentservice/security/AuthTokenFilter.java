@@ -54,7 +54,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/paymentHistoryAllUsersSearchByEmail",
             "/api/payment/dailyTreeRevenueOfPd",
             "/api/payment/admin/treeSummariesAllPd",
-            "/api/payment/admin/treeSummariesTotals"
+            "/api/payment/admin/treeSummariesTotals",
+            "/api/payment/dailyTreeRevenueOfPd",
+            "/api/payment/topDonorsList"
     );
 
     @Override

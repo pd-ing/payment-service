@@ -120,12 +120,15 @@ public class DonationServiceController {
     }
 
     @GetMapping(value = "/topDonorsList")
-    public ResponseEntity<?> getDonationHistoryForPd(@RequestParam(value = "limit") Long limit) {
+    public ResponseEntity<?> getDonationHistoryForPd(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(value = "limit") Long limit) {
         if (limit == null || limit <= 0 || limit > 30) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "limit parameter is invalid or not passed. Please pass limit between 1-30"));
         }
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId cannot be null or empty"));
+        }
         try {
-            String pdUserId = authHelper.getUserId();
+            //String pdUserId = authHelper.getUserId();
             List<PublicUserNet> publicUserNetList = donationService.getTopDonorsInfo(pdUserId, limit);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
         } catch (Exception e) {

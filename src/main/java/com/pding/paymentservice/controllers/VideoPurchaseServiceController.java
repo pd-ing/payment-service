@@ -86,6 +86,14 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, ownerUserId, userEmails);
     }
 
+    @GetMapping(value = "/getAllPdWhoseVideosArePurchasedByUser")
+    public ResponseEntity<?> getAllPdUserIdWhoseVideosArePurchasedByUser(
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "page", defaultValue = "0") int page
+    ) {
+        return videoPurchaseService.getAllPdUserIdWhoseVideosArePurchasedByUser(size, page);
+    }
+
     @GetMapping(value = "/videoSalesHistoryOfPd")
     public ResponseEntity<?> getVideoSalesHistoryOfUser(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,

@@ -38,4 +38,6 @@ public class PublicUserNet {
     private BigDecimal leafsTransacted;
 
     private BigDecimal totalTreesSpent;
+
+    private String profileId;
 }
