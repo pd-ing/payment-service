@@ -96,7 +96,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "WHERE vp.video_owner_user_id = :userId " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date <= :endDate) ",
-            countQuery = "SELECT COUNT(*) FROM FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND (:startDate IS NULL OR vp.last_update_date >= :startDate) "+
+            countQuery = "SELECT COUNT(*) FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                     "AND (:endDate IS NULL OR vp.last_update_date <= :endDate)",
             nativeQuery = true)
     Page<Object[]> getSalesHistoryByUserIdAndDates(String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
@@ -110,12 +110,12 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "LEFT JOIN users u ON vp.user_id = u.id " +
             "WHERE vp.video_owner_user_id = :userId " +
             "AND u.email LIKE %:searchString%",
-            countQuery = "SELECT COUNT(*) FROM FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND " +
+            countQuery = "SELECT COUNT(*) FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND " +
                     "u.email LIKE %:searchString%",
             nativeQuery = true)
     Page<Object[]> searchSalesHistoryByUserId(String userId, String searchString, Pageable pageable);
 
-    @Query(value ="SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR)", nativeQuery = true)
+    @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR)", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
     @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1")

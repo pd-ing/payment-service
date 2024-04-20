@@ -152,7 +152,7 @@ public class VideoPurchaseService {
     }
 
     public BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserID, LocalDateTime endDateTime) {
-        return videoPurchaseRepository.getDailyTreeRevenueByVideoOwner(videoOwnerUserID,endDateTime);
+        return videoPurchaseRepository.getDailyTreeRevenueByVideoOwner(videoOwnerUserID, endDateTime);
     }
 
     public Boolean isVideoPurchasedByUser(String userID, String videoID) {
@@ -433,35 +433,39 @@ public class VideoPurchaseService {
         try {
             String userId = authHelper.getUserId();
             List<VideoSalesHistoryRecord> shList = null;
+            Pageable pageable = null;
+            Page<Object[]> shPage = null;
             if (sort == 0 || sort == 1) {
-                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
                 if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                     return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
                 }
                 if (userId == null) {
                     return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId null; cannot get video sales history."));
                 } else {
-                    Page<Object[]> shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(userId, startDate, endDate, pageable);
+                    shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(userId, startDate, endDate, pageable);
                     shList = createSalesHistoryList(shPage.getContent());
                 }
             }
-            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, shList));
+            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
-    public ResponseEntity<?> searchSalesHistoryOfUser( String searchString, int page, int size, int sort) {
+    public ResponseEntity<?> searchSalesHistoryOfUser(String searchString, int page, int size, int sort) {
         try {
             String userId = authHelper.getUserId();
             List<VideoSalesHistoryRecord> shList = null;
+            Pageable pageable = null;
+            Page<Object[]> shPage = null;
             if (sort == 0 || sort == 1) {
-                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
-                Page<Object[]> shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
+                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+                shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
                 shList = createSalesHistoryList(shPage.getContent());
             }
-            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, shList));
+            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -518,7 +522,7 @@ public class VideoPurchaseService {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
             }
 
-            List<UserLite> users = usersFlux.stream().map( userObj -> {
+            List<UserLite> users = usersFlux.stream().map(userObj -> {
                 return UserLite.fromPublicUserNet(userObj, tokenSigner);
             }).toList();
 
