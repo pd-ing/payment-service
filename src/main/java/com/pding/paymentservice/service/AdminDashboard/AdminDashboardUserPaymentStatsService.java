@@ -4,10 +4,7 @@ import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
-import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.Status;
-import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import com.pding.paymentservice.service.LedgerService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
@@ -47,6 +44,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Autowired
     TreeSummaryTabService treeSummaryTabService;
+
+    @Autowired
+    RealTimeTreeUsageTabService realTimeTreeUsageTabService;
 
     @Transactional
     public String addTreesFromBackend(String userId, BigDecimal purchasedTrees) throws Exception {
@@ -122,6 +122,14 @@ public class AdminDashboardUserPaymentStatsService {
 
     public TreeSummary getTreesSummaryTotals (){
         return treeSummaryTabService.getTreesSummaryTotals();
+    }
+
+    public RealTimeTreeTransactionHistory getRealTimeTreeUsage (LocalDate startDate, LocalDate endDate, String searchString, int page, int size){
+        return realTimeTreeUsageTabService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
+    }
+
+    public TotalTreeUsageSummary getTotalTreeUsageSummary (LocalDate startDate, LocalDate endDate){
+        return realTimeTreeUsageTabService.getTreesSummaryTotals(startDate, endDate);
     }
 
 }

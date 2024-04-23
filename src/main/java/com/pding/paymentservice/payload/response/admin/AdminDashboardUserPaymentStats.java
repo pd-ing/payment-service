@@ -3,10 +3,7 @@ package com.pding.paymentservice.payload.response.admin;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
-import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.Status;
-import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +21,8 @@ public class AdminDashboardUserPaymentStats {
     GiftHistory giftHistory;
     TreeSummary treeSummary;
     TreeSummaryGridResult treeSummaryGridResult;
+    RealTimeTreeTransactionHistory realTimeTreeTransactionHistory;
+    TotalTreeUsageSummary totalTreeUsageSummary;
 
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, Status status) {
         this.errorResponse = errorResponse;
@@ -53,5 +52,15 @@ public class AdminDashboardUserPaymentStats {
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, TreeSummary treesSummaryTotals) {
         this.errorResponse = errorResponse;
         this.treeSummary = treesSummaryTotals;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, RealTimeTreeTransactionHistory realTimeTreeTransactionHistory) {
+        this.errorResponse = errorResponse;
+        this.realTimeTreeTransactionHistory = realTimeTreeTransactionHistory;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, TotalTreeUsageSummary totalTreeUsageSummary) {
+        this.errorResponse = errorResponse;
+        this.totalTreeUsageSummary = totalTreeUsageSummary;
     }
 }

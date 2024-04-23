@@ -1,0 +1,65 @@
+package com.pding.paymentservice.service.AdminDashboard;
+
+import com.pding.paymentservice.payload.response.TreeSummary;
+import com.pding.paymentservice.payload.response.UserObject;
+import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
+import com.pding.paymentservice.payload.response.admin.userTabs.RealTimeTreeTransactionHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.TotalTreeUsageSummary;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.TransactionHistoryForAdminDashboard;
+import com.pding.paymentservice.repository.admin.RealTimeTreeUsageTabRepository;
+import com.pding.paymentservice.repository.admin.TreeSummaryTabRepository;
+import com.pding.paymentservice.util.TokenSigner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+public class RealTimeTreeUsageTabService {
+    @Autowired
+    RealTimeTreeUsageTabRepository realTimeTreeUsageTabRepository;
+
+    @Autowired
+    TokenSigner tokenSigner;
+
+
+    public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+        RealTimeTreeTransactionHistory result = new RealTimeTreeTransactionHistory();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").descending());
+        Page<Object[]> transaction = realTimeTreeUsageTabRepository.getRealTimeTreeUsage(startDate, endDate, searchString, pageable);
+        List<TransactionHistoryForAdminDashboard> transactionList = createTreeUsageSummaryList(transaction.getContent());
+        result.setTransactionHistoryForAdminDashboards(new PageImpl<>(transactionList, pageable, transaction.getTotalElements()));
+        return result;
+    }
+
+    public TotalTreeUsageSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate) {
+        TotalTreeUsageSummary treeSummary = new TotalTreeUsageSummary();
+//        BigDecimal totalTreesTransacted = new BigDecimal(0.00);
+//        BigDecimal totalTreesVideoTransaction = realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideos(startDate, endDate);
+//        BigDecimal totalTreesDonated = realTimeTreeUsageTabRepository.getTotalTreesDonated(startDate, endDate);
+//        treeSummary.setTotalTreesTransacted(totalTreesTransacted);
+//        treeSummary.setTotalTreesVideoTransaction(totalTreesVideoTransaction);
+//        treeSummary.setTotalTreesDonated(totalTreesDonated);
+        return treeSummary;
+    }
+
+
+    private List<TransactionHistoryForAdminDashboard> createTreeUsageSummaryList(List<Object[]> transactionPage) {
+        List<TransactionHistoryForAdminDashboard> treeUsageList = new ArrayList<>();
+        for (Object innerObject : transactionPage) {
+            Object[] realTimeTreeTransactionHistory = (Object[]) innerObject;
+            TransactionHistoryForAdminDashboard tranObj = new TransactionHistoryForAdminDashboard();
+            tranObj.setUserEmail(realTimeTreeTransactionHistory[0].toString());
+            tranObj.setTransactionDateTime(realTimeTreeTransactionHistory[1].toString());
+            tranObj.setTotalTrees(realTimeTreeTransactionHistory[2].toString() + " TREES");
+            tranObj.setTransactionType(realTimeTreeTransactionHistory[3].toString());
+            tranObj.setPdNickname(realTimeTreeTransactionHistory[4].toString());
+            tranObj.setPdUserId(realTimeTreeTransactionHistory[5].toString());
+            treeUsageList.add(tranObj);
+        }
+        return treeUsageList;
+    }
+
+}
