@@ -208,6 +208,9 @@ public class AdminDashboardUserPaymentStatsController {
                                                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
         TotalTreeUsageSummary totalTreeUsageSummary = null;
         try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
             totalTreeUsageSummary = adminDashboardUserPaymentStatsService.getTotalTreeUsageSummary(startDate, endDate);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, totalTreeUsageSummary));
         } catch (Exception e) {

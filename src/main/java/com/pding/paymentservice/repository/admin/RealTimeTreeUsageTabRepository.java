@@ -73,18 +73,18 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
             nativeQuery = true)
     Page<Object[]> getRealTimeTreeUsage(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString, Pageable pageable);
 
-    @Query(value = "SELECT  COALESCE(SUM(donated_trees), 0) " +
-            "FROM donation d WHERE d.pd_user_id = :userId " +
-            "AND (:startDate IS NULL OR d.last_update_date >= :startDate) " +
-            "AND (:endDate IS NULL OR  d.last_update_date <= :endDate) ",
+    @Query(value = "SELECT  COALESCE(SUM(trees_consumed), 0) " +
+            "FROM video_purchase " +
+            "WHERE (:startDate IS NULL OR last_update_date >= :startDate) " +
+            "AND (:endDate IS NULL OR  last_update_date <= :endDate) ",
             nativeQuery = true)
-    BigDecimal getTotalTreesDonated(@Param("userId") String userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    BigDecimal getTotalTreesTransactedForVideos(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    @Query(value = "SELECT  COALESCE(SUM(w.trees),0) " +
-            "FROM withdrawals w WHERE w.pd_user_id = :userId AND w.status IN ('COMPLETE', 'PENDING') " +
-            "AND (:startDate IS NULL OR w.created_date >= :startDate) " +
-            "AND (:endDate IS NULL OR  w.created_date <= :endDate) ",
+    @Query(value = "SELECT  COALESCE(SUM(donated_trees),0) " +
+            "FROM donation d " +
+            "WHERE (:startDate IS NULL OR last_update_date >= :startDate) " +
+            "AND (:endDate IS NULL OR  last_update_date <= :endDate) ",
             nativeQuery = true)
-    BigDecimal getTotalTreesTransactedForVideos(@Param("userId") String userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    BigDecimal getTotalTreesDonated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
 }

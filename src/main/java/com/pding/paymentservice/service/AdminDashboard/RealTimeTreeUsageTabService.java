@@ -38,12 +38,13 @@ public class RealTimeTreeUsageTabService {
 
     public TotalTreeUsageSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate) {
         TotalTreeUsageSummary treeSummary = new TotalTreeUsageSummary();
-//        BigDecimal totalTreesTransacted = new BigDecimal(0.00);
-//        BigDecimal totalTreesVideoTransaction = realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideos(startDate, endDate);
-//        BigDecimal totalTreesDonated = realTimeTreeUsageTabRepository.getTotalTreesDonated(startDate, endDate);
-//        treeSummary.setTotalTreesTransacted(totalTreesTransacted);
-//        treeSummary.setTotalTreesVideoTransaction(totalTreesVideoTransaction);
-//        treeSummary.setTotalTreesDonated(totalTreesDonated);
+        BigDecimal totalTreesTransacted = new BigDecimal(0.00);
+        BigDecimal totalTreesVideoTransaction = realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideos(startDate, endDate);
+        BigDecimal totalTreesDonated = realTimeTreeUsageTabRepository.getTotalTreesDonated(startDate, endDate);
+        totalTreesTransacted = totalTreesVideoTransaction.add(totalTreesDonated);
+        treeSummary.setTotalTreesTransacted(totalTreesTransacted);
+        treeSummary.setTotalTreesVideoTransaction(totalTreesVideoTransaction);
+        treeSummary.setTotalTreesDonated(totalTreesDonated);
         return treeSummary;
     }
 
