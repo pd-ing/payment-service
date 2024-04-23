@@ -48,6 +48,7 @@ public class AdminDashboardUserPaymentStatsService {
     @Autowired
     RealTimeTreeUsageTabService realTimeTreeUsageTabService;
 
+
     @Transactional
     public String addTreesFromBackend(String userId, BigDecimal purchasedTrees) throws Exception {
         try {

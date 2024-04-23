@@ -11,12 +11,14 @@ import com.pding.paymentservice.repository.admin.TreeSummaryTabRepository;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class RealTimeTreeUsageTabService {
     @Autowired
     RealTimeTreeUsageTabRepository realTimeTreeUsageTabRepository;
