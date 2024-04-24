@@ -4,12 +4,9 @@ import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
+import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
-import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.Status;
-import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -162,13 +159,17 @@ public class AdminDashboardUserPaymentStatsController {
     @GetMapping(value = "/treeSummariesAllPd")
     public ResponseEntity<?> getTreeSummaryByUserTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                       @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                                                                      @RequestParam(required = false)  String searchString,
+                                                                      @RequestParam(required = false) String searchString,
                                                                       @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
                                                                       @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
         TreeSummaryGridResult treeSummaryGridResult = null;
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
             }
             treeSummaryGridResult = adminDashboardUserPaymentStatsService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treeSummaryGridResult));
@@ -185,6 +186,47 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treesSummaryTotals));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), treesSummaryTotals));
+        }
+    }
+
+    @GetMapping(value = "/realTimeTreeUsageHistory")
+    public ResponseEntity<?> getRealTimeTreeUsageHistoryDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                                          @RequestParam(required = false) String searchString,
+                                                                          @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                                          @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
+        RealTimeTreeTransactionHistory realTimeTransactionHistory = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            realTimeTransactionHistory = adminDashboardUserPaymentStatsService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, realTimeTransactionHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), realTimeTransactionHistory));
+        }
+    }
+
+    @GetMapping(value = "/realTimeTreeUsageTotals")
+    public ResponseEntity<?> getRealTimeTreeUsageTotalsDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        TotalTreeUsageSummary totalTreeUsageSummary = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            totalTreeUsageSummary = adminDashboardUserPaymentStatsService.getTotalTreeUsageSummary(startDate, endDate);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, totalTreeUsageSummary));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), totalTreeUsageSummary));
         }
     }
 
