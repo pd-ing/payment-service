@@ -159,13 +159,17 @@ public class AdminDashboardUserPaymentStatsController {
     @GetMapping(value = "/treeSummariesAllPd")
     public ResponseEntity<?> getTreeSummaryByUserTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                       @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                                                                      @RequestParam(required = false)  String searchString,
+                                                                      @RequestParam(required = false) String searchString,
                                                                       @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
                                                                       @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
         TreeSummaryGridResult treeSummaryGridResult = null;
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
             }
             treeSummaryGridResult = adminDashboardUserPaymentStatsService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treeSummaryGridResult));
@@ -187,14 +191,18 @@ public class AdminDashboardUserPaymentStatsController {
 
     @GetMapping(value = "/realTimeTreeUsageHistory")
     public ResponseEntity<?> getRealTimeTreeUsageHistoryDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                                                                      @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                                                                      @RequestParam(required = false)  String searchString,
-                                                                      @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
-                                                                      @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
+                                                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                                          @RequestParam(required = false) String searchString,
+                                                                          @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                                          @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
         RealTimeTreeTransactionHistory realTimeTransactionHistory = null;
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
             }
             realTimeTransactionHistory = adminDashboardUserPaymentStatsService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, realTimeTransactionHistory));
@@ -210,6 +218,10 @@ public class AdminDashboardUserPaymentStatsController {
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
             }
             totalTreeUsageSummary = adminDashboardUserPaymentStatsService.getTotalTreeUsageSummary(startDate, endDate);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, totalTreeUsageSummary));
