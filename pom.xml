@@ -99,7 +99,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.13</version> <!-- Use the latest version -->
+            <version>1.12.261</version> <!-- Use the latest version -->
         </dependency>
 
         <dependency>
