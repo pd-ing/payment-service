@@ -75,10 +75,10 @@ public class AdminDashboardUserPaymentStatsController {
     }
 
     @GetMapping(value = "/statusTabForPd")
-    public ResponseEntity<?> getStatusTabForPdDetailsController(@RequestParam(value = "userId") String userId) {
+    public ResponseEntity<?> getStatusTabForPdDetailsController(@RequestParam(value = "pdUserId") String pdUserId) {
         StatusForPd statusPd = null;
         try {
-            statusPd = adminDashboardUserPaymentStatsService.getStatusTabForPdDetails(userId);
+            statusPd = adminDashboardUserPaymentStatsService.getStatusTabForPdDetails(pdUserId);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, statusPd));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), statusPd));
