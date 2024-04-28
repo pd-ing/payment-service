@@ -57,11 +57,11 @@ public interface StatusTabRepository extends JpaRepository<WalletHistory, String
             "WHERE user_id = :userId", nativeQuery = true)
     BigDecimal getTotalVideosPurchasedByUserId(String userId);
 
-    @Query(value = "SELECT COALESCE(SUM(ew.trees), 0) " +
+    @Query(value = "SELECT COALESCE(SUM(w.trees), 0) " +
             "FROM withdrawals w WHERE w.pd_user_id = :pdId AND w.status IN ('COMPLETE', 'PENDING')  ", nativeQuery = true)
     BigDecimal getTotalTreesExchangedByPd(String pdId);
 
-    @Query(value = "SELECT COALESCE(SUM(ew.treesEarned), 0) " +
+    @Query(value = "SELECT COALESCE(SUM(ew.trees_earned), 0) " +
             "FROM earning ew " +
             "WHERE ew.user_id = :pdId ", nativeQuery = true)
     BigDecimal getTotalHoldingTreesByPd(String pdId);
@@ -70,13 +70,13 @@ public interface StatusTabRepository extends JpaRepository<WalletHistory, String
             "FROM ( \n" +
             "\tSELECT COALESCE(SUM(vp.trees_consumed), 0) AS trees \n" +
             "\tFROM video_purchase vp  \n" +
-            "    WHERE vp.video_owner_user_id = @userId \n" +
+            "    WHERE vp.video_owner_user_id = :pdId \n" +
             "    AND MONTH(vp.last_update_date) = MONTH(CURRENT_DATE()) \n" +
             "    AND YEAR(vp.last_update_date) = YEAR(CURRENT_DATE()) \n" +
             "UNION ALL    \n" +
             "\tSELECT COALESCE(SUM(d.donated_trees), 0) AS trees \n" +
             "\tFROM  donation d \n" +
-            "\tWHERE d.pd_user_id = @userId \n" +
+            "\tWHERE d.pd_user_id = :pdId \n" +
             "\tAND MONTH(d.last_update_date) = MONTH(CURRENT_DATE()) \n" +
             "\tAND YEAR(d.last_update_date) = YEAR(CURRENT_DATE()) \n" +
             ") AS temp", nativeQuery = true)
@@ -86,14 +86,14 @@ public interface StatusTabRepository extends JpaRepository<WalletHistory, String
             "FROM ( \n" +
             "\tSELECT COALESCE(SUM(vp.trees_consumed), 0) AS trees \n" +
             "\tFROM video_purchase vp  \n" +
-            "    WHERE vp.video_owner_user_id = @userId \n" +
+            "    WHERE vp.video_owner_user_id = :pdId \n" +
             "    AND \n" +
             "    (( MONTH(vp.last_update_date) = 12 AND YEAR(vp.last_update_date) = YEAR(CURRENT_DATE()) - 1) \n" +
             "    OR ( MONTH(vp.last_update_date) = MONTH(CURRENT_DATE()) - 1  AND YEAR(vp.last_update_date) = YEAR(CURRENT_DATE()) )) \n" +
             "UNION ALL    \n" +
             "\tSELECT COALESCE(SUM(d.donated_trees), 0) AS trees \n" +
             "\tFROM  donation d \n" +
-            "\tWHERE d.pd_user_id = @userId \n" +
+            "\tWHERE d.pd_user_id = :pdId \n" +
             "\tAND \n" +
             "    (( MONTH(d.last_update_date) = 12 AND YEAR(d.last_update_date) = YEAR(CURRENT_DATE()) - 1) \n" +
             "    OR ( MONTH(d.last_update_date) = MONTH(CURRENT_DATE()) - 1  AND YEAR(d.last_update_date) = YEAR(CURRENT_DATE()) )) \n" +

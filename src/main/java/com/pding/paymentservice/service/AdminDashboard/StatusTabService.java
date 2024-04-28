@@ -85,10 +85,8 @@ public class StatusTabService {
         statusForPd.setTotalTreesEarnedInVideo(statusTabRepository.getVideoSalesTreeForPd(pdUserId));
         statusForPd.setTotalTreesEarnedInDonation(statusTabRepository.getGiftGivingTreeForPd(pdUserId));
 
-        BigDecimal treesEarnedInCurrentMonth = new BigDecimal(0);
-        BigDecimal treesEarnedInPrevMonth = new BigDecimal(0);
-        treesEarnedInCurrentMonth = statusTabRepository.getCurrentMonthTreeRevenueForPd(pdUserId);
-        treesEarnedInPrevMonth = statusTabRepository.getPreviousMonthTreeRevenueForPd(pdUserId);
+        BigDecimal treesEarnedInCurrentMonth = statusTabRepository.getCurrentMonthTreeRevenueForPd(pdUserId);
+        BigDecimal treesEarnedInPrevMonth = statusTabRepository.getPreviousMonthTreeRevenueForPd(pdUserId);
         statusForPd.setRevenueInCurrentMonth(treesEarnedInCurrentMonth);
         BigDecimal difference = treesEarnedInCurrentMonth.subtract(treesEarnedInPrevMonth);
         BigDecimal momPercentage = new BigDecimal(0);
@@ -96,6 +94,7 @@ public class StatusTabService {
             momPercentage = difference.divide(treesEarnedInPrevMonth, 4, RoundingMode.HALF_UP)
                     .multiply(new BigDecimal("100"));
         }
+        statusForPd.setRevenueInCurrentMonth(treesEarnedInCurrentMonth);
         statusForPd.setMom(momPercentage);
 
         return statusForPd;

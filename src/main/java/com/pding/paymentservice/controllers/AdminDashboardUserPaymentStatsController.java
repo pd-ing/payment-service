@@ -75,7 +75,7 @@ public class AdminDashboardUserPaymentStatsController {
     }
 
     @GetMapping(value = "/statusTabForPd")
-    public ResponseEntity<?> getStatusTabDetailsController(@RequestParam(value = "userId") String userId) {
+    public ResponseEntity<?> getStatusTabForPdDetailsController(@RequestParam(value = "userId") String userId) {
         StatusForPd statusPd = null;
         try {
             statusPd = adminDashboardUserPaymentStatsService.getStatusTabForPdDetails(userId);
