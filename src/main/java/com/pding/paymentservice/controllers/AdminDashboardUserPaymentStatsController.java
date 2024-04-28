@@ -74,6 +74,17 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/statusTabForPd")
+    public ResponseEntity<?> getStatusTabDetailsController(@RequestParam(value = "userId") String userId) {
+        StatusForPd statusPd = null;
+        try {
+            statusPd = adminDashboardUserPaymentStatsService.getStatusTabForPdDetails(userId);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, statusPd));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), statusPd));
+        }
+    }
+
 
     @GetMapping(value = "/viewingHistoryTab")
     public ResponseEntity<?> getViewingHistoryTabDetailsController(@RequestParam(value = "userId") String userId, @RequestParam(defaultValue = "0") @Min(0) int page,

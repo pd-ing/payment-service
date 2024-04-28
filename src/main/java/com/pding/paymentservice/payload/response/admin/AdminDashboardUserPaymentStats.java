@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 public class AdminDashboardUserPaymentStats {
     ErrorResponse errorResponse;
     Status status;
+    StatusForPd statusForPd;
     ViewingHistory viewingHistory;
     PaymentHistory paymentHistory;
     GiftHistory giftHistory;
@@ -27,6 +28,11 @@ public class AdminDashboardUserPaymentStats {
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, Status status) {
         this.errorResponse = errorResponse;
         this.status = status;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, StatusForPd statusForPd) {
+        this.errorResponse = errorResponse;
+        this.statusForPd = statusForPd;
     }
 
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, ViewingHistory viewingHistory) {

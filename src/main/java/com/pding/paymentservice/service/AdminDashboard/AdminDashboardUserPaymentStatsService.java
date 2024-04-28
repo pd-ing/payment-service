@@ -93,6 +93,10 @@ public class AdminDashboardUserPaymentStatsService {
         return statusTabService.getStatusTabDetails(userId);
     }
 
+    public StatusForPd getStatusTabForPdDetails(String userId) {
+        return statusTabService.getStatusTabForPdDetails(userId);
+    }
+
     public ViewingHistory getViewingHistory(String userId, int page, int size) {
         return viewingHistoryTabService.getViewingHistory(userId, page, size);
     }
