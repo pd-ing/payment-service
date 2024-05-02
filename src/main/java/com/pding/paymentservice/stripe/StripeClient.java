@@ -9,11 +9,13 @@ import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Price;
 import com.stripe.model.Product;
+import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PriceListParams;
 import com.stripe.param.ProductListParams;
+import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -157,27 +159,17 @@ public class StripeClient {
         return Session.retrieve(sessionId);
     }
 
-    public PaymentIntent sendPayment(String stripeUserId, String recipientEmail, Long amountInCents) throws Exception {
-        PaymentIntent paymentIntent = PaymentIntent.create(createParams(stripeUserId, recipientEmail, amountInCents));
-        System.out.println("Payment successful. Payment Intent ID: " + paymentIntent.getId());
-        return paymentIntent;
-    }
+    public Transfer transferPayment(String stripeId, String recipientEmail, Long amountInCents, Map<String, String> metaData) throws Exception {
+        Stripe.apiKey = secretKey;
+        TransferCreateParams createParams = TransferCreateParams.builder()
+                .setAmount(amountInCents) // amount in cents
+                .setCurrency("usd")
+                .setDestination(stripeId)
+                .setDescription("Commission for the referrer")
+                .putAllMetadata(metaData)
+                .build();
 
-    private Map<String, Object> createParams(String stripeUserId, String recipientEmail, long amount) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("amount", amount);
-        params.put("currency", "usd");
-        params.put("payment_method_types", "card");
-        params.put("transfer_data", createTransferData(stripeUserId));
-        params.put("receipt_email", recipientEmail); // Add receipt email
-        return params;
-    }
-
-
-    private Map<String, Object> createTransferData(String stripeUserId) {
-        Map<String, Object> transferDataParams = new HashMap<>();
-        transferDataParams.put("destination", stripeUserId);
-        return transferDataParams;
+        return Transfer.create(createParams);
     }
 
     public Boolean isSessionCompleteOrExpired(Session session) {

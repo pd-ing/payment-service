@@ -1,6 +1,6 @@
 package com.pding.paymentservice.models;
 
-import com.pding.paymentservice.models.enums.CommissionPaymentStatus;
+import com.pding.paymentservice.models.enums.CommissionTransferStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,26 +50,21 @@ public class ReferralCommission {
     private LocalDateTime updatedDate;
 
     @Enumerated(EnumType.STRING)
-    private CommissionPaymentStatus commissionPaymentStatus;
+    private CommissionTransferStatus commissionTransferStatus;
 
     // Payment Information
-    @Column(name = "payment_transaction_id")
-    private String paymentTransactionId;
+    @Column(name = "transfer_id")
+    private String transferId;
 
-    @Column(name = "payment_amount")
-    private BigDecimal paymentAmount;
+    @Column(name = "transfer_amount")
+    private BigDecimal transferAmount;
 
-    @Column(name = "payment_date")
-    private LocalDateTime paymentDate;
-    
-    private String stripePaymentStatus;
-
-    @Column(name = "payment_method")
-    private String paymentMethod;
+    @Column(name = "transfer_description")
+    private String transferDescription;
 
     public ReferralCommission(String withdrawalId, String referrerUserId, String referredUserId, String commissionPercent, String commissionAmountInTrees,
-                              LocalDateTime createdDate, LocalDateTime updatedDate, CommissionPaymentStatus commissionPaymentStatus, String paymentTransactionId, BigDecimal paymentAmount,
-                              LocalDateTime paymentDate, String stripePaymentStatus, String paymentMethod) {
+                              LocalDateTime createdDate, LocalDateTime updatedDate, CommissionTransferStatus commissionTransferStatus, String transferId, BigDecimal transferAmount,
+                              String transferDescription) {
         this.withdrawalId = withdrawalId;
         this.referrerUserId = referrerUserId;
         this.referredUserId = referrerUserId;
@@ -77,11 +72,9 @@ public class ReferralCommission {
         this.commissionAmountInTrees = commissionAmountInTrees;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
-        this.commissionPaymentStatus = commissionPaymentStatus;
-        this.paymentTransactionId = paymentTransactionId;
-        this.paymentAmount = paymentAmount;
-        this.paymentDate = paymentDate;
-        this.stripePaymentStatus = stripePaymentStatus;
-        this.paymentMethod = paymentMethod;
+        this.commissionTransferStatus = commissionTransferStatus;
+        this.transferId = transferId;
+        this.transferAmount = transferAmount;
+        this.transferDescription = transferDescription;
     }
 }

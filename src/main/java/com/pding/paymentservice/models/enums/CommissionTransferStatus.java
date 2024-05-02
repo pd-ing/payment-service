@@ -1,13 +1,13 @@
 package com.pding.paymentservice.models.enums;
 
-public enum CommissionPaymentStatus {
-    PENDING("pending"),
-    PAID("paid"),
-    FAILED("failed");
+public enum CommissionTransferStatus {
+    TRANSFER_PENDING("TRANSFER_PENDING"),
+    TRANSFER_DONE("TRANSFER_DONE"),
+    TRANSFER_FAILED("TRANSFER_FAILED");
 
     private final String displayName;
 
-    CommissionPaymentStatus(String displayName) {
+    CommissionTransferStatus(String displayName) {
         this.displayName = displayName;
     }
 
