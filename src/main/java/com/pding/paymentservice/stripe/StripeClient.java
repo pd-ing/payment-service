@@ -11,6 +11,7 @@ import com.stripe.model.Price;
 import com.stripe.model.Product;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
+import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PriceListParams;
 import com.stripe.param.ProductListParams;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -154,6 +155,29 @@ public class StripeClient {
     public Session getSessionDetails(String sessionId) throws Exception {
         Stripe.apiKey = secretKey;
         return Session.retrieve(sessionId);
+    }
+
+    public PaymentIntent sendPayment(String stripeUserId, String recipientEmail, Long amountInCents) throws Exception {
+        PaymentIntent paymentIntent = PaymentIntent.create(createParams(stripeUserId, recipientEmail, amountInCents));
+        System.out.println("Payment successful. Payment Intent ID: " + paymentIntent.getId());
+        return paymentIntent;
+    }
+
+    private Map<String, Object> createParams(String stripeUserId, String recipientEmail, long amount) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("amount", amount);
+        params.put("currency", "usd");
+        params.put("payment_method_types", "card");
+        params.put("transfer_data", createTransferData(stripeUserId));
+        params.put("receipt_email", recipientEmail); // Add receipt email
+        return params;
+    }
+
+
+    private Map<String, Object> createTransferData(String stripeUserId) {
+        Map<String, Object> transferDataParams = new HashMap<>();
+        transferDataParams.put("destination", stripeUserId);
+        return transferDataParams;
     }
 
     public Boolean isSessionCompleteOrExpired(Session session) {

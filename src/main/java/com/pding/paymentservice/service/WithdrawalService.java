@@ -2,6 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
+import com.pding.paymentservice.models.ReferralCommission;
 import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.WithdrawalStatus;
@@ -50,6 +51,9 @@ public class WithdrawalService {
     EarningService earningService;
 
     @Autowired
+    ReferralCommissionService referralCommissionService;
+
+    @Autowired
     LedgerService ledgerService;
 
     @Autowired
@@ -84,6 +88,8 @@ public class WithdrawalService {
         Withdrawal withdrawal = new Withdrawal(pdUserId, trees, leafs, WithdrawalStatus.PENDING);
         withdrawalRepository.save(withdrawal);
 
+        referralCommissionService.giveCommissionToReferrer(withdrawal);
+        
         ledgerService.saveToLedger(withdrawal.getId(), trees, leafs, TransactionType.WITHDRAWAL_STARTED, pdUserId);
     }
 
