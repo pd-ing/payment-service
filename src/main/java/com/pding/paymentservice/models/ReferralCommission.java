@@ -31,17 +31,17 @@ public class ReferralCommission {
     @Column(name = "withdrawal_id")
     private String withdrawalId;
 
-    @Column(name = "referrer_user_id")
-    private String referrerUserId;
-
-    @Column(name = "referred_user_id")
-    private String referredUserId;
+    @Column(name = "referrer_pd_user_id")
+    private String referrerPdUserId;
 
     @Column(name = "commission_percent")
     private String commissionPercent;
 
-    @Column(name = "commission_amount")
+    @Column(name = "commission_amount_in_trees")
     private String commissionAmountInTrees;
+
+    @Column(name = "commission_amount_in_cents")
+    private BigDecimal commissionAmountInCents;
 
     @Column(name = "created_date")
     private LocalDateTime createdDate;
@@ -52,29 +52,24 @@ public class ReferralCommission {
     @Enumerated(EnumType.STRING)
     private CommissionTransferStatus commissionTransferStatus;
 
-    // Payment Information
-    @Column(name = "transfer_id")
-    private String transferId;
 
-    @Column(name = "transfer_amount")
-    private BigDecimal transferAmount;
-
-    @Column(name = "transfer_description")
-    private String transferDescription;
-
-    public ReferralCommission(String withdrawalId, String referrerUserId, String referredUserId, String commissionPercent, String commissionAmountInTrees,
-                              LocalDateTime createdDate, LocalDateTime updatedDate, CommissionTransferStatus commissionTransferStatus, String transferId, BigDecimal transferAmount,
-                              String transferDescription) {
+    public ReferralCommission(String withdrawalId,
+                              String referrerPdUserId,
+                              String commissionPercent,
+                              String commissionAmountInTrees,
+                              LocalDateTime createdDate,
+                              LocalDateTime updatedDate,
+                              CommissionTransferStatus commissionTransferStatus,
+                              BigDecimal commissionAmountInCents
+    ) {
         this.withdrawalId = withdrawalId;
-        this.referrerUserId = referrerUserId;
-        this.referredUserId = referrerUserId;
+        this.referrerPdUserId = referrerPdUserId;
         this.commissionPercent = commissionPercent;
         this.commissionAmountInTrees = commissionAmountInTrees;
+        this.commissionAmountInCents = commissionAmountInCents;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
         this.commissionTransferStatus = commissionTransferStatus;
-        this.transferId = transferId;
-        this.transferAmount = transferAmount;
-        this.transferDescription = transferDescription;
+
     }
 }
