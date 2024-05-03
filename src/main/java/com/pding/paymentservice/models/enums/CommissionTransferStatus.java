@@ -2,7 +2,7 @@ package com.pding.paymentservice.models.enums;
 
 public enum CommissionTransferStatus {
     TRANSFER_PENDING("TRANSFER_PENDING"),
-    TRANSFER_DONE("TRANSFER_DONE"),
+    TRANSFER_COMPLETED("TRANSFER_COMPLETED"),
     TRANSFER_FAILED("TRANSFER_FAILED");
 
     private final String displayName;

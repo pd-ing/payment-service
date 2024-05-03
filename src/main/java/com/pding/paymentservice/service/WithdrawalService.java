@@ -87,8 +87,8 @@ public class WithdrawalService {
 
         Withdrawal withdrawal = new Withdrawal(pdUserId, trees, leafs, WithdrawalStatus.PENDING);
         withdrawalRepository.save(withdrawal);
-
-        referralCommissionService.giveCommissionToReferrer(withdrawal);
+        
+        referralCommissionService.createReferralCommissionEntryInPendingState(withdrawal);
 
         ledgerService.saveToLedger(withdrawal.getId(), trees, leafs, TransactionType.WITHDRAWAL_STARTED, pdUserId);
     }

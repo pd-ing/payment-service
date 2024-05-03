@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.pding.paymentservice.PdLogger.EVENT.GIVE_REFERRAL_COMMISSION;
 
@@ -37,14 +38,55 @@ public class ReferralCommissionService {
     @Autowired
     PdLogger pdLogger;
 
+    long valueOfOneTreeInCents = 10L;
+
+
+    @Transactional
+    public void createReferralCommissionEntryInPendingState(Withdrawal withdrawal) throws Exception {
+        ReferralInfoDTO referralInfoDTO = getReferralInfo(withdrawal.getPdUserId());
+        if (referralInfoDTO != null) {
+            UserInfoDTO referrerPdUserInfoDTO = getUserInfo(referralInfoDTO.getReferrerPdUserId());
+            String commissionAmountInTrees = getCommissionAmountInTrees(withdrawal.getTrees(), referrerPdUserInfoDTO.getCommissionPercent());
+            BigDecimal commissionAmountInCents = new BigDecimal(commissionAmountInTrees).multiply(new BigDecimal(Long.toString(valueOfOneTreeInCents)));
+
+            ReferralCommission referralCommission = createReferralCommission(
+                    withdrawal,
+                    referralInfoDTO,
+                    referrerPdUserInfoDTO,
+                    commissionAmountInTrees,
+                    CommissionTransferStatus.TRANSFER_PENDING,
+                    "",
+                    commissionAmountInCents,
+                    "");
+            referralCommissionRepository.save(referralCommission);
+        }
+    }
+
+    @Transactional
+    public String updateReferralCommissionEntryToCompletedState(String referralCommissionId) throws Exception {
+        Optional<ReferralCommission> referralCommissionOptional = referralCommissionRepository.findById(referralCommissionId);
+        if (referralCommissionOptional.isEmpty()) {
+            return "Commission entry not found for the given commission id";
+        }
+
+        ReferralCommission referralCommission = referralCommissionOptional.get();
+
+        referralCommission.setCommissionTransferStatus(CommissionTransferStatus.TRANSFER_COMPLETED);
+        referralCommission.setUpdatedDate(LocalDateTime.now());
+
+        referralCommissionRepository.save(referralCommission);
+        return "Successfully updated the state to " + CommissionTransferStatus.TRANSFER_COMPLETED;
+    }
+
+    // This will be used later, when we will set up auto payment of commission
     @Transactional
     public void giveCommissionToReferrer(Withdrawal withdrawal) throws Exception {
         ReferralInfoDTO referralInfoDTO = getReferralInfo(withdrawal.getPdUserId());
-
         if (referralInfoDTO != null) {
             UserInfoDTO referrerPdUserInfoDTO = getUserInfo(referralInfoDTO.getReferrerPdUserId());
             UserInfoDTO referredPdUserInfoDTO = getUserInfo(withdrawal.getPdUserId());
             String commissionAmountInTrees = getCommissionAmountInTrees(withdrawal.getTrees(), referrerPdUserInfoDTO.getCommissionPercent());
+            BigDecimal commissionAmountInCents = new BigDecimal(commissionAmountInTrees).multiply(new BigDecimal(Long.toString(valueOfOneTreeInCents)));
 
             String transferId = "";
             String transferAmount = "0";
@@ -55,12 +97,12 @@ public class ReferralCommissionService {
                 commissionTransferStatus = CommissionTransferStatus.TRANSFER_PENDING;
                 transferDescription = "Stripe ID is not set for referrer.";
             } else {
-                PayReferrerThroughStripeResponse paymentResponse = payReferrerThroughStripe(referrerPdUserInfoDTO, referredPdUserInfoDTO, withdrawal, new BigDecimal(commissionAmountInTrees));
+                PayReferrerThroughStripeResponse paymentResponse = payReferrerThroughStripe(referrerPdUserInfoDTO, referredPdUserInfoDTO, withdrawal, commissionAmountInCents);
                 if (paymentResponse.getException() != null) {
                     commissionTransferStatus = CommissionTransferStatus.TRANSFER_FAILED;
                     transferDescription = "Transfer failed: " + paymentResponse.getException().getMessage();
                 } else {
-                    commissionTransferStatus = CommissionTransferStatus.TRANSFER_DONE;
+                    commissionTransferStatus = CommissionTransferStatus.TRANSFER_COMPLETED;
                     Transfer transfer = paymentResponse.getTransfer();
                     transferId = transfer.getId();
                     transferAmount = transfer.getAmount().toString();
@@ -79,56 +121,6 @@ public class ReferralCommissionService {
         }
     }
 
-    public PayReferrerThroughStripeResponse payReferrerThroughStripe(UserInfoDTO referrerPdUserInfoDTO, UserInfoDTO referredPdUserInfoDTO, Withdrawal withdrawal, BigDecimal commissionAmount) {
-        try {
-            Map<String, String> metaData = createMetaData(referrerPdUserInfoDTO, referredPdUserInfoDTO, withdrawal, commissionAmount);
-            Transfer transfer = stripeClient.transferPayment(referrerPdUserInfoDTO.getLinkedStripeId(), referrerPdUserInfoDTO.getEmail(), commissionAmount.longValue(), metaData);
-            return new PayReferrerThroughStripeResponse(null, transfer);
-        } catch (Exception e) {
-            String errorDetails = "Error while sending payment to the referrerPdUserId: " + referrerPdUserInfoDTO.getId() +
-                    ", WithDrawalId: " + withdrawal.getId() + ", Error: " + e.getMessage();
-            pdLogger.logException(GIVE_REFERRAL_COMMISSION, new Exception(errorDetails));
-            return new PayReferrerThroughStripeResponse(e, null);
-        }
-    }
-
-    private ReferralCommission createReferralCommission(Withdrawal withdrawal,
-                                                        ReferralInfoDTO referralInfoDTO,
-                                                        UserInfoDTO referrerPdUserInfoDTO,
-                                                        String commissionAmountInTrees,
-                                                        CommissionTransferStatus commissionTransferStatus,
-                                                        String transferId,
-                                                        BigDecimal transferAmount,
-                                                        String transferDescription) {
-        LocalDateTime createUpdateDate = LocalDateTime.now();
-        return new ReferralCommission(
-                withdrawal.getId(),
-                referralInfoDTO.getReferrerPdUserId(),
-                referralInfoDTO.getReferredPdUserId(),
-                referrerPdUserInfoDTO.getCommissionPercent(),
-                commissionAmountInTrees,
-                createUpdateDate,
-                createUpdateDate,
-                commissionTransferStatus,
-                transferId,
-                transferAmount,
-                transferDescription
-        );
-    }
-
-    private Map<String, String> createMetaData(UserInfoDTO referrerPdUserInfoDTO, UserInfoDTO referredPdUserInfoDTO, Withdrawal withdrawal, BigDecimal commissionAmount) {
-        Map<String, String> metaData = new HashMap<>();
-        metaData.put("Referrer_PdUserId", referrerPdUserInfoDTO.getId());
-        metaData.put("Referrer_Email", referrerPdUserInfoDTO.getEmail());
-        metaData.put("Referrer_PdType", referrerPdUserInfoDTO.getPdType());
-        metaData.put("Referrer_CommissionAmount", commissionAmount.toString());
-
-        metaData.put("Referred_PdUserId", referredPdUserInfoDTO.getId());
-        metaData.put("Referred_PdUser_Email", referredPdUserInfoDTO.getEmail());
-        metaData.put("Referred_PdUser_PdType", referredPdUserInfoDTO.getPdType());
-        metaData.put("Referred_PdUser_WithDrawalId", withdrawal.getId());
-        return metaData;
-    }
 
     public ReferralInfoDTO getReferralInfo(String referredPdUserId) throws Exception {
         List<Object[]> referralInfo = otherServicesTablesNativeQueryRepository.findReferralDetailsByReferredPdUserId(referredPdUserId);
@@ -192,6 +184,57 @@ public class ReferralCommissionService {
         }
 
         return userInfoDTO;
+    }
+
+    private PayReferrerThroughStripeResponse payReferrerThroughStripe(UserInfoDTO referrerPdUserInfoDTO, UserInfoDTO referredPdUserInfoDTO, Withdrawal withdrawal, BigDecimal commissionAmount) {
+        try {
+            Map<String, String> metaData = createMetaData(referrerPdUserInfoDTO, referredPdUserInfoDTO, withdrawal, commissionAmount);
+            Transfer transfer = stripeClient.transferPayment(referrerPdUserInfoDTO.getLinkedStripeId(), referrerPdUserInfoDTO.getEmail(), commissionAmount.longValue(), metaData);
+            return new PayReferrerThroughStripeResponse(null, transfer);
+        } catch (Exception e) {
+            String errorDetails = "Error while sending payment to the referrerPdUserId: " + referrerPdUserInfoDTO.getId() +
+                    ", WithDrawalId: " + withdrawal.getId() + ", Error: " + e.getMessage();
+            pdLogger.logException(GIVE_REFERRAL_COMMISSION, new Exception(errorDetails));
+            return new PayReferrerThroughStripeResponse(e, null);
+        }
+    }
+
+    private ReferralCommission createReferralCommission(Withdrawal withdrawal,
+                                                        ReferralInfoDTO referralInfoDTO,
+                                                        UserInfoDTO referrerPdUserInfoDTO,
+                                                        String commissionAmountInTrees,
+                                                        CommissionTransferStatus commissionTransferStatus,
+                                                        String transferId,
+                                                        BigDecimal transferAmountInCents,
+                                                        String transferDescription) {
+        LocalDateTime createUpdateDate = LocalDateTime.now();
+        return new ReferralCommission(
+                withdrawal.getId(),
+                referralInfoDTO.getReferrerPdUserId(),
+                referralInfoDTO.getReferredPdUserId(),
+                referrerPdUserInfoDTO.getCommissionPercent(),
+                commissionAmountInTrees,
+                createUpdateDate,
+                createUpdateDate,
+                commissionTransferStatus,
+                transferId,
+                transferAmountInCents,
+                transferDescription
+        );
+    }
+
+    private Map<String, String> createMetaData(UserInfoDTO referrerPdUserInfoDTO, UserInfoDTO referredPdUserInfoDTO, Withdrawal withdrawal, BigDecimal commissionAmount) {
+        Map<String, String> metaData = new HashMap<>();
+        metaData.put("Referrer_PdUserId", referrerPdUserInfoDTO.getId());
+        metaData.put("Referrer_Email", referrerPdUserInfoDTO.getEmail());
+        metaData.put("Referrer_PdType", referrerPdUserInfoDTO.getPdType());
+        metaData.put("Referrer_CommissionAmount", commissionAmount.toString());
+
+        metaData.put("Referred_PdUserId", referredPdUserInfoDTO.getId());
+        metaData.put("Referred_PdUser_Email", referredPdUserInfoDTO.getEmail());
+        metaData.put("Referred_PdUser_PdType", referredPdUserInfoDTO.getPdType());
+        metaData.put("Referred_PdUser_WithDrawalId", withdrawal.getId());
+        return metaData;
     }
 
     private String getCommissionAmountInTrees(BigDecimal trees, String percent) {
