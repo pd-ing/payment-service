@@ -15,9 +15,11 @@ import java.time.LocalDateTime;
 public class TransactionHistoryForAdminDashboard {
 
     String userEmail;
+    String userId;
     String transactionDateTime;
     String totalTrees;
     String transactionType;
     String pdNickname;
     String pdUserId;
+
 }
