@@ -55,11 +55,13 @@ public class RealTimeTreeUsageTabService {
             Object[] realTimeTreeTransactionHistory = (Object[]) innerObject;
             TransactionHistoryForAdminDashboard tranObj = new TransactionHistoryForAdminDashboard();
             tranObj.setUserEmail(realTimeTreeTransactionHistory[0].toString());
-            tranObj.setTransactionDateTime(realTimeTreeTransactionHistory[1].toString());
-            tranObj.setTotalTrees(realTimeTreeTransactionHistory[2].toString() + " TREES");
-            tranObj.setTransactionType(realTimeTreeTransactionHistory[3].toString());
-            tranObj.setPdNickname(realTimeTreeTransactionHistory[4].toString());
-            tranObj.setPdUserId(realTimeTreeTransactionHistory[5].toString());
+            tranObj.setUserId(realTimeTreeTransactionHistory[1].toString());
+            tranObj.setTransactionDateTime(realTimeTreeTransactionHistory[2].toString());
+            tranObj.setTotalTrees(realTimeTreeTransactionHistory[3].toString() + " TREES");
+            tranObj.setTransactionType(realTimeTreeTransactionHistory[4].toString());
+            tranObj.setPdNickname(realTimeTreeTransactionHistory[5].toString());
+            tranObj.setPdUserId(realTimeTreeTransactionHistory[6].toString());
+
             treeUsageList.add(tranObj);
         }
         return treeUsageList;
