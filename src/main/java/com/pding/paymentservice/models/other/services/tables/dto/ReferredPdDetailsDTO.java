@@ -25,15 +25,17 @@ public class ReferredPdDetailsDTO {
     String lastWithdrawalDate;
 
 
-    public static ReferredPdDetailsDTO fromObjectArray(Object[] objects) {
-        return new ReferredPdDetailsDTO(
-                (String) objects[0],
-                (String) objects[1],
-                (String) objects[2],
-                (String) objects[3],
-                (String) objects[4],
-                (String) objects[5],
-                (String) objects[6]
-        );
+    public static ReferredPdDetailsDTO fromObjectArray(Object[] objectArr) {
+        ReferredPdDetailsDTO referredPdDetailsDTOObj = new ReferredPdDetailsDTO();
+
+        referredPdDetailsDTOObj.setNickname(objectArr[0].toString());
+        referredPdDetailsDTOObj.setPdType(objectArr[1].toString());
+        referredPdDetailsDTOObj.setJoiningDate(objectArr[2].toString());
+        referredPdDetailsDTOObj.setTreesCurrentlyOwned(objectArr[3].toString());
+        referredPdDetailsDTOObj.setLeafsCurrentlyOwned(objectArr[4].toString());
+        referredPdDetailsDTOObj.setPdUserId(objectArr[5].toString());
+        referredPdDetailsDTOObj.setLastWithdrawalDate(objectArr[6].toString());
+
+        return referredPdDetailsDTOObj;
     }
 }

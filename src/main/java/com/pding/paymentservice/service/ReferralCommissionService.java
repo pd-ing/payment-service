@@ -4,6 +4,7 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.ReferralCommission;
 import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.CommissionTransferStatus;
+import com.pding.paymentservice.models.other.services.tables.dto.ReferralCommissionDetailsDTO;
 import com.pding.paymentservice.models.other.services.tables.dto.ReferralInfoDTO;
 import com.pding.paymentservice.models.other.services.tables.dto.UserInfoDTO;
 import com.pding.paymentservice.payload.response.PayReferrerThroughStripeResponse;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,7 +89,7 @@ public class ReferralCommissionService {
     public Page<ReferredPdDetailsDTO> getDetailsOfAllTheReferredPd(String referrerPdUserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getDetailsOfAllTheReferredPd(referrerPdUserId, pageable);
-        
+
         List<ReferredPdDetailsDTO> referredPdDetailsDTOList = new ArrayList<>();
         for (Object[] referredPdObj : referredPdDetailsPage.getContent()) {
             ReferredPdDetailsDTO referredPdDetailsDTO = ReferredPdDetailsDTO.fromObjectArray(referredPdObj);
@@ -95,6 +97,31 @@ public class ReferralCommissionService {
         }
 
         return new PageImpl<>(referredPdDetailsDTOList, pageable, referredPdDetailsPage.getTotalElements());
+    }
+
+    @Transactional
+    public Page<ReferralCommissionDetailsDTO> getReferralCommissionDetailsWithFilters(String referrerPdUserId,
+                                                                                      int page,
+                                                                                      int size,
+                                                                                      String searchString,
+                                                                                      LocalDate startDate,
+                                                                                      LocalDate endDate) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> referralCommissionDetailsWithFiltersPage = otherServicesTablesNativeQueryRepository.getReferralCommissionDetailsWithFilters(
+                referrerPdUserId,
+                pageable,
+                searchString,
+                startDate,
+                endDate);
+
+        List<ReferralCommissionDetailsDTO> referralCommissionDetailsDTOList = new ArrayList<>();
+        for (Object[] referralCommissionDetails : referralCommissionDetailsWithFiltersPage.getContent()) {
+            ReferralCommissionDetailsDTO referralCommissionDetailsDTO = ReferralCommissionDetailsDTO.fromObjectArray(referralCommissionDetails);
+            referralCommissionDetailsDTOList.add(referralCommissionDetailsDTO);
+        }
+
+        return new PageImpl<>(referralCommissionDetailsDTOList, pageable, referralCommissionDetailsWithFiltersPage.getTotalElements());
     }
 
     // This will be used later, when we will set up auto payment of commission
