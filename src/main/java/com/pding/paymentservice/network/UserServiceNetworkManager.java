@@ -12,7 +12,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,7 +45,10 @@ public class UserServiceNetworkManager {
                 .bodyToMono(GetUsersResponseNet.class)
                 .flatMapMany(resp -> {
                     if (resp.getError() == null && resp.getResult() != null) {
-                        return Flux.fromIterable(resp.getResult());
+                        Map<String, PublicUserNet> userMap = resp.getResult().stream()
+                                .collect(Collectors.toMap(PublicUserNet::getId, Function.identity()));
+                        return Flux.fromIterable(userIds)
+                                .map(userMap::get);
                     } else {
                         return Flux.empty();
                     }
@@ -60,7 +65,10 @@ public class UserServiceNetworkManager {
                 .bodyToMono(GetUsersResponseNet.class)
                 .flatMapMany(resp -> {
                     if (resp.getError() == null && resp.getResult() != null) {
-                        return Flux.fromIterable(resp.getResult());
+                        Map<String, PublicUserNet> userMap = resp.getResult().stream()
+                                .collect(Collectors.toMap(PublicUserNet::getEmail, Function.identity()));
+                        return Flux.fromIterable(emails)
+                                .map(userMap::get);
                     } else {
                         return Flux.empty();
                     }
@@ -77,11 +85,14 @@ public class UserServiceNetworkManager {
                 .bodyToMono(GetUsersResponseNet.class)
                 .flatMapMany(resp -> {
                     if (resp.getError() == null && resp.getResult() != null) {
-                        return Flux.just(resp.getResult());
+                        return Flux.just(resp.getResult())
+                                .flatMapIterable(list -> list);
                     } else {
                         return Flux.empty();
                     }
-                });
+                })
+                .collectList()
+                .flux();
     }
 
     public Flux<PublicUserWithStripeIdNet> getUsersListWithStripeFlux(List<String> userIds) throws Exception {
