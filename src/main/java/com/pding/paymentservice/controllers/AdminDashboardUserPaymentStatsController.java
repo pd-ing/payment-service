@@ -98,6 +98,19 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/viewingHistoryTabForPd")
+    public ResponseEntity<?> getViewingHistoryTabForPdDetailsController(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(required = false) String searchString,
+                                                                        @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+        ViewingHistoryForPd viewingHistoryForPd = null;
+        try {
+            viewingHistoryForPd = adminDashboardUserPaymentStatsService.getViewingHistoryForPd(pdUserId, searchString, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, viewingHistoryForPd));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), viewingHistoryForPd));
+        }
+    }
+
     @GetMapping(value = "/viewingHistoryTabSearchVideo")
     public ResponseEntity<?> getViewingHistoryTabDetailsSearchVideoController(@RequestParam(value = "userId") @NotBlank String userId,
                                                                               @RequestParam(value = "videoTitle") @NotBlank String videoTitle,

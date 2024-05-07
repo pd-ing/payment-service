@@ -18,6 +18,7 @@ public class AdminDashboardUserPaymentStats {
     Status status;
     StatusForPd statusForPd;
     ViewingHistory viewingHistory;
+    ViewingHistoryForPd viewingHistoryForPd;
     PaymentHistory paymentHistory;
     GiftHistory giftHistory;
     TreeSummary treeSummary;
@@ -38,6 +39,11 @@ public class AdminDashboardUserPaymentStats {
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, ViewingHistory viewingHistory) {
         this.errorResponse = errorResponse;
         this.viewingHistory = viewingHistory;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, ViewingHistoryForPd viewingHistoryForPd) {
+        this.errorResponse = errorResponse;
+        this.viewingHistoryForPd = viewingHistoryForPd;
     }
 
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, PaymentHistory paymentHistory) {

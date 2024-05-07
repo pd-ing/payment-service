@@ -83,5 +83,36 @@ public interface ViewingHistoryTabRepository extends JpaRepository<VideoPurchase
             countQuery = "SELECT COUNT(*) FROM video_purchase vp LEFT JOIN videos v ON vp.video_id = v.video_id WHERE vp.user_id = ?1 AND v.title LIKE %?2%",
             nativeQuery = true)
     Page<Object[]> findVideoPurchaseHistoryByUserIdAndVideoTitle(String userId, String videoTitle, Pageable pageable);
+
+    @Query(value = "SELECT COUNT(DISTINCT v.video_id) AS videoCount, SUM(vw.count) AS totalViews\n" +
+            " FROM videos v INNER JOIN video_view_count vw ON v.video_id = vw.video_id\n" +
+            " WHERE v.user_id = :pdUserId", nativeQuery = true)
+    Object[] getVideoSummaryByPdUserId(@Param("pdUserId") String userId);
+
+    @Query(value = "  SELECT COUNT(DISTINCT vp.id) AS totalVideoSales, COALESCE (SUM(trees_consumed), 0) AS totalProfit\n" +
+            "  FROM video_purchase vp INNER JOIN videos v ON v.user_id = vp.video_owner_user_id AND v.video_id = vp.video_id\n" +
+            " WHERE vp.video_owner_user_id= :pdUserId", nativeQuery = true)
+    Object[] getVideoSalesTotalsByPdUserId(@Param("pdUserId") String userId);
+
+    @Query(value = "SELECT COALESCE(v.title, '') AS title, " +
+            "       COALESCE(vw.count, '0.0') AS views, " +
+            "       COALESCE(COUNT(DISTINCT vp.id), '0.0') AS sales, " +
+            "       COALESCE(v.trees, '0.0') AS price, " +
+            "       COALESCE(SUM(vp.trees_consumed), '0.0') AS profit, " +
+            "       COALESCE(MAX(vp.last_update_date), '') " +
+            "FROM videos v " +
+            "LEFT JOIN video_view_count vw ON vw.video_id = v.video_id " +
+            "LEFT JOIN video_purchase vp ON vp.video_id = v.video_id AND v.user_id = vp.video_owner_user_id " +
+            "WHERE v.user_id = :pdUserId " +
+            "      AND (v.title IS NULL OR v.title LIKE %:searchString%) " +
+            "GROUP BY v.title, v.trees, vw.count",
+            countQuery = "SELECT COUNT(*) FROM videos v " +
+                    "WHERE v.user_id = :pdUserId " +
+                    "AND (v.title IS NULL OR v.title LIKE %:searchString%)",
+            nativeQuery = true)
+    Page<Object[]> getVideoSalesHistoryByPdIdAndVideoTitle(String pdUserId, String searchString, Pageable pageable);
+
+
+
 }
 

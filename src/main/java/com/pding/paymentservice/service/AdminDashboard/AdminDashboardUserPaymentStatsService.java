@@ -101,6 +101,10 @@ public class AdminDashboardUserPaymentStatsService {
         return viewingHistoryTabService.getViewingHistory(userId, page, size);
     }
 
+    public ViewingHistoryForPd getViewingHistoryForPd(String userId, String searchString, int page, int size) {
+        return viewingHistoryTabService.getViewingHistoryForPd(userId, searchString, page, size);
+    }
+
     public ViewingHistory searchVideo(String userId, String videoTitle, int page, int size) {
         return viewingHistoryTabService.searchVideo(userId, videoTitle, page, size);
     }
