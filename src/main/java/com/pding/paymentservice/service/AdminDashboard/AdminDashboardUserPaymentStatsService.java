@@ -125,6 +125,10 @@ public class AdminDashboardUserPaymentStatsService {
         return giftHistoryTabService.getGiftHistoryTabDetails(userId, page, size);
     }
 
+    public GiftHistoryForPd getGiftHistoryTabForPdDetails(String pdUserId, LocalDate startDate, LocalDate endDate, int page, int size) {
+        return giftHistoryTabService.getGiftHistoryTabForPdDetails(pdUserId, startDate, endDate, page, size);
+    }
+
     public TreeSummaryGridResult getTreesSummaryForAllUsers (LocalDate startDate, LocalDate endDate, String searchString, int page, int size){
         return treeSummaryTabService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
     }

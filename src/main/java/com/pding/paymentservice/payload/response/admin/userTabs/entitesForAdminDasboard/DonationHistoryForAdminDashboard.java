@@ -16,6 +16,8 @@ public class DonationHistoryForAdminDashboard {
 
     String pdProfileId;
 
+    String pdEmailId;
+
     String treesOrLeafs;
 
     String amount;

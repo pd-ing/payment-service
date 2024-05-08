@@ -47,6 +47,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/clearPendingPayment",
             "/api/payment/admin/viewingHistoryTab",
             "/api/payment/admin/giftHistoryTab",
+            "/api/payment/admin/giftHistoryTabForPd",
             "/api/payment/paymentsFailedInitiallyButSucceededLater",
             "/api/payment/admin/viewingHistoryTab",
             "/api/payment/admin/viewingHistoryTabForPd",

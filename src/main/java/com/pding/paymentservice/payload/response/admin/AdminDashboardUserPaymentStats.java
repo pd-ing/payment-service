@@ -21,6 +21,7 @@ public class AdminDashboardUserPaymentStats {
     ViewingHistoryForPd viewingHistoryForPd;
     PaymentHistory paymentHistory;
     GiftHistory giftHistory;
+    GiftHistoryForPd giftHistoryForPd;
     TreeSummary treeSummary;
     TreeSummaryGridResult treeSummaryGridResult;
     RealTimeTreeTransactionHistory realTimeTreeTransactionHistory;
@@ -54,6 +55,11 @@ public class AdminDashboardUserPaymentStats {
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, GiftHistory giftHistory) {
         this.errorResponse = errorResponse;
         this.giftHistory = giftHistory;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, GiftHistoryForPd giftHistoryForPd) {
+        this.errorResponse = errorResponse;
+        this.giftHistoryForPd = giftHistoryForPd;
     }
 
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, TreeSummaryGridResult treeSummaryGridResult) {
