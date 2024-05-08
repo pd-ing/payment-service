@@ -26,7 +26,9 @@ public class TreeSummaryTabService {
     public TreeSummaryGridResult getTreesSummaryForAllUsers(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         TreeSummaryGridResult treeSummaryGridResult = new TreeSummaryGridResult();
         Pageable pageable = PageRequest.of(page, size, Sort.by("email").ascending());
+
         Page<Object[]> userPage = treeSummaryTabRepository.getTreesRevenueForPd(startDate, endDate, searchString, pageable);
+
         List<UserObject> userTreeSummaryList = createTreeSummaryList(userPage.getContent(), startDate, endDate);
         treeSummaryGridResult.setUserObjects(new PageImpl<>(userTreeSummaryList, pageable, userPage.getTotalElements()));
         return treeSummaryGridResult;

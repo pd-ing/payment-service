@@ -63,6 +63,8 @@ public class PdLogger {
 
         CHARGE(Priority.p0),
 
+        GIVE_REFERRAL_COMMISSION(Priority.p0),
+
         BUY_VIDEO(Priority.p0),
 
         IS_VIDEO_PURCHASED(Priority.p0),
@@ -85,7 +87,13 @@ public class PdLogger {
         WALLET_HISTORY(Priority.p1),
 
         START_WITHDRAW(Priority.p1),
+
         COMPLETE_WITHDRAW(Priority.p1),
+
+        START_REFERRAL_COMMISSION(Priority.p1),
+
+        COMPLETE_REFERRAL_COMMISSION(Priority.p1),
+        
         WITHDRAW_TRANSACTION(Priority.p1),
 
         VIDEO_EARNING_AND_SALES(Priority.p1),
