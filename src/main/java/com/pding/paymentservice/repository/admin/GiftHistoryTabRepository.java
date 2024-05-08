@@ -12,7 +12,7 @@ import java.time.LocalDate;
 
 public interface GiftHistoryTabRepository extends JpaRepository<VideoPurchase, String> {
 
-    @Query(value = "SELECT SUM(donated_trees) FROM donation " +
+    @Query(value = "SELECT COALESCE(SUM(donated_trees), 0) FROM donation " +
             "WHERE donor_user_id = :userId " +
             "AND YEAR(last_update_date) = YEAR(CURRENT_DATE) " +
             "AND MONTH(last_update_date) = MONTH(CURRENT_DATE)", nativeQuery = true)
@@ -30,7 +30,7 @@ public interface GiftHistoryTabRepository extends JpaRepository<VideoPurchase, S
             nativeQuery = true)
     Page<Object[]> findDonationHistoryByUserId(String userId, Pageable pageable);
 
-    @Query(value = "SELECT SUM(donated_trees) FROM donation " +
+    @Query(value = "SELECT COALESCE(SUM(donated_trees), 0) FROM donation " +
             "WHERE pd_user_id = :pdUserId ", nativeQuery = true)
     BigDecimal totalTreesReceivedByPd(@Param("pdUserId") String pdUserId);
 

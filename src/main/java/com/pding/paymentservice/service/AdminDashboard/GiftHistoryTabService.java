@@ -33,6 +33,7 @@ public class GiftHistoryTabService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> dhadPage = giftHistoryTabRepository.findDonationHistoryByUserId(userId, pageable);
         List<DonationHistoryForAdminDashboard> dhadList = createGiftHistoryList(dhadPage.getContent());
+
         // List<DonationHistoryForAdminDashboard> dhadList = new ArrayList<>();
         /* for (Object innerObject : dhadPage.getContent()) {
             Object[] giftDonationHistory = (Object[]) innerObject;
@@ -43,6 +44,7 @@ public class GiftHistoryTabService {
             dhadObj.setAmount(giftDonationHistory[3].toString());
             dhadList.add(dhadObj);
         } */
+
         giftHistory.setDonationHistoryForAdminDashboardList(new PageImpl<>(dhadList, pageable, dhadPage.getTotalElements()));
         return giftHistory;
     }
@@ -65,11 +67,13 @@ public class GiftHistoryTabService {
         for (Object innerObject : dhadPage) {
             Object[] giftDonationHistory = (Object[]) innerObject;
             DonationHistoryForAdminDashboard dhadObj = new DonationHistoryForAdminDashboard();
+
             dhadObj.setDateTime(giftDonationHistory[0].toString());
             dhadObj.setPdProfileId(giftDonationHistory[1].toString());
             dhadObj.setTreesOrLeafs(giftDonationHistory[2].toString());
             dhadObj.setAmount(giftDonationHistory[3].toString());
             dhadObj.setPdEmailId(giftDonationHistory.length > 4 && giftDonationHistory[4] != null ? giftDonationHistory[4].toString() : "");
+
             dhadList.add(dhadObj);
         }
         return dhadList;
