@@ -160,6 +160,9 @@ public class AdminDashboardUserPaymentStatsController {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
             }
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
             giftHistoryForPd = adminDashboardUserPaymentStatsService.getGiftHistoryTabForPdDetails(pdUserId,startDate,endDate, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, giftHistoryForPd));
         } catch (Exception e) {
@@ -177,6 +180,9 @@ public class AdminDashboardUserPaymentStatsController {
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
             }
             paymentHistory = adminDashboardUserPaymentStatsService.getPaymentHistoryForAllUsers(startDate, endDate, sortOrder, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, paymentHistory));

@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class VideoSalesHistoryForAdminDashboard {
+    String videoId;
+
     String videoTitle;
 
     String views;

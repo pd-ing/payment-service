@@ -94,21 +94,22 @@ public interface ViewingHistoryTabRepository extends JpaRepository<VideoPurchase
             " WHERE vp.video_owner_user_id= :pdUserId", nativeQuery = true)
     Object[] getVideoSalesTotalsByPdUserId(@Param("pdUserId") String userId);
 
-    @Query(value = "SELECT COALESCE(v.title, ''), " +
-            "       COALESCE(vw.count, '0.0'), " +
-            "       COALESCE(COUNT(DISTINCT vp.id), '0.0'), " +
-            "       COALESCE(v.trees, '0.0'), " +
-            "       COALESCE(SUM(vp.trees_consumed), '0.0'), " +
-            "       COALESCE(MAX(vp.last_update_date), '') " +
-            "FROM videos v " +
-            "LEFT JOIN video_view_count vw ON vw.video_id = v.video_id " +
-            "LEFT JOIN video_purchase vp ON vp.video_id = v.video_id AND v.user_id = vp.video_owner_user_id " +
-            "WHERE v.user_id = :pdUserId " +
-            "      AND ((:searchString IS NULL) OR (v.title LIKE %:searchString%)) " +
-            "GROUP BY v.title, v.trees, vw.count",
+    @Query(value = "SELECT video_id, title, views, GROUP_CONCAT(salePrice SEPARATOR ', ') AS salePrices, SUM(profit), MAX(last_update_date) \n" +
+            "FROM ( SELECT COALESCE(v.video_id, '') AS video_id, \n" +
+            "\tCOALESCE(v.title, '') AS title, \n" +
+            "\tCOALESCE(vw.count, '0.0') AS views, \n" +
+            "\tCOALESCE(CONCAT(COUNT(distinct vp.id), '/', trees_consumed), '0/0.0') AS salePrice, \n" +
+            "\tCOALESCE(SUM(vp.trees_consumed), '0.0') AS profit, \n" +
+            "\tCOALESCE(MAX(vp.last_update_date), '') AS last_update_date \n" +
+            "\tFROM videos v LEFT JOIN video_view_count vw ON vw.video_id = v.video_id \n" +
+            "\tLEFT JOIN video_purchase vp ON vp.video_id = v.video_id AND v.user_id = vp.video_owner_user_id \n" +
+            "\tWHERE v.user_id = :pdUserId \n" +
+            "\t\t AND ((:searchString IS NULL) OR (v.title LIKE %:searchString%)) \n" +
+            "\tGROUP BY v.video_id, v.title, trees_consumed, vw.count ) AS subquery \n" +
+            " GROUP BY  title, video_id, views ",
             countQuery = "SELECT COUNT(*) FROM videos v " +
                     "WHERE v.user_id = :pdUserId " +
-                    "AND ((:searchString IS NULL) OR (v.title LIKE %:searchString%))",
+                    "AND ((:searchString IS NULL) OR (v.title LIKE %:searchString%)) ",
             nativeQuery = true)
     Page<Object[]> getVideoSalesHistoryByPdIdAndVideoTitle(String pdUserId, String searchString, Pageable pageable);
 

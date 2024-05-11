@@ -29,13 +29,14 @@ public interface TreeSummaryTabRepository extends JpaRepository<VideoPurchase, S
 
 
     @Query(value = "SELECT COALESCE(u.id, ''), COALESCE(u.nickname, ''), COALESCE(u.email, ''), COALESCE(u.pd_type, ''), " +
-            "COALESCE(SUM(vp.trees_consumed), 0) " +
+            "COALESCE(SUM(vp.trees_consumed), 0) AS totalTreeRevenue " +
             "FROM users u " +
             "INNER JOIN video_purchase vp ON vp.video_owner_user_id = u.id " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR  vp.last_update_date <= :endDate) " +
             "AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%) " +
-            "GROUP BY u.id, u.nickname, u.email, u.pd_type",
+            "GROUP BY u.id, u.nickname, u.email, u.pd_type " +
+            "ORDER BY totalTreeRevenue DESC ",
             countQuery = "SELECT COUNT(*) FROM users u WHERE (:searchString IS NULL OR u.email LIKE %:searchString%)",
             nativeQuery = true)
     Page<Object[]> getTreesRevenueForPd(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString, Pageable pageable);

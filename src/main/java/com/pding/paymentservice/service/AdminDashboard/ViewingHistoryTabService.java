@@ -121,9 +121,10 @@ public class ViewingHistoryTabService {
             Object[] videoSalesHistory = (Object[]) innerObject;
 
             VideoSalesHistoryForAdminDashboard vshadObj = new VideoSalesHistoryForAdminDashboard();
-            vshadObj.setVideoTitle(videoSalesHistory[0].toString());
-            vshadObj.setViews(videoSalesHistory[1].toString());
-            vshadObj.setSalePrice(videoSalesHistory[2].toString() + "/" + videoSalesHistory[3].toString() + "Tree");
+            vshadObj.setVideoId(videoSalesHistory[0].toString());
+            vshadObj.setVideoTitle(videoSalesHistory[1].toString());
+            vshadObj.setViews(videoSalesHistory[2].toString());
+            vshadObj.setSalePrice(videoSalesHistory[3].toString() + "Tree");
             vshadObj.setProfit(videoSalesHistory[4].toString() + "Tree");
             vshadObj.setDate(videoSalesHistory[5].toString());
             vshadList.add(vshadObj);

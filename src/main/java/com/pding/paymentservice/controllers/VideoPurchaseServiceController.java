@@ -102,6 +102,12 @@ public class VideoPurchaseServiceController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size
     ) {
+        if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+        }
+        if (endDate != null) {
+            endDate = endDate.plusDays(1L);
+        }
         return videoPurchaseService.getSalesHistoryOfUser(startDate, endDate, page, size, sortOrder);
     }
 
