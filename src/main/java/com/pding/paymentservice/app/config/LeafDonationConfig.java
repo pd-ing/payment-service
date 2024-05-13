@@ -18,12 +18,12 @@ public class LeafDonationConfig {
     List<LeafItem> Signature;
 
     public static LeafDonationConfig createConfig() {
-        LeafItem basicItem1 = new LeafItem(1, 10, "dummyURL", "dummyAnimationURL");
-        LeafItem basicItem2 = new LeafItem(2, 20, "dummyURL", "dummyAnimationURL");
-        LeafItem basicItem3 = new LeafItem(3, 44, "dummyURL", "dummyAnimationURL");
-        LeafItem basicItem4 = new LeafItem(4, 50, "dummyURL", "dummyAnimationURL");
-        LeafItem basicItem5 = new LeafItem(5, 100, "dummyURL", "dummyAnimationURL");
-        LeafItem basicItem6 = new LeafItem(6, 1000, "dummyURL", "dummyAnimationURL");
+        LeafItem basicItem1 = new LeafItem(1, 10, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem basicItem2 = new LeafItem(2, 20, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem basicItem3 = new LeafItem(3, 44, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem basicItem4 = new LeafItem(4, 50, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem basicItem5 = new LeafItem(5, 100, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem basicItem6 = new LeafItem(6, 1000, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
 
         List<LeafItem> basic = new ArrayList<>();
         basic.add(basicItem1);
@@ -34,12 +34,12 @@ public class LeafDonationConfig {
         basic.add(basicItem6);
 
 
-        LeafItem signatureItem1 = new LeafItem(1, 10, "dummyURL", "dummyAnimationURL");
-        LeafItem signatureItem2 = new LeafItem(2, 20, "dummyURL", "dummyAnimationURL");
-        LeafItem signatureItem3 = new LeafItem(3, 44, "dummyURL", "dummyAnimationURL");
-        LeafItem signatureItem4 = new LeafItem(4, 50, "dummyURL", "dummyAnimationURL");
-        LeafItem signatureItem5 = new LeafItem(5, 100, "dummyURL", "dummyAnimationURL");
-        LeafItem signatureItem6 = new LeafItem(6, 1000, "dummyURL", "dummyAnimationURL");
+        LeafItem signatureItem1 = new LeafItem(1, 10, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem signatureItem2 = new LeafItem(2, 20, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem signatureItem3 = new LeafItem(3, 44, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem signatureItem4 = new LeafItem(4, 50, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem signatureItem5 = new LeafItem(5, 100, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
+        LeafItem signatureItem6 = new LeafItem(6, 1000, "https://picsum.photos/id/1/200/300", "https://media.giphy.com/media/z3SJjTckxqKZW3SKOd/giphy.gif");
 
         List<LeafItem> signature = new ArrayList<>();
         signature.add(signatureItem1);

@@ -64,7 +64,33 @@ public class DonationServiceController {
         try {
             //Set userId from token
             String userId = authHelper.getUserId();
-            Donation donation = donationService.createDonationTransaction(userId, trees, pdUserId);
+            Donation donation = donationService.createTreesDonationTransaction(userId, trees, pdUserId);
+            return ResponseEntity.ok().body(new DonationResponse(null, donation));
+        } catch (WalletNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        } catch (InsufficientTreesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (InvalidAmountException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new DonationResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.DONATE, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping(value = "/donateLeafs")
+    public ResponseEntity<?> donateLeafs(@RequestParam(value = "leafs") BigDecimal leafs, @RequestParam(value = "pdUserId") String pdUserId) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "PdUserId parameter is required."));
+        }
+        if (leafs == null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafs parameter is required."));
+        }
+
+        try {
+            //Set userId from token
+            String userId = authHelper.getUserId();
+            Donation donation = donationService.createLeafsDonationTransaction(userId, leafs, pdUserId);
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
