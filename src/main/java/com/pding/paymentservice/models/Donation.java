@@ -30,14 +30,22 @@ public class Donation {
 
     private String pdUserId;
 
-    private BigDecimal donatedTrees;
+    private BigDecimal donatedTrees = BigDecimal.ZERO;
+
+    private BigDecimal donatedLeafs = BigDecimal.ZERO;
 
     private LocalDateTime lastUpdateDate;
 
-    public Donation(String donorUserId, String pdUserId, BigDecimal donatedTrees) {
+    public Donation(String donorUserId, String pdUserId, BigDecimal donatedTrees, BigDecimal donatedLeafs) {
         this.donorUserId = donorUserId;
         this.pdUserId = pdUserId;
-        this.donatedTrees = donatedTrees;
+
+        if (donatedTrees != null)
+            this.donatedTrees = donatedTrees;
+
+        if (donatedLeafs != null)
+            this.donatedLeafs = donatedLeafs;
+        
         this.lastUpdateDate = LocalDateTime.now();
     }
 }

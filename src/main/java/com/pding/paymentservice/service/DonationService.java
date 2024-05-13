@@ -69,14 +69,27 @@ public class DonationService {
     AuthHelper authHelper;
 
     @Transactional
-    public Donation createDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
+    public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
         walletService.deductTreesFromWallet(userId, treesToDonate);
 
-        Donation transaction = new Donation(userId, PdUserId, treesToDonate);
+        Donation transaction = new Donation(userId, PdUserId, treesToDonate, null);
         Donation donation = donationRepository.save(transaction);
 
         earningService.addTreesToEarning(PdUserId, treesToDonate);
         ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION, userId);
+
+        return donation;
+    }
+
+    @Transactional
+    public Donation createLeafsDonationTransaction(String userId, BigDecimal leafsToDonate, String PdUserId) {
+        walletService.deductLeafsFromWallet(userId, leafsToDonate);
+
+        Donation transaction = new Donation(userId, PdUserId, null, leafsToDonate);
+        Donation donation = donationRepository.save(transaction);
+
+        earningService.addLeafsToEarning(PdUserId, leafsToDonate);
+        ledgerService.saveToLedger(donation.getId(), new BigDecimal(0), leafsToDonate, TransactionType.DONATION, userId);
 
         return donation;
     }
@@ -196,7 +209,7 @@ public class DonationService {
         }
 
         try {
-            Donation donation = createDonationTransaction(userId, trees, pdUserId);
+            Donation donation = createTreesDonationTransaction(userId, trees, pdUserId);
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

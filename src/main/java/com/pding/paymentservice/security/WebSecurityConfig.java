@@ -34,6 +34,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
                                 //.requestMatchers("/api/payment/charge").authenticated()
+                                .requestMatchers("/api/payment/appConfig/leafDonationConfig").authenticated()
                                 .requestMatchers("/api/payment/test").authenticated()
                                 .requestMatchers("/api/payment/wallet").authenticated()
                                 .requestMatchers("/api/payment/walletHistory").authenticated()
@@ -82,6 +83,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
+                                .requestMatchers("/api/payment/donateLeafs").authenticated()
                                 //.requestMatchers("/api/payment/v2/charge").authenticated()
                                 .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
                                 .requestMatchers("/api/payment/clearPendingAndStalePayments/**").permitAll()
