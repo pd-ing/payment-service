@@ -9,28 +9,32 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserWithStripeIdNet;
 import com.pding.paymentservice.payload.request.WithdrawRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistoryForPd;
+import com.pding.paymentservice.payload.response.admin.userTabs.WithdrawHistoryForPd;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.WithdrawHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.WithdrawalResponseWithStripeId;
+import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.repository.WithdrawalRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Page;
 
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -353,6 +357,52 @@ public class WithdrawalService {
             pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
+    }
+
+    public WithdrawHistoryForPd getWithdrawHistoryTabForPdDetails(String pdUserId, LocalDate startDate, LocalDate endDate, int sortOrder, int page, int size) {
+        WithdrawHistoryForPd withdrawHistoryForPd = new WithdrawHistoryForPd();
+
+        String pdStripeId = withdrawalRepository.getPdStripeId(pdUserId);
+        withdrawHistoryForPd.setPdStripeId(pdStripeId);
+
+        // Define custom sorting comparator, To show all the data with status as pending first and then rest of the data
+        Comparator<WithdrawHistoryForAdminDashboard> customComparator = (w1, w2) -> {
+            if (WithdrawalStatus.valueOf(w1.getStatus()) == WithdrawalStatus.PENDING && WithdrawalStatus.valueOf(w2.getStatus()) != WithdrawalStatus.PENDING) {
+                return -1; // w1 comes before w2
+            } else if (WithdrawalStatus.valueOf(w1.getStatus()) != WithdrawalStatus.PENDING && WithdrawalStatus.valueOf(w2.getStatus()) == WithdrawalStatus.PENDING) {
+                return 1; // w2 comes before w1
+            } else {
+                // If both have the same status or both are not "pending", sort by created date
+                return 0;
+            }
+        };
+
+        // Define sorting criteria based on createdDate
+        Sort sort = sortOrder == 0 ?
+                Sort.by(Sort.Direction.ASC, "created_date") :
+                Sort.by(Sort.Direction.DESC, "created_date");
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+        // Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").descending());
+        Page<Object[]> whadPage = withdrawalRepository.findWithdrawalHistoryByPdId(pdUserId, startDate, endDate, pageRequest);
+
+        List<WithdrawHistoryForAdminDashboard> wdList = new ArrayList<>();
+        for (Object innerObject : whadPage.getContent()) {
+            Object[] withdrawalHistory = (Object[]) innerObject;
+            WithdrawHistoryForAdminDashboard wdobj = new WithdrawHistoryForAdminDashboard();
+            wdobj.setCreateDateTime(withdrawalHistory[0].toString());
+            wdobj.setStatus(withdrawalHistory[1].toString());
+            wdobj.setApplicationNumber(withdrawalHistory[2].toString());
+            wdobj.setRate(withdrawalHistory[3].toString() + "%");
+            double rate = Double.parseDouble(withdrawalHistory[3].toString());
+            BigDecimal treesWithdrawn = new BigDecimal(withdrawalHistory[2].toString());
+            wdobj.setActualPayment((treesWithdrawn.multiply(new BigDecimal(rate/100))).toString());
+            wdobj.setCompleteDate(withdrawalHistory[4].toString());
+            wdList.add(wdobj);
+        }
+        wdList.sort(customComparator);
+        withdrawHistoryForPd.setWithdrawHistoryForAdminDashboardList(new PageImpl<>(wdList, pageRequest, whadPage.getTotalElements()));
+        return withdrawHistoryForPd;
     }
 
 }

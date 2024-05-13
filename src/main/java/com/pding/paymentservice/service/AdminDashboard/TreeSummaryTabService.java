@@ -32,7 +32,7 @@ public class TreeSummaryTabService {
         return treeSummaryGridResult;
     }
 
-    public TreeSummary getTreesSummaryTotals() {
+    public TreeSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate, String searchString) {
         TreeSummary treeSummary = new TreeSummary();
         BigDecimal totalTreeRevenue = treeSummaryTabRepository.getTotalTreesConsumedForVideos().add(treeSummaryTabRepository.getTotalDonatedTrees());
         BigDecimal totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForAllUsers();

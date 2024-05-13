@@ -170,6 +170,28 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/withdrawalHistoryTabForPd")
+    public ResponseEntity<?> getGiftHistoryTabDetailsController(@RequestParam(value = "pdUserId") String pdUserId,
+                                                                @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                                @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                                @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                                @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                @RequestParam(defaultValue = "10") @Min(1) int size) {
+        WithdrawHistoryForPd withdrawHistoryForPd = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            withdrawHistoryForPd = adminDashboardUserPaymentStatsService.getWithdrawHistoryTabForPdDetails(pdUserId, startDate, endDate, sortOrder, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, withdrawHistoryForPd));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), withdrawHistoryForPd));
+        }
+    }
+
     @GetMapping(value = "/paymentHistoryAllUsersTab")
     public ResponseEntity<?> getPaymentHistoryForAllUsersTabDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                               @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
@@ -227,10 +249,19 @@ public class AdminDashboardUserPaymentStatsController {
     }
 
     @GetMapping(value = "/treeSummariesTotals")
-    public ResponseEntity<?> getTreeSummaryDetailsController() {
+    public ResponseEntity<?> getTreeSummaryDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                             @RequestParam(required = false) String searchString) {
         TreeSummary treesSummaryTotals = null;
         try {
-            treesSummaryTotals = adminDashboardUserPaymentStatsService.getTreesSummaryTotals();
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            treesSummaryTotals = adminDashboardUserPaymentStatsService.getTreesSummaryTotals(startDate, endDate, searchString);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treesSummaryTotals));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), treesSummaryTotals));
