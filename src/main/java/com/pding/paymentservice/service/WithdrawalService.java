@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -367,9 +368,9 @@ public class WithdrawalService {
 
         // Define custom sorting comparator, To show all the data with status as pending first and then rest of the data
         Comparator<WithdrawHistoryForAdminDashboard> customComparator = (w1, w2) -> {
-            if (WithdrawalStatus.valueOf(w1.getStatus()) == WithdrawalStatus.PENDING && WithdrawalStatus.valueOf(w2.getStatus()) != WithdrawalStatus.PENDING) {
+            if (w1.getStatus() == WithdrawalStatus.PENDING && w2.getStatus() != WithdrawalStatus.PENDING) {
                 return -1; // w1 comes before w2
-            } else if (WithdrawalStatus.valueOf(w1.getStatus()) != WithdrawalStatus.PENDING && WithdrawalStatus.valueOf(w2.getStatus()) == WithdrawalStatus.PENDING) {
+            } else if (w1.getStatus() != WithdrawalStatus.PENDING && w2.getStatus() == WithdrawalStatus.PENDING) {
                 return 1; // w2 comes before w1
             } else {
                 // If both have the same status or both are not "pending", sort by created date
@@ -387,16 +388,20 @@ public class WithdrawalService {
         Page<Object[]> whadPage = withdrawalRepository.findWithdrawalHistoryByPdId(pdUserId, startDate, endDate, pageRequest);
 
         List<WithdrawHistoryForAdminDashboard> wdList = new ArrayList<>();
+
         for (Object innerObject : whadPage.getContent()) {
             Object[] withdrawalHistory = (Object[]) innerObject;
             WithdrawHistoryForAdminDashboard wdobj = new WithdrawHistoryForAdminDashboard();
-            wdobj.setCreateDateTime(withdrawalHistory[0].toString());
-            wdobj.setStatus(withdrawalHistory[1].toString());
-            wdobj.setApplicationNumber(withdrawalHistory[2].toString());
-            wdobj.setRate(withdrawalHistory[3].toString() + "%");
+
             double rate = Double.parseDouble(withdrawalHistory[3].toString());
             BigDecimal treesWithdrawn = new BigDecimal(withdrawalHistory[2].toString());
-            wdobj.setActualPayment((treesWithdrawn.multiply(new BigDecimal(rate/100))).toString());
+            BigDecimal result = treesWithdrawn.multiply(new BigDecimal(rate / 100));
+
+            wdobj.setCreateDateTime(withdrawalHistory[0].toString());
+            wdobj.setStatus(WithdrawalStatus.valueOf(withdrawalHistory[1].toString()));
+            wdobj.setApplicationNumber(treesWithdrawn);
+            wdobj.setRate(String.valueOf(rate) + "%");
+            wdobj.setActualPayment(new BigDecimal(result.toString()).setScale(2, RoundingMode.HALF_UP));
             wdobj.setCompleteDate(withdrawalHistory[4].toString());
             wdList.add(wdobj);
         }
