@@ -67,17 +67,34 @@ public interface TreeSummaryTabRepository extends JpaRepository<VideoPurchase, S
 //            nativeQuery = true)
 //    BigDecimal getTotalTreeRevenueForAllUsers();
 
-    @Query(value = "SELECT COALESCE(SUM(vp.trees_consumed), 0) FROM video_purchase vp", nativeQuery = true)
-    BigDecimal getTotalTreesConsumedForVideos();
+    @Query(value = "SELECT COALESCE(SUM(vp.trees_consumed), 0) FROM video_purchase vp INNER JOIN users u \n" +
+            " ON vp.video_owner_user_id = u.id \n" +
+            " WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate) \n" +
+            " AND (:endDate IS NULL OR  vp.last_update_date <= :endDate) \n" +
+            " AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)", nativeQuery = true)
+    BigDecimal getTotalTreesConsumedForVideos(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
-    @Query(value = "SELECT COALESCE(SUM(d.donated_trees), 0) FROM donation d", nativeQuery = true)
-    BigDecimal getTotalDonatedTrees();
+    @Query(value = "SELECT COALESCE(SUM(d.donated_trees), 0) FROM donation d INNER JOIN users u \n" +
+            " ON d.pd_user_id = u.id \n" +
+            " WHERE (:startDate IS NULL OR d.last_update_date >= :startDate) \n" +
+            " AND (:endDate IS NULL OR  d.last_update_date <= :endDate) \n" +
+            " AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)", nativeQuery = true)
+    BigDecimal getTotalDonatedTrees(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
-    @Query(value = "SELECT COALESCE(SUM(w.trees), 0) AS totalExchangedTrees FROM withdrawals w WHERE w.status IN ('COMPLETE', 'PENDING')", nativeQuery = true)
-    BigDecimal getTotalExchangedTreesForAllUsers();
+    @Query(value = "SELECT COALESCE(SUM(w.trees), 0) AS totalExchangedTrees FROM withdrawals w INNER JOIN users u \n" +
+            " ON w.pd_user_id = u.id \n" +
+            " WHERE w.status IN ('COMPLETE', 'PENDING') \n" +
+            " AND (:startDate IS NULL OR w.created_date >= :startDate) \n" +
+            " AND (:endDate IS NULL OR  w.created_date <= :endDate) \n" +
+            " AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)", nativeQuery = true)
+    BigDecimal getTotalExchangedTreesForAllUsers(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
-    @Query(value = "SELECT COALESCE(SUM(ew.trees_earned), 0) AS unExchangedTrees FROM earning ew", nativeQuery = true)
-    BigDecimal getUnExchangedTreesForAllUsers();
+    @Query(value = "SELECT COALESCE(SUM(ew.trees_earned), 0) AS unExchangedTrees FROM earning ew INNER JOIN users u \n" +
+            "ON ew.user_id = u.id \n" +
+            " WHERE (:startDate IS NULL OR ew.created_date >= :startDate) \n" +
+            " AND (:endDate IS NULL OR  ew.created_date <= :endDate) \n" +
+            " AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)", nativeQuery = true)
+    BigDecimal getUnExchangedTreesForAllUsers(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
 }
 

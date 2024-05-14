@@ -34,9 +34,9 @@ public class TreeSummaryTabService {
 
     public TreeSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate, String searchString) {
         TreeSummary treeSummary = new TreeSummary();
-        BigDecimal totalTreeRevenue = treeSummaryTabRepository.getTotalTreesConsumedForVideos().add(treeSummaryTabRepository.getTotalDonatedTrees());
-        BigDecimal totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForAllUsers();
-        BigDecimal totalUnexchangedTrees = treeSummaryTabRepository.getUnExchangedTreesForAllUsers();
+        BigDecimal totalTreeRevenue = treeSummaryTabRepository.getTotalTreesConsumedForVideos(startDate, endDate, searchString).add(treeSummaryTabRepository.getTotalDonatedTrees(startDate, endDate, searchString));
+        BigDecimal totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForAllUsers(startDate, endDate, searchString);
+        BigDecimal totalUnexchangedTrees = treeSummaryTabRepository.getUnExchangedTreesForAllUsers(startDate, endDate, searchString);
         treeSummary.setTotalTreeRevenue(totalTreeRevenue);
         treeSummary.setTotalTreesExchanged(totalTreesExchanged);
         treeSummary.setTotalUnexchangedTrees(totalUnexchangedTrees);
