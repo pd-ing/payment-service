@@ -25,20 +25,18 @@ public class TreeSummaryTabService {
 
     public TreeSummaryGridResult getTreesSummaryForAllUsers(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         TreeSummaryGridResult treeSummaryGridResult = new TreeSummaryGridResult();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("email").ascending());
-
+        Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> userPage = treeSummaryTabRepository.getTreesRevenueForPd(startDate, endDate, searchString, pageable);
-
         List<UserObject> userTreeSummaryList = createTreeSummaryList(userPage.getContent(), startDate, endDate);
         treeSummaryGridResult.setUserObjects(new PageImpl<>(userTreeSummaryList, pageable, userPage.getTotalElements()));
         return treeSummaryGridResult;
     }
 
-    public TreeSummary getTreesSummaryTotals() {
+    public TreeSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate, String searchString) {
         TreeSummary treeSummary = new TreeSummary();
-        BigDecimal totalTreeRevenue = treeSummaryTabRepository.getTotalTreesConsumedForVideos().add(treeSummaryTabRepository.getTotalDonatedTrees());
-        BigDecimal totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForAllUsers();
-        BigDecimal totalUnexchangedTrees = treeSummaryTabRepository.getUnExchangedTreesForAllUsers();
+        BigDecimal totalTreeRevenue = treeSummaryTabRepository.getTotalTreesConsumedForVideos(startDate, endDate, searchString).add(treeSummaryTabRepository.getTotalDonatedTrees(startDate, endDate, searchString));
+        BigDecimal totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForAllUsers(startDate, endDate, searchString);
+        BigDecimal totalUnexchangedTrees = treeSummaryTabRepository.getUnExchangedTreesForAllUsers(startDate, endDate, searchString);
         treeSummary.setTotalTreeRevenue(totalTreeRevenue);
         treeSummary.setTotalTreesExchanged(totalTreesExchanged);
         treeSummary.setTotalUnexchangedTrees(totalUnexchangedTrees);
