@@ -9,10 +9,13 @@ import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Price;
 import com.stripe.model.Product;
+import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
+import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PriceListParams;
 import com.stripe.param.ProductListParams;
+import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -154,6 +157,19 @@ public class StripeClient {
     public Session getSessionDetails(String sessionId) throws Exception {
         Stripe.apiKey = secretKey;
         return Session.retrieve(sessionId);
+    }
+
+    public Transfer transferPayment(String stripeId, String recipientEmail, Long amountInCents, Map<String, String> metaData) throws Exception {
+        Stripe.apiKey = secretKey;
+        TransferCreateParams createParams = TransferCreateParams.builder()
+                .setAmount(amountInCents) // amount in cents
+                .setCurrency("usd")
+                .setDestination(stripeId)
+                .setDescription("Commission for the referrer")
+                .putAllMetadata(metaData)
+                .build();
+
+        return Transfer.create(createParams);
     }
 
     public Boolean isSessionCompleteOrExpired(Session session) {
