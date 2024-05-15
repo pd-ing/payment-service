@@ -1,5 +1,6 @@
 package com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard;
 
+import com.pding.paymentservice.models.enums.WithdrawalStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,18 +8,21 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DonationHistoryForAdminDashboard {
-    String dateTime;
+public class WithdrawHistoryForAdminDashboard {
+    String createDateTime;
 
-    String pdProfileId;
+    WithdrawalStatus status;
 
-    String pdEmailId;
+    BigDecimal applicationNumber;
 
-    String treesOrLeafs;
+    String rate;
 
-    String amount;
+    BigDecimal actualPayment;
+
+    String completeDate;
 }

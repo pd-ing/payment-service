@@ -5,20 +5,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DonationHistoryForAdminDashboard {
-    String dateTime;
+public class VideoSalesHistoryForAdminDashboard {
+    String videoId;
 
-    String pdProfileId;
+    String videoTitle;
 
-    String pdEmailId;
+    String views;
 
-    String treesOrLeafs;
+    String salePrice;
 
-    String amount;
+    String profit;
+
+    String date;
+
 }

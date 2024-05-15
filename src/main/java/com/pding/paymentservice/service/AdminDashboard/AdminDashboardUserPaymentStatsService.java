@@ -8,6 +8,7 @@ import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import com.pding.paymentservice.service.LedgerService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
+import com.pding.paymentservice.service.WithdrawalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Autowired
     RealTimeTreeUsageTabService realTimeTreeUsageTabService;
+
+    @Autowired
+    WithdrawalService withdrawalService;
 
 
     @Transactional
@@ -101,6 +105,10 @@ public class AdminDashboardUserPaymentStatsService {
         return viewingHistoryTabService.getViewingHistory(userId, page, size);
     }
 
+    public ViewingHistoryForPd getViewingHistoryForPd(String userId, String searchString, int page, int size) {
+        return viewingHistoryTabService.getViewingHistoryForPd(userId, searchString, page, size);
+    }
+
     public ViewingHistory searchVideo(String userId, String videoTitle, int page, int size) {
         return viewingHistoryTabService.searchVideo(userId, videoTitle, page, size);
     }
@@ -121,12 +129,21 @@ public class AdminDashboardUserPaymentStatsService {
         return giftHistoryTabService.getGiftHistoryTabDetails(userId, page, size);
     }
 
+    public GiftHistoryForPd getGiftHistoryTabForPdDetails(String pdUserId, LocalDate startDate, LocalDate endDate, int page, int size) {
+        return giftHistoryTabService.getGiftHistoryTabForPdDetails(pdUserId, startDate, endDate, page, size);
+    }
+
+    public WithdrawHistoryForPd getWithdrawHistoryTabForPdDetails(String pdUserId, LocalDate startDate, LocalDate endDate, int sortOrder, int page, int size) {
+        return withdrawalService.getWithdrawHistoryTabForPdDetails(pdUserId, startDate, endDate, sortOrder, page, size);
+    }
+
+
     public TreeSummaryGridResult getTreesSummaryForAllUsers (LocalDate startDate, LocalDate endDate, String searchString, int page, int size){
         return treeSummaryTabService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
     }
 
-    public TreeSummary getTreesSummaryTotals (){
-        return treeSummaryTabService.getTreesSummaryTotals();
+    public TreeSummary getTreesSummaryTotals (LocalDate startDate, LocalDate endDate, String searchString){
+        return treeSummaryTabService.getTreesSummaryTotals(startDate, endDate, searchString);
     }
 
     public RealTimeTreeTransactionHistory getRealTimeTreeUsage (LocalDate startDate, LocalDate endDate, String searchString, int page, int size){
