@@ -43,7 +43,7 @@ public class LeafsChargeServiceController {
     PdLogger pdLogger;
 
 
-    @PostMapping(value = "/buyCall")
+    @PostMapping(value = "/buyCallOrMessage")
     public ResponseEntity<?> buyCall(@RequestParam(value = "pdUserId") String pdUserId,
                                      @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge, @RequestParam(value = "callType") String callType, @RequestParam(value = "callOrMessageId") String callOrMessageId) {
         if (pdUserId == null || pdUserId.isEmpty()) {
