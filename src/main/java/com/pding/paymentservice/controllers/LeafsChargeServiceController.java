@@ -55,7 +55,7 @@ public class LeafsChargeServiceController {
         }
 
         if (callOrMessageId == null || callOrMessageId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafsToCharge parameter is required."), null));
+            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "callOrMessageId parameter is required."), null));
         }
 
         if ((leafsToCharge.compareTo(BigDecimal.ZERO) == 0) || (leafsToCharge.compareTo(BigDecimal.ZERO) < 0)) {
@@ -78,10 +78,10 @@ public class LeafsChargeServiceController {
             String message = "";
 
             if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL))
-                message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, "CALL_ID");
+                message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId);
 
             if (transactionType.equals(TransactionType.TEXT_MESSAGE))
-                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, "MESSAGE_ID");
+                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId);
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (WalletNotFoundException e) {
