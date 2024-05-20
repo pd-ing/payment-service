@@ -16,12 +16,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "CallDetails")
+@Table(name = "CallPurchase")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CallDetails {
+public class CallPurchase {
     @Id
     //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @UuidGenerator
@@ -36,13 +36,16 @@ public class CallDetails {
     @Enumerated(EnumType.STRING)
     TransactionType callType; // Audio or Video
 
+    String callId;
+
     private LocalDateTime lastUpdateDate;
 
-    public CallDetails(String userId, String pdUserId, BigDecimal leafsTransacted, TransactionType callType) {
+    public CallPurchase(String userId, String pdUserId, BigDecimal leafsTransacted, TransactionType callType, String callId) {
         this.userId = userId;
         this.pdUserId = pdUserId;
         this.leafsTransacted = leafsTransacted;
         this.callType = callType;
         this.lastUpdateDate = LocalDateTime.now();
+        this.callId = callId;
     }
 }

@@ -1,17 +1,13 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
-import com.pding.paymentservice.exception.InsufficientLeafsException;
-import com.pding.paymentservice.exception.InvalidAmountException;
-import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.CallDetails;
+import com.pding.paymentservice.models.CallPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
-import com.pding.paymentservice.repository.CallRepository;
+import com.pding.paymentservice.repository.CallPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +23,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class CallChargeService {
+public class CallPurchaseService {
     @Autowired
-    CallRepository callRepository;
+    CallPurchaseRepository callPurchaseRepository;
 
     @Autowired
     WalletService walletService;
@@ -54,33 +50,33 @@ public class CallChargeService {
 
 
     @Transactional
-    String CreateCallTransaction(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType) {
+    public String CreateCallTransaction(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType, String callId) {
         walletService.deductLeafsFromWallet(userId, leafsToCharge);
 
-        CallDetails callDetails = new CallDetails(userId, pddUserId, leafsToCharge, callType);
-        callRepository.save(callDetails);
+        CallPurchase callPurchase = new CallPurchase(userId, pddUserId, leafsToCharge, callType, callId);
+        callPurchaseRepository.save(callPurchase);
 
         earningService.addLeafsToEarning(pddUserId, leafsToCharge);
-        ledgerService.saveToLedger(callDetails.getId(), new BigDecimal(0), leafsToCharge, callType, userId);
+        ledgerService.saveToLedger(callPurchase.getId(), new BigDecimal(0), leafsToCharge, callType, userId);
 
         return "Leafs charge was successful";
     }
 
-    List<CallDetails> fetchCallDetailsHistoryForPd(String pdUserId) {
-        return callRepository.findByPdUserId(pdUserId);
+    List<CallPurchase> fetchCallDetailsHistoryForPd(String pdUserId) {
+        return callPurchaseRepository.findByPdUserId(pdUserId);
     }
 
-    List<CallDetails> fetchCallDetailsHistoryForUser(String userId) {
-        return callRepository.findByUserId(userId);
+    List<CallPurchase> fetchCallDetailsHistoryForUser(String userId) {
+        return callPurchaseRepository.findByUserId(userId);
     }
 
     List<PublicUserNet> getTopCallersForPdInfo(String pdUserId, Long limit) throws Exception {
-        List<Object[]> callerUserObjects = callRepository.findTopCallerUserByPdUserID(pdUserId, limit);
+        List<Object[]> callerUserObjects = callPurchaseRepository.findTopCallerUserByPdUserID(pdUserId, limit);
         return getPublicUserInfo(callerUserObjects);
     }
 
     List<PublicUserNet> getTopCallersInfo(String userId, Long limit) throws Exception {
-        List<Object[]> callerUserObjects = callRepository.findTopCallerUsers(userId, limit);
+        List<Object[]> callerUserObjects = callPurchaseRepository.findTopCallerUsers(userId, limit);
         return getPublicUserInfo(callerUserObjects);
     }
 
@@ -138,48 +134,6 @@ public class CallChargeService {
         return publicUsers;
     }
 
-    public ResponseEntity<?> buyCall(String pdUserId, BigDecimal leafsToCharge, String callType) {
-
-        if (pdUserId == null || pdUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."), null));
-        }
-
-        if (leafsToCharge == null) {
-            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafsToCharge parameter is required."), null));
-        }
-
-        if ((leafsToCharge.compareTo(BigDecimal.ZERO) == 0) || (leafsToCharge.compareTo(BigDecimal.ZERO) < 0)) {
-            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafsToCharge should be greater than 0"), null));
-        }
-
-        TransactionType transactionType;
-        if (callType.equals("audio")) {
-            transactionType = TransactionType.AUDIO_CALL;
-        } else if (callType.equals("video")) {
-            transactionType = TransactionType.VIDEO_CALL;
-        } else if (callType.equals("message")) {
-            transactionType = TransactionType.TEXT_MESSAGE;
-        } else {
-            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid callType passed,Valid callTyle is audio or video"), null));
-        }
-
-        try {
-            String userId = authHelper.getUserId();
-            String message = CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType);
-            return ResponseEntity.ok().body(new GenericStringResponse(null, message));
-        } catch (WalletNotFoundException e) {
-            pdLogger.logException(PdLogger.EVENT.CALL_CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        } catch (InsufficientLeafsException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (InvalidAmountException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.CALL_CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
 
     public ResponseEntity<?> callDetailsHistoryForPd(String pdUserId) {
         if (pdUserId == null || pdUserId.isEmpty()) {
@@ -187,7 +141,7 @@ public class CallChargeService {
         }
 
         try {
-            List<CallDetails> callDetails = fetchCallDetailsHistoryForPd(pdUserId);
+            List<CallPurchase> callDetails = fetchCallDetailsHistoryForPd(pdUserId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, callDetails));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.CALL_DETAILS_HISTORY_FOR_PD, e);
@@ -201,7 +155,7 @@ public class CallChargeService {
         }
 
         try {
-            List<CallDetails> callDetails = fetchCallDetailsHistoryForUser(userId);
+            List<CallPurchase> callDetails = fetchCallDetailsHistoryForUser(userId);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, callDetails));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.CALL_DETAILS_HISTORY_FOR_USER, e);
