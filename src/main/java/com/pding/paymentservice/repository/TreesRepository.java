@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
-    @Query(value = "SELECT user_id, SUM(totalSpent) AS totalTreesLeafsSpent \n" +
+    @Query(value = "SELECT user_id, 2.5 * SUM(totalSpent) AS totalTreesLeafsSpent \n" +
             "FROM ( \n" +
             "    SELECT user_id, SUM(totalTreesSpent) AS totalSpent \n" +
             "    FROM ( \n" +
