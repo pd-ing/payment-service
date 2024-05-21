@@ -12,22 +12,42 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
-    @Query(value = "SELECT user_id, SUM(totalTreesSpent) AS totalTreesSpent " +
-            "FROM (" +
-            "   SELECT COALESCE(vp.user_id, d.donor_user_id) AS user_id, " +
-            "          COALESCE(SUM(vp.trees_consumed), 0) + COALESCE(SUM(d.donated_trees), 0) AS totalTreesSpent " +
-            "   FROM video_purchase vp " +
-            "   LEFT JOIN donation d ON vp.user_id = d.donor_user_id " +
-            "   GROUP BY user_id " +
-            "   UNION ALL " +
-            "   SELECT COALESCE(vp.user_id, d.donor_user_id) AS user_id, " +
-            "          COALESCE(SUM(vp.trees_consumed) + SUM(d.donated_trees), 0) AS totalTreesSpent " +
-            "   FROM video_purchase vp " +
-            "   RIGHT JOIN donation d ON vp.user_id = d.donor_user_id " +
-            "   GROUP BY user_id" +
-            ") AS subquery " +
-            "GROUP BY user_id " +
-            "ORDER BY totalTreesSpent DESC " +
+    @Query(value = "SELECT user_id, SUM(totalSpent) AS totalTreesLeafsSpent \n" +
+            "FROM ( \n" +
+            "    SELECT user_id, SUM(totalTreesSpent) AS totalSpent \n" +
+            "    FROM ( \n" +
+            "        SELECT COALESCE(vp.user_id, d.donor_user_id) AS user_id, \n" +
+            "               COALESCE(SUM(vp.trees_consumed), 0) + COALESCE(SUM(d.donated_trees), 0) AS totalTreesSpent \n" +
+            "        FROM video_purchase vp \n" +
+            "        LEFT JOIN donation d ON vp.user_id = d.donor_user_id \n" +
+            "        GROUP BY COALESCE(vp.user_id, d.donor_user_id) \n" +
+            "        UNION ALL \n" +
+            "        SELECT COALESCE(vp.user_id, d.donor_user_id) AS user_id, \n" +
+            "               COALESCE(SUM(vp.trees_consumed), 0) + COALESCE(SUM(d.donated_trees), 0) AS totalTreesSpent \n" +
+            "        FROM video_purchase vp \n" +
+            "        RIGHT JOIN donation d ON vp.user_id = d.donor_user_id \n" +
+            "        GROUP BY COALESCE(vp.user_id, d.donor_user_id) \n" +
+            "    ) AS subquery1 \n" +
+            "    GROUP BY user_id \n" +
+            "    UNION ALL \n" +
+            "    SELECT user_id, SUM(totalLeaves) AS totalSpent \n" +
+            "    FROM ( \n" +
+            "        SELECT user_id, COALESCE(SUM(leafs_transacted), 0) AS totalLeaves \n" +
+            "        FROM call_purchase \n" +
+            "        GROUP BY user_id \n" +
+            "        UNION ALL \n" +
+            "        SELECT user_id, COALESCE(SUM(leafs_transacted), 0) AS totalLeaves \n" +
+            "        FROM message_purchase \n" +
+            "        GROUP BY user_id \n" +
+            "        UNION ALL \n" +
+            "        SELECT donor_user_id AS user_id, COALESCE(SUM(donated_leafs), 0) AS totalLeaves \n" +
+            "        FROM donation \n" +
+            "        GROUP BY donor_user_id \n" +
+            "    ) AS subquery2 \n" +
+            "    GROUP BY user_id \n" +
+            ") AS combined \n" +
+            "GROUP BY user_id \n" +
+            "ORDER BY totalTreesLeafsSpent DESC " +
             "LIMIT :limit", nativeQuery = true)
     List<Object[]> getUserTotalTreesSpentWithLimit(@Param("limit") Long limit);
 
