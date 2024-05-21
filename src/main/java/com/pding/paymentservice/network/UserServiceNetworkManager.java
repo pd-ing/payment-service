@@ -13,6 +13,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,12 +48,24 @@ public class UserServiceNetworkManager {
                     if (resp.getError() == null && resp.getResult() != null) {
                         Map<String, PublicUserNet> userMap = resp.getResult().stream()
                                 .collect(Collectors.toMap(PublicUserNet::getId, Function.identity()));
+
                         return Flux.fromIterable(userIds)
-                                .map(userMap::get);
+                                .map(userId -> {
+                                    PublicUserNet user = userMap.get(userId);
+                                    if (user == null) {
+                                        return new PublicUserNet(userId, null, null, null, null, null, null, null, null, null, null, null);
+                                    }
+                                    return user;
+                                });
                     } else {
-                        return Flux.empty();
+                        return Flux.fromIterable(userIds)
+                                .map(userId -> {
+                                    // Return null for each userId in case of error
+                                    return null;
+                                });
                     }
-                });
+                })
+                .filter(Objects::nonNull);
     }
 
     public Flux<PublicUserNet> getUsersListByEmailFlux(List<String> emails) throws Exception {

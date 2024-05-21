@@ -37,7 +37,7 @@ public class CommonMethods {
         Map<String, BigDecimal> topFansMap = userObjects.stream()
                 .collect(Collectors.toMap(
                         row -> (String) row[0],          // calledUserId
-                        row -> (BigDecimal) row[1]       // totalLeafsTransacted
+                        row -> (BigDecimal) row[1]       // totalTreesLeafsTransacted
                 ));
 
         List<PublicUserNet> publicUsers = userServiceNetworkManager

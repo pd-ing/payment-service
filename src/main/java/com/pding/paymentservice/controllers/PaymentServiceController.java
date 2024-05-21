@@ -1,6 +1,8 @@
 package com.pding.paymentservice.controllers;
 
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
@@ -8,6 +10,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
+import com.pding.paymentservice.security.AppPaymentInitializer;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.stripe.StripeClientResponse;
@@ -47,6 +50,9 @@ public class PaymentServiceController {
 
     @Autowired
     StripeClient stripeClient;
+
+    @Autowired
+    AppPaymentInitializer appPaymentInitializer;
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
@@ -129,6 +135,16 @@ public class PaymentServiceController {
         }
     }
 
+
+    @PostMapping("/buyLeafs")
+    ResponseEntity<?> buyLeafs(@Valid @RequestBody BuyLeafsRequest buyLeafsRequest) {
+        try {
+            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, "MESSAGE"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
