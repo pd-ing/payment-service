@@ -139,8 +139,19 @@ public class PaymentServiceController {
     @PostMapping("/buyLeafs")
     ResponseEntity<?> buyLeafs(@Valid @RequestBody BuyLeafsRequest buyLeafsRequest) {
         try {
-            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "MESSAGE"));
+            // check  if txnId is present in DB from
+            if(paymentService.checkIfTxnIdExists(buyLeafsRequest.getPurchaseToken())){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+            }
+            else {
+                ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
+                // check if purchase is complete; 0: purchased successfully, 1: canceled, 2: pending
+                if(productPurchase.getPurchaseState() == 0){
+                    paymentService.creditLeavesForUser(buyLeafsRequest.getProductId(),buyLeafsRequest.getPurchaseToken(), productPurchase);
+                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Leaves credited successfully"));
+                }
+                return ResponseEntity.ok().body(new GenericStringResponse(null, "MESSAGE"));
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }

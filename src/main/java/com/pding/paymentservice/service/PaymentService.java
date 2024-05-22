@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.WalletHistory;
@@ -23,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -281,6 +285,11 @@ public class PaymentService {
         return result;
     }
 
+    public boolean checkIfTxnIdExists (String txnId){
+        Optional<WalletHistory> walletHistory = walletHistoryService.findByTransactionId(txnId);
+        return walletHistory.isPresent();
+    }
+
     // This API will clear payments where Users were charged money but trees were not given,
     // This API will also mark update the statuses of the payments which users started but never completed.
     @Transactional
@@ -445,4 +454,59 @@ public class PaymentService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    public ResponseEntity<?> creditLeavesForUser(String productId, String txnId, ProductPurchase productPurchase) {
+        try {
+            int purchaseLeaves = 0;
+            // If any of trees or leaf is null then init it with 0.
+            if (productId != null && productId.indexOf("_") != -1) {
+                purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
+            }
+            //Set userId from token
+            String userId = authHelper.getUserId();
+            String addLeaves = addLeavesForUser(
+                    userId,
+                    new BigDecimal(0),
+                    new BigDecimal(purchaseLeaves),
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
+                    txnId,
+                    TransactionType.PAYMENT_COMPLETED.name(),
+                    new BigDecimal(purchaseLeaves * 10) ,
+                    "Google App",
+                    "USD",
+                    "Added " + purchaseLeaves + " successfully for user.",
+                    null
+            );
+
+            return ResponseEntity.ok().body(new GenericStringResponse(null, addLeaves));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @Transactional
+    public String addLeavesForUser(String userId,
+                                 BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
+                                 String transactionID, String transactionStatus, BigDecimal amount,
+                                 String paymentMethod, String currency,
+                                 String description, String ipAddress) throws Exception {
+        try {
+            // validatePaymentIntentID(transactionID, userId);
+
+            Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedLeafs, purchasedDate);
+
+            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
+                    amount, paymentMethod, currency, description, ipAddress);
+
+            ledgerService.saveToLedger(wallet.getId(), new BigDecimal(0), purchasedLeafs, TransactionType.LEAF_PURCHASE, userId);
+
+            return "Leaves added successfully.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new Exception("Adding Leaves failed with following error : " + e.getMessage());
+        }
+    }
+
 }

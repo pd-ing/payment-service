@@ -68,6 +68,7 @@ public class Ledger {
         }
         //this.walletOrVideoOrDonationOrWithdrawalId = walletOrVideoOrDonationOrWithdrawalId;
         this.treesTransacted = treesTransacted;
+        this.leafsTransacted = leafsTransacted;
         this.transactionType = transactionType;
         this.timestamp = LocalDateTime.now();
         this.userId = userId;
