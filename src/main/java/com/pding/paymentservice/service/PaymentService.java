@@ -472,7 +472,7 @@ public class PaymentService {
                     txnId,
                     TransactionType.PAYMENT_COMPLETED.name(),
                     new BigDecimal(purchaseLeaves * 10) ,
-                    "Google App",
+                    "Google_Play_Store",
                     "USD",
                     "Added " + purchaseLeaves + " successfully for user.",
                     null
