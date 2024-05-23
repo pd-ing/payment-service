@@ -55,6 +55,7 @@ public class TreeSummaryTabService {
             Object[] treeSummaryByUser = (Object[]) innerObject;
             UserObject userObj = new UserObject();
             userId = treeSummaryByUser[0].toString();
+            userObj.setPdUserId(userId);
             userObj.setNickName(treeSummaryByUser[1].toString());
             userObj.setEmail(treeSummaryByUser[2].toString());
             userObj.setPdType(treeSummaryByUser[3].toString());

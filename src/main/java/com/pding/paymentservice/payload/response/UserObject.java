@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserObject {
+    private String pdUserId;
     private String nickName;
     private String email;
     private String pdType;
     private TreeSummary treeSummary;
-
 }
