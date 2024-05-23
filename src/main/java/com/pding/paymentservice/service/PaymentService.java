@@ -61,6 +61,7 @@ public class PaymentService {
 
 
     @Transactional
+    @Deprecated
     public String chargeCustomer(String userId,
                                  BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
                                  String transactionID, String transactionStatus, BigDecimal amount,
@@ -285,7 +286,7 @@ public class PaymentService {
         return result;
     }
 
-    public boolean checkIfTxnIdExists (String txnId){
+    public boolean checkIfTxnIdExists(String txnId) {
         Optional<WalletHistory> walletHistory = walletHistoryService.findByTransactionId(txnId);
         return walletHistory.isPresent();
     }
@@ -370,130 +371,14 @@ public class PaymentService {
         return "UserId:" + walletHistory.getUserId() + " , Email :" + emailId.get() + " , StripePaymentStatus :" + stripePaymentStatus + ", BackendPaymentStatus:" + walletHistory.getTransactionStatus() + " PaymentIntentId:" + transactionId + " , ClearPaymentStatus : Trees were not given to user as paymentIntent status was not succeeded ";
     }
 
-    public ResponseEntity<?> chargeCustomer(PaymentDetailsRequest paymentDetailsRequest) {
-        try {
-            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
-
-            // If any of trees or leaf is null then init it with 0.
-            if (paymentDetailsRequest.getTrees() == null) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-            }
-            if (paymentDetailsRequest.getLeafs() == null) {
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
-
-            //Set userId from token
-            String userId = authHelper.getUserId();
-
-            if (userId.equals(paymentDetailsRequest.getUserId())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId provided in the payload does not match with the userId embedded in token"), null));
-            }
-
-            String charge = chargeCustomer(
-                    paymentDetailsRequest.getUserId(),
-                    paymentDetailsRequest.getTrees(),
-                    paymentDetailsRequest.getLeafs(),
-                    paymentDetailsRequest.getPurchasedDate(),
-                    paymentDetailsRequest.getTransactionId(),
-                    paymentDetailsRequest.getTransactionStatus(),
-                    paymentDetailsRequest.getAmount(),
-                    paymentDetailsRequest.getPaymentMethod(),
-                    paymentDetailsRequest.getCurrency(),
-                    paymentDetailsRequest.getDescription(),
-                    paymentDetailsRequest.getIpAddress()
-            );
-
-            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-
-    public ResponseEntity<?> chargeCustomerV2(PaymentDetailsRequest paymentDetailsRequest) {
-        try {
-            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
-
-            // If any of trees or leaf is null then init it with 0.
-            if (paymentDetailsRequest.getTrees() == null) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-            }
-            if (paymentDetailsRequest.getLeafs() == null) {
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
-
-            //Set userId from token
-            String userId = authHelper.getUserId();
-
-            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,started payment to buy " + paymentDetailsRequest.getTrees() + " trees");
-
-            String charge = chargeCustomer(
-                    userId,
-                    paymentDetailsRequest.getTrees(),
-                    paymentDetailsRequest.getLeafs(),
-                    paymentDetailsRequest.getPurchasedDate(),
-                    paymentDetailsRequest.getTransactionId(),
-                    paymentDetailsRequest.getTransactionStatus(),
-                    paymentDetailsRequest.getAmount(),
-                    paymentDetailsRequest.getPaymentMethod(),
-                    paymentDetailsRequest.getCurrency(),
-                    paymentDetailsRequest.getDescription(),
-                    paymentDetailsRequest.getIpAddress()
-            );
-            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,completed payment to buy " + paymentDetailsRequest.getTrees() + " trees");
-            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-    public ResponseEntity<?> creditLeavesForUser(String productId, String txnId, ProductPurchase productPurchase) {
-        try {
-            int purchaseLeaves = 0;
-            // If any of trees or leaf is null then init it with 0.
-            if (productId != null && productId.indexOf("_") != -1) {
-                purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
-            }
-            //Set userId from token
-            String userId = authHelper.getUserId();
-            String addLeaves = addLeavesForUser(
-                    userId,
-                    new BigDecimal(0),
-                    new BigDecimal(purchaseLeaves),
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
-                    txnId,
-                    TransactionType.PAYMENT_COMPLETED.name(),
-                    new BigDecimal(purchaseLeaves * 10) ,
-                    "Google_Play_Store",
-                    "USD",
-                    "Added " + purchaseLeaves + " successfully for user.",
-                    null
-            );
-
-            return ResponseEntity.ok().body(new GenericStringResponse(null, addLeaves));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
 
     @Transactional
-    public String addLeavesForUser(String userId,
-                                 BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
-                                 String transactionID, String transactionStatus, BigDecimal amount,
-                                 String paymentMethod, String currency,
-                                 String description, String ipAddress) throws Exception {
+    public String completePaymentToBuyLeafs(String userId,
+                                            BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
+                                            String transactionID, String transactionStatus, BigDecimal amount,
+                                            String paymentMethod, String currency,
+                                            String description, String ipAddress) throws Exception {
         try {
-            // validatePaymentIntentID(transactionID, userId);
-
             Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedLeafs, purchasedDate);
 
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
@@ -501,9 +386,8 @@ public class PaymentService {
 
             ledgerService.saveToLedger(wallet.getId(), new BigDecimal(0), purchasedLeafs, TransactionType.LEAF_PURCHASE, userId);
 
-            return "Leaves added successfully.";
+            return "Leaves added successfully for user";
         } catch (Exception e) {
-            e.printStackTrace();
             log.error(e.getMessage());
             throw new Exception("Adding Leaves failed with following error : " + e.getMessage());
         }
