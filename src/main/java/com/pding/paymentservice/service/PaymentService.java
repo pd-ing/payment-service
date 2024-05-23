@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.WalletHistory;
@@ -23,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +61,7 @@ public class PaymentService {
 
 
     @Transactional
+    @Deprecated
     public String chargeCustomer(String userId,
                                  BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
                                  String transactionID, String transactionStatus, BigDecimal amount,
@@ -281,6 +286,11 @@ public class PaymentService {
         return result;
     }
 
+    public boolean checkIfTxnIdExists(String txnId) {
+        Optional<WalletHistory> walletHistory = walletHistoryService.findByTransactionId(txnId);
+        return walletHistory.isPresent();
+    }
+
     // This API will clear payments where Users were charged money but trees were not given,
     // This API will also mark update the statuses of the payments which users started but never completed.
     @Transactional
@@ -361,88 +371,26 @@ public class PaymentService {
         return "UserId:" + walletHistory.getUserId() + " , Email :" + emailId.get() + " , StripePaymentStatus :" + stripePaymentStatus + ", BackendPaymentStatus:" + walletHistory.getTransactionStatus() + " PaymentIntentId:" + transactionId + " , ClearPaymentStatus : Trees were not given to user as paymentIntent status was not succeeded ";
     }
 
-    public ResponseEntity<?> chargeCustomer(PaymentDetailsRequest paymentDetailsRequest) {
+
+    @Transactional
+    public String completePaymentToBuyLeafs(String userId,
+                                            BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
+                                            String transactionID, String transactionStatus, BigDecimal amount,
+                                            String paymentMethod, String currency,
+                                            String description, String ipAddress) throws Exception {
         try {
-            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
+            Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedLeafs, purchasedDate);
 
-            // If any of trees or leaf is null then init it with 0.
-            if (paymentDetailsRequest.getTrees() == null) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-            }
-            if (paymentDetailsRequest.getLeafs() == null) {
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
+            walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
+                    amount, paymentMethod, currency, description, ipAddress);
 
-            //Set userId from token
-            String userId = authHelper.getUserId();
+            ledgerService.saveToLedger(wallet.getId(), new BigDecimal(0), purchasedLeafs, TransactionType.LEAF_PURCHASE, userId);
 
-            if (userId.equals(paymentDetailsRequest.getUserId())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId provided in the payload does not match with the userId embedded in token"), null));
-            }
-
-            String charge = chargeCustomer(
-                    paymentDetailsRequest.getUserId(),
-                    paymentDetailsRequest.getTrees(),
-                    paymentDetailsRequest.getLeafs(),
-                    paymentDetailsRequest.getPurchasedDate(),
-                    paymentDetailsRequest.getTransactionId(),
-                    paymentDetailsRequest.getTransactionStatus(),
-                    paymentDetailsRequest.getAmount(),
-                    paymentDetailsRequest.getPaymentMethod(),
-                    paymentDetailsRequest.getCurrency(),
-                    paymentDetailsRequest.getDescription(),
-                    paymentDetailsRequest.getIpAddress()
-            );
-
-            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
+            return "Leaves added successfully for user";
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            log.error(e.getMessage());
+            throw new Exception("Adding Leaves failed with following error : " + e.getMessage());
         }
     }
 
-
-    public ResponseEntity<?> chargeCustomerV2(PaymentDetailsRequest paymentDetailsRequest) {
-        try {
-            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
-
-            // If any of trees or leaf is null then init it with 0.
-            if (paymentDetailsRequest.getTrees() == null) {
-                paymentDetailsRequest.setTrees(new BigDecimal(0));
-            }
-            if (paymentDetailsRequest.getLeafs() == null) {
-                paymentDetailsRequest.setLeafs(new BigDecimal(0));
-            }
-
-            //Set userId from token
-            String userId = authHelper.getUserId();
-
-            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,started payment to buy " + paymentDetailsRequest.getTrees() + " trees");
-
-            String charge = chargeCustomer(
-                    userId,
-                    paymentDetailsRequest.getTrees(),
-                    paymentDetailsRequest.getLeafs(),
-                    paymentDetailsRequest.getPurchasedDate(),
-                    paymentDetailsRequest.getTransactionId(),
-                    paymentDetailsRequest.getTransactionStatus(),
-                    paymentDetailsRequest.getAmount(),
-                    paymentDetailsRequest.getPaymentMethod(),
-                    paymentDetailsRequest.getCurrency(),
-                    paymentDetailsRequest.getDescription(),
-                    paymentDetailsRequest.getIpAddress()
-            );
-            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,completed payment to buy " + paymentDetailsRequest.getTrees() + " trees");
-            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
 }

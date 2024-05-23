@@ -75,4 +75,8 @@ public class AppPaymentInitializer {
         InappproductsListResponse response = request.execute();
         return response.getInappproduct();
     }
+
+    public InAppProduct getInAppProduct(String productId) throws IOException {
+        return androidPublisher.inappproducts().get(appPackageName, productId).execute();
+    }
 }

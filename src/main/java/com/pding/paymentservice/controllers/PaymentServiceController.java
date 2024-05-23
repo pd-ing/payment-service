@@ -1,7 +1,9 @@
 package com.pding.paymentservice.controllers;
 
+import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
@@ -11,6 +13,7 @@ import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.security.AppPaymentInitializer;
+import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.stripe.StripeClient;
 import com.pding.paymentservice.stripe.StripeClientResponse;
@@ -34,7 +37,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -54,6 +59,9 @@ public class PaymentServiceController {
     @Autowired
     AppPaymentInitializer appPaymentInitializer;
 
+    @Autowired
+    AuthHelper authHelper;
+
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
         return ResponseEntity.ok()
@@ -70,7 +78,46 @@ public class PaymentServiceController {
                     new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
             );
         }
-        return paymentService.chargeCustomer(paymentDetailsRequest);
+        try {
+            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            // If any of trees or leaf is null then init it with 0.
+            if (paymentDetailsRequest.getTrees() == null) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+            }
+            if (paymentDetailsRequest.getLeafs() == null) {
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            //Set userId from token
+            String userId = authHelper.getUserId();
+
+            if (userId.equals(paymentDetailsRequest.getUserId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId provided in the payload does not match with the userId embedded in token"), null));
+            }
+
+            String charge = paymentService.chargeCustomer(
+                    paymentDetailsRequest.getUserId(),
+                    paymentDetailsRequest.getTrees(),
+                    paymentDetailsRequest.getLeafs(),
+                    paymentDetailsRequest.getPurchasedDate(),
+                    paymentDetailsRequest.getTransactionId(),
+                    paymentDetailsRequest.getTransactionStatus(),
+                    paymentDetailsRequest.getAmount(),
+                    paymentDetailsRequest.getPaymentMethod(),
+                    paymentDetailsRequest.getCurrency(),
+                    paymentDetailsRequest.getDescription(),
+                    paymentDetailsRequest.getIpAddress()
+            );
+
+            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
     }
 
 
@@ -109,7 +156,44 @@ public class PaymentServiceController {
                     new ErrorResponse(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage())
             );
         }
-        return paymentService.chargeCustomerV2(paymentDetailsRequest);
+        try {
+            if (!paymentDetailsRequest.getTransactionStatus().equals("success")) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            // If any of trees or leaf is null then init it with 0.
+            if (paymentDetailsRequest.getTrees() == null) {
+                paymentDetailsRequest.setTrees(new BigDecimal(0));
+            }
+            if (paymentDetailsRequest.getLeafs() == null) {
+                paymentDetailsRequest.setLeafs(new BigDecimal(0));
+            }
+
+            //Set userId from token
+            String userId = authHelper.getUserId();
+
+            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,started payment to buy " + paymentDetailsRequest.getTrees() + " trees");
+
+            String charge = paymentService.chargeCustomer(
+                    userId,
+                    paymentDetailsRequest.getTrees(),
+                    paymentDetailsRequest.getLeafs(),
+                    paymentDetailsRequest.getPurchasedDate(),
+                    paymentDetailsRequest.getTransactionId(),
+                    paymentDetailsRequest.getTransactionStatus(),
+                    paymentDetailsRequest.getAmount(),
+                    paymentDetailsRequest.getPaymentMethod(),
+                    paymentDetailsRequest.getCurrency(),
+                    paymentDetailsRequest.getDescription(),
+                    paymentDetailsRequest.getIpAddress()
+            );
+            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,completed payment to buy " + paymentDetailsRequest.getTrees() + " trees");
+            return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.CHARGE, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
     }
 
 
@@ -139,8 +223,50 @@ public class PaymentServiceController {
     @PostMapping("/buyLeafs")
     ResponseEntity<?> buyLeafs(@Valid @RequestBody BuyLeafsRequest buyLeafsRequest) {
         try {
-            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "MESSAGE"));
+            if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getPurchaseToken())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+            } else {
+                ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
+                InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(buyLeafsRequest.getProductId());
+
+                // check if purchase is complete; 0: purchased successfully, 1: canceled, 2: pending
+                if (productPurchase.getPurchaseState() == 0) {
+
+                    int purchaseLeaves = 0;
+                    String productId = buyLeafsRequest.getProductId();
+
+                    // If any of trees or leaf is null then init it with 0.
+                    if (productId != null && productId.contains("_")) {
+                        purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
+                    } else {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Product Id is not valid, cannot fetch leafs to add from productId"), null));
+                    }
+
+                    String userId = authHelper.getUserId();
+                    String txnId = buyLeafsRequest.getPurchaseToken();
+                    String paymentMethod = "Google_Play_Store";
+                    String currency = inAppProduct.getDefaultPrice().get("currency").toString();
+                    String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
+                    
+
+                    String message = paymentService.completePaymentToBuyLeafs(
+                            userId,
+                            new BigDecimal(0),
+                            new BigDecimal(purchaseLeaves),
+                            LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
+                            txnId,
+                            TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                            new BigDecimal(amountInCents),
+                            paymentMethod,
+                            currency,
+                            "Added " + purchaseLeaves + " leafs successfully for user.",
+                            null
+                    );
+                    return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+                } else {
+                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Cannot add leafs to the user's wallet as the purchase state is not completed"));
+                }
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
