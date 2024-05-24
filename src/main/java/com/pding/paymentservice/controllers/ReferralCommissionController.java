@@ -62,7 +62,6 @@ public class ReferralCommissionController {
 
         try {
             String referrerPdUserId = authHelper.getUserId();
-            referrerPdUserId = "F6ZjgjPCwAUKSdCl0UgDwEMD0q52";
             Page<ReferredPdDetailsDTO> referredPdDetailsDTOPage = referralCommissionService.getDetailsOfAllTheReferredPd(referrerPdUserId, page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPdDetailsDTOPage));
         } catch (Exception e) {
