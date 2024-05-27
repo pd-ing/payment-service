@@ -85,7 +85,6 @@ public class ReferralCommissionController {
                 endDate = endDate.plusDays(1L);
             }
             String referrerPdUserId = authHelper.getUserId();
-            referrerPdUserId = "F6ZjgjPCwAUKSdCl0UgDwEMD0q52";
             Page<ReferralCommissionDetailsDTO> referralCommissionDetailsDTOPage = referralCommissionService.getReferralCommissionDetailsWithFilters(
                     referrerPdUserId,
                     page,
