@@ -82,6 +82,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/withdrawalHistoryTabForPd").permitAll()
                                 .requestMatchers("/api/payment/admin/giftHistoryTabForPd").permitAll()
                                 .requestMatchers("/api/payment/admin/viewingHistoryTabSearchVideo").permitAll()
+                                .requestMatchers("/api/payment/admin/referenceTabDetails").permitAll()
+                                .requestMatchers("/api/payment/admin/modalForReferenceTab").permitAll()
                                 .requestMatchers("/api/payment/topEarners").permitAll()
                                 .requestMatchers("/api/payment/topFans").authenticated()
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()

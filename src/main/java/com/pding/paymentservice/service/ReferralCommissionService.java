@@ -124,6 +124,7 @@ public class ReferralCommissionService {
         return new PageImpl<>(referralCommissionDetailsDTOList, pageable, referralCommissionDetailsWithFiltersPage.getTotalElements());
     }
 
+
     // This will be used later, when we will set up auto payment of commission
     @Transactional
 //    public void giveCommissionToReferrer(Withdrawal withdrawal) throws Exception {

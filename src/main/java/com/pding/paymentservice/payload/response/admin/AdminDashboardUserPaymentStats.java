@@ -87,4 +87,5 @@ public class AdminDashboardUserPaymentStats {
         this.errorResponse = errorResponse;
         this.totalTreeUsageSummary = totalTreeUsageSummary;
     }
+
 }
