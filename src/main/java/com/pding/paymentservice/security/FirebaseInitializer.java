@@ -1,64 +1,35 @@
 package com.pding.paymentservice.security;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.androidpublisher.model.InAppProduct;
-import com.google.api.services.androidpublisher.model.InappproductsListResponse;
-import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.google.api.services.androidpublisher.AndroidPublisher;
-import com.google.api.services.androidpublisher.AndroidPublisherScopes;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
-import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
 
 
 @Component
 public class FirebaseInitializer implements CommandLineRunner {
 
-    @Autowired
-    private SsmClient ssmClient;
-
-    @Value("${aws.param.firebaseKey}")
-    private String firebaseKey;
+    @Value("${app.config.firebase-admin-keys}")
+    private String firebaseCreds;
 
     @Value("${firebase.db.url}")
     private String dbUrl;
 
     AndroidPublisher androidPublisher;
 
-    public String getFirebaseServiceAccount() {
-        GetParameterResponse response = ssmClient.getParameter(
-                GetParameterRequest.builder()
-                        .name(firebaseKey)
-                        .build()
-        );
-
-        return response.parameter().value();
-    }
-    
-
     @Override
     public void run(String... args) throws Exception {
 
         try {
-            String key = getFirebaseServiceAccount();
+            String key = firebaseCreds;
             InputStream inputStream = new ByteArrayInputStream(key.getBytes());
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(inputStream))
