@@ -21,6 +21,20 @@ public class ReferredPDWithdrawalRecord {
     private String lastWithdrawRequest;
     private BigDecimal exchangedTrees;
 
+    public static ReferredPDWithdrawalRecord fromObjectArray(Object[] objectArr) {
+        ReferredPDWithdrawalRecord referredPDWithdrawalRecord = new ReferredPDWithdrawalRecord();
+
+        referredPDWithdrawalRecord.setReferredPdNickname(objectArr[0].toString());
+        referredPDWithdrawalRecord.setReferredPdEmail(objectArr[1].toString());
+        referredPDWithdrawalRecord.setTotalTreesInEarningWallet((BigDecimal) objectArr[4]);
+        referredPDWithdrawalRecord.setRegistrationDate(objectArr[2].toString());
+        referredPDWithdrawalRecord.setReferredPdGrade(objectArr[3].toString());
+        referredPDWithdrawalRecord.setLastWithdrawRequest(objectArr[5].toString());
+        referredPDWithdrawalRecord.setExchangedTrees((BigDecimal) objectArr[6]);
+
+        return referredPDWithdrawalRecord;
+    }
+
 }
 
 

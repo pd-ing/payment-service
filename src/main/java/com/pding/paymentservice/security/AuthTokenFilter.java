@@ -39,6 +39,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/videoEarningAndSales",
             "/api/payment/topEarners",
             "/api/payment/listReferredPds",
+            "/api/payment/getWithdrawalHistoryForReferredPds",
             "/api/payment/admin/balanceTrees",
             "/api/payment/admin/addTrees",
             "/api/payment/admin/removeTrees",

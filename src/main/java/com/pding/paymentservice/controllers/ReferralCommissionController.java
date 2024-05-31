@@ -9,6 +9,7 @@ import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPayment
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.ReferralCommissionService;
 import jakarta.validation.constraints.Max;
@@ -94,13 +95,13 @@ public class ReferralCommissionController {
     }
 
     @GetMapping("/getWithdrawalHistoryForReferredPds")
-    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(defaultValue = "0") @Min(0) int page,
+    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(defaultValue = "0") @Min(0) int page,
                                                    @RequestParam(defaultValue = "10") @Min(1) int size) {
 
         try {
-            String referrerPdUserId = authHelper.getUserId();
-            Page<ReferredPdDetailsDTO> referredPdDetailsDTOPage = referralCommissionService.getDetailsOfAllTheReferredPd(referrerPdUserId, page, size);
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPdDetailsDTOPage));
+            // String referrerPdUserId = authHelper.getUserId();
+            Page<ReferredPDWithdrawalRecord> referredPDWithdrawalRecords = referralCommissionService.getWithdrawalHistoryForReferredPds(pdUserId, page, size);
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDWithdrawalRecords));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }

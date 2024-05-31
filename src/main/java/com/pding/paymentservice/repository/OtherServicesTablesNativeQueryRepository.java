@@ -63,6 +63,27 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             nativeQuery = true)
     Page<Object[]> getListOfAllTheReferredPds (String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
 
+
+    @Query(value = "SELECT COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, \n" +
+            "COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, \n" +
+            "COALESCE(u.pd_type, ' ') ,\n" +
+            "COALESCE(ew.trees_earned, 0.00) AS trees_earned, \n" +
+            "COALESCE(w.created_date, ' ') AS withdrawal_date , \n" +
+            "COALESCE(w.trees, 0.00) AS trees_exhanged \n" +
+            "FROM referrals r \n" +
+            "INNER JOIN  users u ON u.id = r.referred_pd_user_id \n" +
+            "INNER JOIN  earning ew ON ew.user_id = u.id  and ew.user_id = r.referred_pd_user_id \n" +
+            "INNER JOIN  withdrawals w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id  = u.id AND w.pd_user_id  = ew.user_id\n" +
+            "WHERE r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId " +
+            "ORDER BY w.created_date DESC",
+            countQuery = "SELECT COUNT(*) FROM  referrals r \n" +
+                    "INNER JOIN  users u ON u.id = r.referred_pd_user_id \n" +
+                    "INNER JOIN  earning ew ON ew.user_id = u.id  and ew.user_id = r.referred_pd_user_id \n" +
+                    "INNER JOIN  withdrawals w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id  = u.id AND w.pd_user_id  = ew.user_id\n" +
+                    "where r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId",
+            nativeQuery = true)
+    Page<Object[]> getWithdrawalHistoryForReferredPds (String pdUserId, Pageable pageable);
+
     @Query(value = "SELECT rc.id as referralCommissionId, rc.withdrawal_id as withdrawalId, rc.referrer_pd_user_id as referrerPdUserId, " +
             "rc.commission_percent as commissionPercent, rc.commission_amount_in_trees as commissionAmountInTrees, " +
             "rc.commission_amount_in_cents as commissionAmountInCents, rc.created_date as referralCommissionCreatedDate, " +

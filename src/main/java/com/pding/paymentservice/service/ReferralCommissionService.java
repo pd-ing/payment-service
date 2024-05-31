@@ -10,6 +10,7 @@ import com.pding.paymentservice.models.other.services.tables.dto.UserInfoDTO;
 import com.pding.paymentservice.payload.response.PayReferrerThroughStripeResponse;
 import com.pding.paymentservice.models.other.services.tables.dto.ReferredPdDetailsDTO;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.ReferralCommissionRepository;
 import com.pding.paymentservice.stripe.StripeClient;
@@ -112,6 +113,21 @@ public class ReferralCommissionService {
         }
 
         return new PageImpl<>(referredPdDetailsRecords, pageable, referredPdDetailsPage.getTotalElements());
+    }
+
+
+    @Transactional
+    public Page<ReferredPDWithdrawalRecord> getWithdrawalHistoryForReferredPds(String referredPdUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> referredPdWithdrawalDetailsPage = otherServicesTablesNativeQueryRepository.getWithdrawalHistoryForReferredPds(referredPdUserId, pageable);
+
+        List<ReferredPDWithdrawalRecord> referredPDWithdrawalRecords = new ArrayList<>();
+        for (Object[] referredPdObj : referredPdWithdrawalDetailsPage.getContent()) {
+            ReferredPDWithdrawalRecord referredPDWithdrawalRecord = ReferredPDWithdrawalRecord.fromObjectArray(referredPdObj);
+            referredPDWithdrawalRecords.add(referredPDWithdrawalRecord);
+        }
+
+        return new PageImpl<>(referredPDWithdrawalRecords, pageable, referredPdWithdrawalDetailsPage.getTotalElements());
     }
 
     @Transactional
