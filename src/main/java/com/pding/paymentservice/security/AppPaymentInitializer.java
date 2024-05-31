@@ -58,7 +58,7 @@ public class AppPaymentInitializer {
                     .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
 
             androidPublisher = new AndroidPublisher.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
-                    .setApplicationName("com.pding.android.dev")
+                    .setApplicationName(appPackageName)
                     .build();
 
         } catch (IOException e) {
