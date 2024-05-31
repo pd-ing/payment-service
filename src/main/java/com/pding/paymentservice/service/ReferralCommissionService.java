@@ -9,6 +9,7 @@ import com.pding.paymentservice.models.other.services.tables.dto.ReferralInfoDTO
 import com.pding.paymentservice.models.other.services.tables.dto.UserInfoDTO;
 import com.pding.paymentservice.payload.response.PayReferrerThroughStripeResponse;
 import com.pding.paymentservice.models.other.services.tables.dto.ReferredPdDetailsDTO;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.ReferralCommissionRepository;
 import com.pding.paymentservice.stripe.StripeClient;
@@ -97,6 +98,20 @@ public class ReferralCommissionService {
         }
 
         return new PageImpl<>(referredPdDetailsDTOList, pageable, referredPdDetailsPage.getTotalElements());
+    }
+
+    @Transactional
+    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferredPds(referrerPdUserId, startDate, endDate, searchString, pageable);
+
+        List<ReferredPDDetailsRecord> referredPdDetailsRecords = new ArrayList<>();
+        for (Object[] referredPdObj : referredPdDetailsPage.getContent()) {
+            ReferredPDDetailsRecord referredPDDetailsRecord = ReferredPDDetailsRecord.fromObjectArray(referredPdObj);
+            referredPdDetailsRecords.add(referredPDDetailsRecord);
+        }
+
+        return new PageImpl<>(referredPdDetailsRecords, pageable, referredPdDetailsPage.getTotalElements());
     }
 
     @Transactional

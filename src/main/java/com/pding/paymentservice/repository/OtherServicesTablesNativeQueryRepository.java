@@ -39,6 +39,30 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             nativeQuery = true)
     Page<Object[]> getDetailsOfAllTheReferredPd(String referrerPdUserId, Pageable pageable);
 
+    @Query(value = "SELECT COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, \n" +
+            "COALESCE(ew.trees_earned, 0.00) AS trees_earned, \n" +
+            "COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, \n" +
+            " ref_code.referral_code , COALESCE(u.pd_type, ' ') \n" +
+            "FROM referrals r \n" +
+            "INNER JOIN  users u ON u.id = r.referred_pd_user_id \n" +
+            "INNER JOIN  earning ew ON ew.user_id = u.id  and ew.user_id = r.referred_pd_user_id \n" +
+            "INNER JOIN  (SELECT COALESCE (referral_code, '') AS referral_code FROM users \n" +
+            "   WHERE id = :pdUserId) AS ref_code ON 1 = 1\n" +
+            "where r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId\n" +
+            "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
+            "            AND (:endDate IS NULL OR  FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
+            "             AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+            countQuery = "SELECT COUNT(*) \n" +
+                    "FROM  referrals r \n" +
+                    "INNER JOIN  users u ON u.id = r.referred_pd_user_id \n" +
+                    "INNER JOIN  earning ew ON ew.user_id = u.id  and ew.user_id = r.referred_pd_user_id \n" +
+                    "WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId \n" +
+                    "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
+                    "            AND (:endDate IS NULL OR  FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
+                    "             AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+            nativeQuery = true)
+    Page<Object[]> getListOfAllTheReferredPds (String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
+
     @Query(value = "SELECT rc.id as referralCommissionId, rc.withdrawal_id as withdrawalId, rc.referrer_pd_user_id as referrerPdUserId, " +
             "rc.commission_percent as commissionPercent, rc.commission_amount_in_trees as commissionAmountInTrees, " +
             "rc.commission_amount_in_cents as commissionAmountInCents, rc.created_date as referralCommissionCreatedDate, " +
