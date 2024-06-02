@@ -17,6 +17,7 @@ public class ReferredPDWithdrawalRecord {
     private String referredPdEmail;
     private String registrationDate;
     private String referredPdGrade;
+    private String referralPdGrade;
     private BigDecimal totalTreesInEarningWallet;
     private String lastWithdrawRequest;
     private BigDecimal exchangedTrees;

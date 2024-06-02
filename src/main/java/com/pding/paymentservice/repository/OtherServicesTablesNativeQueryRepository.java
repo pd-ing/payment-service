@@ -19,6 +19,12 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     @Query(value = "SELECT * FROM referrals WHERE referred_pd_user_id = :referredPdUserId", nativeQuery = true)
     List<Object[]> findReferralDetailsByReferredPdUserId(@Param("referredPdUserId") String referredPdUserId);
 
+
+    @Query(value = "SELECT COALESCE(u.pd_type, '') \n" +
+            " FROM users u INNER JOIN referrals r ON r.referrer_pd_user_id = u.id \n" +
+            " WHERE referred_pd_user_id COLLATE utf8mb4_unicode_ci = :referredPdUserId", nativeQuery = true)
+    String getReferralPdGrade(@Param("referredPdUserId") String referredPdUserId);
+
     @Query(value = "SELECT COALESCE(u.nickname, '') as nickname, " +
             "COALESCE(u.pd_type, '') as pd_type, " +
             "COALESCE(u.created_date, '') as created_date, " +

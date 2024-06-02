@@ -120,10 +120,12 @@ public class ReferralCommissionService {
     public Page<ReferredPDWithdrawalRecord> getWithdrawalHistoryForReferredPds(String referredPdUserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> referredPdWithdrawalDetailsPage = otherServicesTablesNativeQueryRepository.getWithdrawalHistoryForReferredPds(referredPdUserId, pageable);
+        String referralPdGrade = otherServicesTablesNativeQueryRepository.getReferralPdGrade(referredPdUserId);
 
         List<ReferredPDWithdrawalRecord> referredPDWithdrawalRecords = new ArrayList<>();
         for (Object[] referredPdObj : referredPdWithdrawalDetailsPage.getContent()) {
             ReferredPDWithdrawalRecord referredPDWithdrawalRecord = ReferredPDWithdrawalRecord.fromObjectArray(referredPdObj);
+            referredPDWithdrawalRecord.setReferralPdGrade(referralPdGrade);
             referredPDWithdrawalRecords.add(referredPDWithdrawalRecord);
         }
 
