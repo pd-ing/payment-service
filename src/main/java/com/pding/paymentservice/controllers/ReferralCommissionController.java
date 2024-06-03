@@ -8,6 +8,8 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.ReferralCommissionService;
 import jakarta.validation.constraints.Max;
@@ -68,6 +70,43 @@ public class ReferralCommissionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
+
+    @GetMapping("/listReferredPds")
+    ResponseEntity<?> listReferredPdDetails(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                            @RequestParam(required = false) String searchString,
+                                            @RequestParam(defaultValue = "0") @Min(0) int page,
+                                            @RequestParam(defaultValue = "10") @Min(1) int size) {
+
+        try {
+            String referrerPdUserId = authHelper.getUserId();
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            Page<ReferredPDDetailsRecord> referredPDDetailsRecords = referralCommissionService.listReferredPdDetails(referrerPdUserId, startDate, endDate, searchString, page, size);
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDDetailsRecords));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping("/getWithdrawalHistoryForReferredPds")
+    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+
+        try {
+            // String referrerPdUserId = authHelper.getUserId();
+            Page<ReferredPDWithdrawalRecord> referredPDWithdrawalRecords = referralCommissionService.getWithdrawalHistoryForReferredPds(pdUserId, page, size);
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDWithdrawalRecords));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
 
     @GetMapping("/getReferralCommissionDetailsWithFilters")
     ResponseEntity<?> getReferralCommissionDetailsWithFilters(@RequestParam(defaultValue = "0") @Min(0) int page,
