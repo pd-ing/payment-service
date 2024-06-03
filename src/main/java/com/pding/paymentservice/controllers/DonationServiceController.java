@@ -16,6 +16,7 @@ import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.EarningService;
+import com.pding.paymentservice.service.SendNotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,9 @@ public class DonationServiceController {
     @Autowired
     PdLogger pdLogger;
 
+    @Autowired
+    SendNotificationService sendNotificationService;
+
     @PostMapping(value = "/donate")
     public ResponseEntity<?> donateTrees(@RequestParam(value = "donorUserId", required = false) String donorUserId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
         return donationService.donateToPd(authHelper.getUserId(), trees, pdUserId);
@@ -65,6 +69,9 @@ public class DonationServiceController {
             //Set userId from token
             String userId = authHelper.getUserId();
             Donation donation = donationService.createTreesDonationTransaction(userId, trees, pdUserId);
+
+            sendNotificationService.sendDonateTreesNotification(donation);
+
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new DonationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
