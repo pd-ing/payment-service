@@ -5,6 +5,9 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.admin.userTabs.*;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
+import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
@@ -13,6 +16,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -101,7 +105,7 @@ public class AdminDashboardUserPaymentStatsController {
     @GetMapping(value = "/viewingHistoryTabForPd")
     public ResponseEntity<?> getViewingHistoryTabForPdDetailsController(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(required = false) String searchString,
                                                                         @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+                                                                        @RequestParam(defaultValue = "10") @Min(1) int size) {
         ViewingHistoryForPd viewingHistoryForPd = null;
         try {
             viewingHistoryForPd = adminDashboardUserPaymentStatsService.getViewingHistoryForPd(pdUserId, searchString, page, size);
@@ -163,7 +167,7 @@ public class AdminDashboardUserPaymentStatsController {
             if (endDate != null) {
                 endDate = endDate.plusDays(1L);
             }
-            giftHistoryForPd = adminDashboardUserPaymentStatsService.getGiftHistoryTabForPdDetails(pdUserId,startDate,endDate, page, size);
+            giftHistoryForPd = adminDashboardUserPaymentStatsService.getGiftHistoryTabForPdDetails(pdUserId, startDate, endDate, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, giftHistoryForPd));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), giftHistoryForPd));
@@ -309,6 +313,35 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/referenceTabDetails")
+    public ResponseEntity<?> getReferenceTabDetails(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                    @RequestParam(defaultValue = "10") @Min(1) int size,
+                                                    @RequestParam(required = false) String searchString) {
+        try {
+            Page<ReferralCommissionHistory> referralCommissionHistoryPage =
+                    adminDashboardUserPaymentStatsService.getReferenceTabDetails(page, size, searchString);
+            return ResponseEntity.ok(new GenericPageResponse<>(null, referralCommissionHistoryPage));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping(value = "/modalForReferenceTab")
+    public ResponseEntity<?> getModalForReferenceTab(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                                     @RequestParam(defaultValue = "10") @Min(1) int size,
+                                                     @RequestParam(required = false) String referrerPdUserId) {
+
+        if (referrerPdUserId == null || referrerPdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "referrerPdUserId parameter cannot be empty"));
+        }
+        try {
+            Page<ReferredPdDetails> referredPdDetails =
+                    adminDashboardUserPaymentStatsService.getReferredPdDetails(referrerPdUserId, page, size);
+            return ResponseEntity.ok(new GenericPageResponse<>(null, referredPdDetails));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
 
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)

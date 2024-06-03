@@ -58,12 +58,14 @@ public class ReferralCommissionController {
         }
     }
 
+    // PD Registration status tab (FE)
     @GetMapping("/getDetailsOfAllTheReferredPd")
     ResponseEntity<?> getDetailsOfAllTheReferredPd(@RequestParam(defaultValue = "0") @Min(0) int page,
                                                    @RequestParam(defaultValue = "10") @Min(1) int size) {
 
         try {
             String referrerPdUserId = authHelper.getUserId();
+            referrerPdUserId = "F6ZjgjPCwAUKSdCl0UgDwEMD0q52";
             Page<ReferredPdDetailsDTO> referredPdDetailsDTOPage = referralCommissionService.getDetailsOfAllTheReferredPd(referrerPdUserId, page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPdDetailsDTOPage));
         } catch (Exception e) {
@@ -71,6 +73,7 @@ public class ReferralCommissionController {
         }
     }
 
+    // PD Settlement Details tab (FE)
     @GetMapping("/listReferredPds")
     ResponseEntity<?> listReferredPdDetails(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
@@ -107,7 +110,7 @@ public class ReferralCommissionController {
         }
     }
 
-
+    // PD Settlement Details tab (FE)
     @GetMapping("/getReferralCommissionDetailsWithFilters")
     ResponseEntity<?> getReferralCommissionDetailsWithFilters(@RequestParam(defaultValue = "0") @Min(0) int page,
                                                               @RequestParam(defaultValue = "10") @Min(1) int size,
@@ -136,6 +139,7 @@ public class ReferralCommissionController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
-
     }
+
+
 }
