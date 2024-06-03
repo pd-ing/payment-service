@@ -1,6 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -65,6 +66,8 @@ public class VideoPurchaseService {
     @Autowired
     private TokenSigner tokenSigner;
 
+    @Autowired
+    SendNotificationService sendNotificationService;
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
@@ -254,6 +257,9 @@ public class VideoPurchaseService {
             pdLogger.logInfo("BUY_VIDEO", "Buy video request made with following details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
 
             VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
+
+            sendNotificationService.sendBuyVideoNotification(video);
+            
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
@@ -535,6 +541,4 @@ public class VideoPurchaseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
         }
     }
-
-
 }
