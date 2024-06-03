@@ -9,6 +9,7 @@ import com.pding.paymentservice.payload.response.generic.GenericListDataResponse
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.repository.WithdrawalRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.service.SendNotificationService;
 import com.pding.paymentservice.service.WithdrawalService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -44,6 +45,9 @@ public class WithdrawalServiceController {
     @Autowired
     PdLogger pdLogger;
 
+    @Autowired
+    SendNotificationService sendNotificationService;
+
     @PostMapping(value = "/startWithDraw")
     public ResponseEntity<?> startWithDraw(@Valid @RequestBody WithdrawRequest withdrawRequest, BindingResult result) {
         if (result.hasErrors()) {
@@ -64,7 +68,10 @@ public class WithdrawalServiceController {
         }
         try {
             String pdUserId = authHelper.getUserId();
-            withdrawalService.startWithdrawal(pdUserId, withdrawRequest.getTrees(), withdrawRequest.getLeafs());
+            Withdrawal withdrawal = withdrawalService.startWithdrawal(pdUserId, withdrawRequest.getTrees(), withdrawRequest.getLeafs());
+
+            sendNotificationService.sendWithDrawNotification(withdrawal);
+
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process initialted successfully, Will take 5-7 businees days to credit in your account"));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.START_WITHDRAW, e);
@@ -79,7 +86,10 @@ public class WithdrawalServiceController {
         }
 
         try {
-            withdrawalService.completeWithdrawal(withdrawRequest.getPdUserId());
+            Withdrawal withdrawal = withdrawalService.completeWithdrawal(withdrawRequest.getPdUserId());
+
+            sendNotificationService.sendWithDrawNotification(withdrawal);
+            
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process completed successfully, Will take 5-7 businees days to credit in your account"));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
