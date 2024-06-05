@@ -38,6 +38,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/webhook",
             "/api/payment/videoEarningAndSales",
             "/api/payment/topEarners",
+            "/api/payment/listReferredPds",
+            "/api/payment/getWithdrawalHistoryForReferredPds",
             "/api/payment/admin/balanceTrees",
             "/api/payment/admin/addTrees",
             "/api/payment/admin/removeTrees",
@@ -62,7 +64,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/dailyTreeRevenueOfPd",
             "/api/payment/topDonorsList",
             "/api/payment/admin/realTimeTreeUsageHistory",
-            "/api/payment/admin/realTimeTreeUsageTotals"
+            "/api/payment/admin/realTimeTreeUsageTotals",
+            "/api/payment/admin/referenceTabDetails",
+            "/api/payment/admin/modalForReferenceTab"
     );
 
     @Override

@@ -81,7 +81,7 @@ public class WithdrawalService {
 
 
     @Transactional
-    public void startWithdrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) throws Exception {
+    public Withdrawal startWithdrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) throws Exception {
         if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
             throw new Exception("Withdrawal requests can only be made on Mondays.");
         }
@@ -99,19 +99,24 @@ public class WithdrawalService {
         referralCommissionService.createReferralCommissionEntryInPendingState(withdrawal);
 
         ledgerService.saveToLedger(withdrawal.getId(), trees, leafs, TransactionType.WITHDRAWAL_STARTED, pdUserId);
+
+        return withdrawal;
     }
 
 
     @Transactional
-    public void completeWithdrawal(String pdUserId) throws Exception {
+    public Withdrawal completeWithdrawal(String pdUserId) throws Exception {
         List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, WithdrawalStatus.PENDING);
 
         if (withdrawalList.size() == 1) {
 
             Withdrawal withdrawal = withdrawalList.get(0);
             withdrawal.setStatus(WithdrawalStatus.COMPLETE);
+            withdrawalRepository.save(withdrawal);
 
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_COMPLETED, pdUserId);
+
+            return withdrawal;
         } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
         } else {
@@ -127,6 +132,7 @@ public class WithdrawalService {
 
             Withdrawal withdrawal = withdrawalList.get(0);
             withdrawal.setStatus(WithdrawalStatus.FAILED);
+            withdrawalRepository.save(withdrawal);
 
             earningService.addTreesAndLeafsToEarning(withdrawal.getPdUserId(), withdrawal.getTrees(), withdrawal.getLeafs());
 
@@ -297,33 +303,6 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> completeWithDraw(WithdrawRequest withdrawRequest) {
-        if (withdrawRequest.getPdUserId() == null || withdrawRequest.getPdUserId().isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
-
-        try {
-            completeWithdrawal(withdrawRequest.getPdUserId());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrwal process completed successfully, Will take 5-7 businees days to credit in your account"));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-    public ResponseEntity<?> failWithDraw(WithdrawRequest withdrawRequest) {
-        if (withdrawRequest.getPdUserId() == null || withdrawRequest.getPdUserId().isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."));
-        }
-
-        try {
-            failWithdrawal(withdrawRequest.getPdUserId());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Withdrawal Failed, Trees and Leafs rollback done successfully"));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.COMPLETE_WITHDRAW, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
 
     public WithdrawHistoryForPd getWithdrawHistoryTabForPdDetails(String pdUserId, LocalDate startDate, LocalDate endDate, int sortOrder, int page, int size) {
         WithdrawHistoryForPd withdrawHistoryForPd = new WithdrawHistoryForPd();

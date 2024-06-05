@@ -9,12 +9,8 @@ import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.InappproductsListResponse;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
-import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,11 +21,8 @@ import java.util.List;
 @Component
 public class AppPaymentInitializer {
 
-    @Autowired
-    private SsmClient ssmClient;
-
-    @Value("${aws.param.firebaseKey}")
-    private String firebaseKey;
+    @Value("${app.config.firebase-admin-keys}")
+    private String firebaseCreds;
 
 
     @Value("${app.package.name}")
@@ -37,21 +30,11 @@ public class AppPaymentInitializer {
 
     AndroidPublisher androidPublisher;
 
-    public String getFirebaseServiceAccount() {
-        GetParameterResponse response = ssmClient.getParameter(
-                GetParameterRequest.builder()
-                        .name(firebaseKey)
-                        .build()
-        );
-
-        return response.parameter().value();
-    }
-
 
     @PostConstruct
     public void initialize() throws IOException {
         try {
-            String key = getFirebaseServiceAccount();
+            String key = firebaseCreds;
             InputStream inputStream = new ByteArrayInputStream(key.getBytes());
 
             GoogleCredential credential = GoogleCredential.fromStream(inputStream)

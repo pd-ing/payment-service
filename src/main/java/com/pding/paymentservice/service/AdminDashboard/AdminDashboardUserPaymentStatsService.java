@@ -5,13 +5,17 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.admin.userTabs.*;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
 import com.pding.paymentservice.service.LedgerService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
 import com.pding.paymentservice.service.WithdrawalService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -51,6 +55,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Autowired
     WithdrawalService withdrawalService;
+
+    @Autowired
+    ReferenceTabService referenceTabService;
 
 
     @Transactional
@@ -138,20 +145,27 @@ public class AdminDashboardUserPaymentStatsService {
     }
 
 
-    public TreeSummaryGridResult getTreesSummaryForAllUsers (LocalDate startDate, LocalDate endDate, String searchString, int page, int size){
+    public TreeSummaryGridResult getTreesSummaryForAllUsers(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         return treeSummaryTabService.getTreesSummaryForAllUsers(startDate, endDate, searchString, page, size);
     }
 
-    public TreeSummary getTreesSummaryTotals (LocalDate startDate, LocalDate endDate, String searchString){
+    public TreeSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate, String searchString) {
         return treeSummaryTabService.getTreesSummaryTotals(startDate, endDate, searchString);
     }
 
-    public RealTimeTreeTransactionHistory getRealTimeTreeUsage (LocalDate startDate, LocalDate endDate, String searchString, int page, int size){
+    public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         return realTimeTreeUsageTabService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
     }
 
-    public TotalTreeUsageSummary getTotalTreeUsageSummary (LocalDate startDate, LocalDate endDate){
+    public TotalTreeUsageSummary getTotalTreeUsageSummary(LocalDate startDate, LocalDate endDate) {
         return realTimeTreeUsageTabService.getTreesSummaryTotals(startDate, endDate);
     }
 
+    public Page<ReferralCommissionHistory> getReferenceTabDetails(int page, int size, String searchString) throws Exception {
+        return referenceTabService.getReferralCommissionHistoryForAdminDashboard(page, size, searchString);
+    }
+
+    public Page<ReferredPdDetails> getReferredPdDetails(String referrerPdUserId, int page, int size) {
+        return referenceTabService.getReferredPdDetails(referrerPdUserId, page, size);
+    }
 }
