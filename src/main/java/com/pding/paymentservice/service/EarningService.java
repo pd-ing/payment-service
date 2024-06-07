@@ -7,13 +7,15 @@ import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.UserObject;
+import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.repository.EarningRepository;
+import com.pding.paymentservice.service.AdminDashboard.TreeSummaryTabService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,9 @@ public class EarningService {
 
     @Autowired
     PdLogger pdLogger;
+
+    @Autowired
+    TreeSummaryTabService treeSummaryTabService;
 
     @Transactional
     public void addTreesToEarning(String userId, BigDecimal trees) {
@@ -166,16 +171,14 @@ public class EarningService {
 
     public ResponseEntity<?> getTopEarners(int page, int size) {
         try {
-            PageRequest pageRequest = PageRequest.of(page, size);
-            Page<Earning> earnersPage = earningRepository.findAllOrderByTotalEarningsDesc(pageRequest);
-            List<Earning> earnersList = earnersPage.getContent();
-            // Create a PaginationInfo object with embedded response list
-            PaginationInfoWithGenericList<Earning> paginationInfo = new PaginationInfoWithGenericList<>(
+            TreeSummaryGridResult res = treeSummaryTabService.getTreesSummaryForAllUsers(null, null, null, page, size);
+            Page<UserObject> earnersPage = res.getUserObjects();
+            PaginationInfoWithGenericList<UserObject> paginationInfo = new PaginationInfoWithGenericList<>(
                     earnersPage.getNumber(),
                     earnersPage.getSize(),
                     earnersPage.getTotalElements(),
                     earnersPage.getTotalPages(),
-                    earnersList
+                    earnersPage.getContent()
             );
             return ResponseEntity.ok().body(new PaginationResponse(null, paginationInfo));
         } catch (Exception e) {
