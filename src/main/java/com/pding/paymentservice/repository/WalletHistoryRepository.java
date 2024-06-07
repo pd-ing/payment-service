@@ -38,4 +38,11 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, St
             nativeQuery = true)
     List<Object[]> findPendingTransactions(@Param("startDate") LocalDateTime startDate);
 
+    @Query("SELECT w FROM WalletHistory w WHERE w.userId = :userId AND w.transactionStatus IN :statuses AND w.purchasedLeafs > 0")
+    Page<WalletHistory> findAllWithPurchasedLeafsGreaterThanZeroAndStatusAndUserId(
+            @Param("userId") String userId,
+            @Param("statuses") List<String> statuses,
+            Pageable pageable
+    );
+
 }

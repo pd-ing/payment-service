@@ -58,6 +58,20 @@ public class WalletServiceController {
         }
     }
 
+    @GetMapping(value = "/leafsWalletHistory")
+    public ResponseEntity<?> getPurchasedLeafsWalletHistory(@RequestParam(defaultValue = "0") @Min(value = 0, message = "Page number must be greater than or equal to 0") int page,
+                                                            @RequestParam(defaultValue = "10") @Min(value = 1, message = "Page size must be greater than or equal to 1") int size,
+                                                            @RequestParam(value = "sortAsc", defaultValue = "false", required = false) Boolean sortAsc) {
+        try {
+            String userId = authHelper.getUserId();
+            Page<WalletHistory> walletHistory = walletHistoryService.fetchPurchasedLeafWalletHistoryByUserId(userId, page, size, sortAsc);
+            return ResponseEntity.ok().body(new WalletHistoryResponse(null, walletHistory));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.WALLET_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {

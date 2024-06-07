@@ -65,6 +65,17 @@ public class WalletHistoryService {
         return walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, statuses, pageable);
     }
 
+
+    public Page<WalletHistory> fetchPurchasedLeafWalletHistoryByUserId(String userId, int page, int size, Boolean sortAsc) {
+        List<String> statuses = Arrays.asList("paymentCompleted", "success");
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("purchaseDate").descending());
+        if (sortAsc)
+            pageable = PageRequest.of(page, size, Sort.by("purchaseDate").ascending());
+
+        return walletHistoryRepository.findAllWithPurchasedLeafsGreaterThanZeroAndStatusAndUserId(userId, statuses, pageable);
+    }
+
     public Optional<WalletHistory> findByTransactionIdAndUserId(String transactionID, String userId) {
         return walletHistoryRepository.findByTransactionIdAndUserId(transactionID, userId);
     }
