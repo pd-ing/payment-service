@@ -66,7 +66,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
                     "            AND (:endDate IS NULL OR  FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
                     "             AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
             nativeQuery = true)
-    Page<Object[]> getListOfAllTheReferredPds (String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
+    Page<Object[]> getListOfAllTheReferredPds(String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
 
 
     @Query(value = "SELECT COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, \n" +
@@ -87,7 +87,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
                     "INNER JOIN  withdrawals w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id  = u.id AND w.pd_user_id  = ew.user_id\n" +
                     "where r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId",
             nativeQuery = true)
-    Page<Object[]> getWithdrawalHistoryForReferredPds (String pdUserId, Pageable pageable);
+    Page<Object[]> getWithdrawalHistoryForReferredPds(String pdUserId, Pageable pageable);
 
     @Query(value = "SELECT rc.id as referralCommissionId, rc.withdrawal_id as withdrawalId, rc.referrer_pd_user_id as referrerPdUserId, " +
             "rc.commission_percent as commissionPercent, rc.commission_amount_in_trees as commissionAmountInTrees, " +
@@ -125,6 +125,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "rc.referrer_pd_user_id AS referrerPdUserId, " +
             "rc.commission_percent AS referrerCommissionPercent, " +
             "rc.commission_amount_in_trees AS referrerCommissionAmountInTrees, " +
+            "rc.commission_amount_in_leafs AS referrerCommissionAmountInLeafs, " +
             "rc.created_date AS referrerCommissionCreatedDate, " +
             "rc.updated_date AS referrerCommissionUpdatedDate, " +
             "rc.commission_transfer_status AS referrerCommissionTransferStatus, " +

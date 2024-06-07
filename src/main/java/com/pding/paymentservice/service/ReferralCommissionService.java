@@ -57,6 +57,7 @@ public class ReferralCommissionService {
         if (referralInfoDTO != null) {
             UserInfoDTO referrerPdUserInfoDTO = getUserInfo(referralInfoDTO.getReferrerPdUserId());
             String commissionAmountInTrees = getCommissionAmountInTrees(withdrawal.getTrees(), referrerPdUserInfoDTO.getCommissionPercent());
+            String commissionAmountInLeafs = getCommissionAmountInLeafs(withdrawal.getLeafs(), referrerPdUserInfoDTO.getCommissionPercent());
             BigDecimal commissionAmountInCents = new BigDecimal(commissionAmountInTrees).multiply(new BigDecimal(Long.toString(valueOfOneTreeInCents)));
 
             ReferralCommission referralCommission = createReferralCommission(
@@ -64,6 +65,7 @@ public class ReferralCommissionService {
                     referralInfoDTO,
                     referrerPdUserInfoDTO,
                     commissionAmountInTrees,
+                    commissionAmountInLeafs,
                     commissionAmountInCents
             );
             referralCommissionRepository.save(referralCommission);
@@ -283,6 +285,7 @@ public class ReferralCommissionService {
                                                         ReferralInfoDTO referralInfoDTO,
                                                         UserInfoDTO referrerPdUserInfoDTO,
                                                         String commissionAmountInTrees,
+                                                        String commissionAmountInLeafs,
                                                         BigDecimal commissionAmountInCents
     ) {
         LocalDateTime createUpdateDate = LocalDateTime.now();
@@ -291,6 +294,7 @@ public class ReferralCommissionService {
                 referralInfoDTO.getReferrerPdUserId(),
                 referrerPdUserInfoDTO.getCommissionPercent(),
                 commissionAmountInTrees,
+                commissionAmountInLeafs,
                 createUpdateDate,
                 createUpdateDate,
                 CommissionTransferStatus.TRANSFER_PENDING,
@@ -314,9 +318,20 @@ public class ReferralCommissionService {
     }
 
     private String getCommissionAmountInTrees(BigDecimal trees, String percent) {
+        if (trees.compareTo(BigDecimal.ZERO) == 0) {
+            return new BigDecimal(0).toString();
+        }
         BigDecimal percentage = new BigDecimal(percent);
         BigDecimal result = trees.multiply(percentage).divide(new BigDecimal(100));
         return result.toString();
     }
 
+    private String getCommissionAmountInLeafs(BigDecimal leafs, String percent) {
+        if (leafs.compareTo(BigDecimal.ZERO) == 0) {
+            return new BigDecimal(0).toString();
+        }
+        BigDecimal percentage = new BigDecimal(percent);
+        BigDecimal result = leafs.multiply(percentage).divide(new BigDecimal(100));
+        return result.toString();
+    }
 }
