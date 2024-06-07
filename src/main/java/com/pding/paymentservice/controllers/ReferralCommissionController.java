@@ -65,7 +65,6 @@ public class ReferralCommissionController {
 
         try {
             String referrerPdUserId = authHelper.getUserId();
-            referrerPdUserId = "F6ZjgjPCwAUKSdCl0UgDwEMD0q52";
             Page<ReferredPdDetailsDTO> referredPdDetailsDTOPage = referralCommissionService.getDetailsOfAllTheReferredPd(referrerPdUserId, page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPdDetailsDTOPage));
         } catch (Exception e) {
@@ -99,7 +98,7 @@ public class ReferralCommissionController {
 
     @GetMapping("/getWithdrawalHistoryForReferredPds")
     ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                   @RequestParam(defaultValue = "10") @Min(1) int size) {
+                                                         @RequestParam(defaultValue = "10") @Min(1) int size) {
 
         try {
             // String referrerPdUserId = authHelper.getUserId();
