@@ -38,7 +38,10 @@ public class ReferralCommission {
     private String commissionPercent;
 
     @Column(name = "commission_amount_in_trees")
-    private String commissionAmountInTrees;
+    private String commissionAmountInTrees = new BigDecimal(0).toString();
+
+    @Column(name = "commission_amount_in_leafs")
+    private String commissionAmountInLeafs = new BigDecimal(0).toString();
 
     @Column(name = "commission_amount_in_cents")
     private BigDecimal commissionAmountInCents;
@@ -57,6 +60,7 @@ public class ReferralCommission {
                               String referrerPdUserId,
                               String commissionPercent,
                               String commissionAmountInTrees,
+                              String commissionAmountInLeafs,
                               LocalDateTime createdDate,
                               LocalDateTime updatedDate,
                               CommissionTransferStatus commissionTransferStatus,
@@ -66,6 +70,7 @@ public class ReferralCommission {
         this.referrerPdUserId = referrerPdUserId;
         this.commissionPercent = commissionPercent;
         this.commissionAmountInTrees = commissionAmountInTrees;
+        this.commissionAmountInLeafs = commissionAmountInLeafs;
         this.commissionAmountInCents = commissionAmountInCents;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
