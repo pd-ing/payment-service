@@ -32,10 +32,16 @@ public class MessagePurchase {
 
     String messageId;
 
-    public MessagePurchase(String userId, String pdUserid, BigDecimal leafsTransacted, String messageId) {
+    Boolean isGift = false;
+
+    String giftId;
+
+    public MessagePurchase(String userId, String pdUserid, BigDecimal leafsTransacted, String messageId, Boolean isGift, String giftId) {
         this.userId = userId;
         this.pdUserid = pdUserid;
         this.leafsTransacted = leafsTransacted;
         this.messageId = messageId;
+        this.isGift = isGift;
+        this.giftId = giftId;
     }
 }

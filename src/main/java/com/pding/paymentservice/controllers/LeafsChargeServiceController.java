@@ -45,7 +45,10 @@ public class LeafsChargeServiceController {
 
     @PostMapping(value = "/buyCallOrMessage")
     public ResponseEntity<?> buyCall(@RequestParam(value = "pdUserId") String pdUserId,
-                                     @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge, @RequestParam(value = "callType") String callType, @RequestParam(value = "callOrMessageId") String callOrMessageId) {
+                                     @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge,
+                                     @RequestParam(value = "callType") String callType,
+                                     @RequestParam(value = "callOrMessageId") String callOrMessageId,
+                                     @RequestParam(value = "giftId", required = false) String giftId) {
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."), null));
         }
@@ -80,8 +83,10 @@ public class LeafsChargeServiceController {
             if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL))
                 message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId);
 
-            if (transactionType.equals(TransactionType.TEXT_MESSAGE))
-                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId);
+            if (transactionType.equals(TransactionType.TEXT_MESSAGE)) {
+                boolean isGift = giftId != null && !giftId.isEmpty();
+                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId, isGift, giftId);
+            }
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (WalletNotFoundException e) {

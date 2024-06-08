@@ -30,10 +30,10 @@ public class MessagePurchaseService {
     PdLogger pdLogger;
 
     @Transactional
-    public String CreateMessageTransaction(String userId, String pdUserId, BigDecimal leafsTransacted, String messagedId) {
+    public String CreateMessageTransaction(String userId, String pdUserId, BigDecimal leafsTransacted, String messagedId, Boolean isGift, String giftId) {
         walletService.deductLeafsFromWallet(userId, leafsTransacted);
 
-        MessagePurchase transaction = new MessagePurchase(userId, pdUserId, leafsTransacted, messagedId);
+        MessagePurchase transaction = new MessagePurchase(userId, pdUserId, leafsTransacted, messagedId, isGift, giftId);
         MessagePurchase messagePurchase = messagePurchaseRepository.save(transaction);
         pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase record created with details UserId : " + userId + " ,messageId : " + messagePurchase + ", leafs : " + leafsTransacted + ", pdUserId : " + pdUserId);
 
