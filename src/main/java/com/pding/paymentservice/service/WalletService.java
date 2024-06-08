@@ -126,6 +126,8 @@ public class WalletService {
     }
 
     public void deductLeafsFromWallet(String userId, BigDecimal leafsToDeduct) {
+        pdLogger.logInfo("GIFT_TEST", "DdeductLeafsFromWallet for  UserId: " + userId + " , leafsToDeduct : " + leafsToDeduct);
+
         Optional<Wallet> wallet = fetchWalletByUserId(userId);
 
         if (wallet.isPresent()) {

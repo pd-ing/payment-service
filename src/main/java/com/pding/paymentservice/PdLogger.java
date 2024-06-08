@@ -52,7 +52,7 @@ public class PdLogger {
         }
         event.setLevel(SentryLevel.INFO);
 
-        //Sentry.captureEvent(event);
+        Sentry.captureEvent(event);
     }
 
     public static enum EVENT {
@@ -93,7 +93,7 @@ public class PdLogger {
         START_REFERRAL_COMMISSION(Priority.p1),
 
         COMPLETE_REFERRAL_COMMISSION(Priority.p1),
-        
+
         WITHDRAW_TRANSACTION(Priority.p1),
 
         VIDEO_EARNING_AND_SALES(Priority.p1),
