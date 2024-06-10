@@ -52,7 +52,7 @@ public class PdLogger {
         }
         event.setLevel(SentryLevel.INFO);
 
-        Sentry.captureEvent(event);
+        //Sentry.captureEvent(event);
     }
 
     public static enum EVENT {
