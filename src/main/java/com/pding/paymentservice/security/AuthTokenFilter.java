@@ -66,7 +66,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/realTimeTreeUsageTotals",
             "/api/payment/admin/referenceTabDetails",
             "/api/payment/admin/modalForReferenceTab",
-            "/api/payment/admin/listReferredPds"
+            "/api/payment/admin/listReferredPds",
+            "/api/payment/admin/listReferrerPds"
     );
 
     @Override

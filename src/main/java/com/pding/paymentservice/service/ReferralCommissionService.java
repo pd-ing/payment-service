@@ -11,6 +11,7 @@ import com.pding.paymentservice.payload.response.PayReferrerThroughStripeRespons
 import com.pding.paymentservice.models.other.services.tables.dto.ReferredPdDetailsDTO;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
+import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.ReferralCommissionRepository;
 import com.pding.paymentservice.stripe.StripeClient;
@@ -117,6 +118,26 @@ public class ReferralCommissionService {
         return new PageImpl<>(referredPdDetailsRecords, pageable, referredPdDetailsPage.getTotalElements());
     }
 
+    @Transactional
+    public Page<ReferrerPDDetailsRecord> listReferrerPdDetails(String referredPdUserId, LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferrerPds(referredPdUserId, startDate, endDate, searchString, pageable);
+
+        List<ReferrerPDDetailsRecord> referrerPdDetailsRecords = new ArrayList<>();
+        for (Object[] referredPdObj : referredPdDetailsPage.getContent()) {
+            ReferrerPDDetailsRecord referrerPDDetailsRecord = ReferrerPDDetailsRecord.fromObjectArray(referredPdObj);
+
+            //get the sum of treesAndLeafsEarned by the referredPDs
+            BigDecimal treesEarnedByReferredPDs = otherServicesTablesNativeQueryRepository.getTotalTreesEarnedByReferredPdUsers(referrerPDDetailsRecord.getReferrerPdUserId());
+            BigDecimal leafsEarnedByReferredPDs = otherServicesTablesNativeQueryRepository.getTotalLeafsEarnedByReferredPdUsers(referrerPDDetailsRecord.getReferrerPdUserId());
+            referrerPDDetailsRecord.setSumOfTreesEarnedByReferredPDs(treesEarnedByReferredPDs);
+            referrerPDDetailsRecord.setSumOfLeafsEarnedByReferredPDs(leafsEarnedByReferredPDs);
+
+            referrerPdDetailsRecords.add(referrerPDDetailsRecord);
+        }
+
+        return new PageImpl<>(referrerPdDetailsRecords, pageable, referredPdDetailsPage.getTotalElements());
+    }
 
     @Transactional
     public Page<ReferredPDWithdrawalRecord> getWithdrawalHistoryForReferredPds(String referredPdUserId, int page, int size) {

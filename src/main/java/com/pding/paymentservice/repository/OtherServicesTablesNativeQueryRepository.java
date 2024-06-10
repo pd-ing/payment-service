@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -179,4 +180,41 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
                     "WHERE r.referrer_pd_user_id = :referrerPdUserId",
             nativeQuery = true)
     Page<Object[]> getReferredPdDetails(@Param("referrerPdUserId") String referrerPdUserId, Pageable pageable);
+
+
+    @Query(value = "SELECT DISTINCT u.id,COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, \n" +
+            "COALESCE(ew.trees_earned, 0.00) AS trees_earned, \n" +
+            "COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, \n" +
+            "ref_code.referral_code, COALESCE(u.referral_grade, ' ') \n" +
+            "FROM referrals r \n" +
+            "INNER JOIN users u ON u.id = r.referrer_pd_user_id \n" +
+            "INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id \n" +
+            "LEFT JOIN (SELECT COALESCE(referral_code, '') AS referral_code, id FROM users) AS ref_code ON ref_code.id = u.id \n" +
+            "WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) \n" +
+            "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
+            "AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
+            "AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+            countQuery = "SELECT COUNT(*) \n" +
+                    "FROM referrals r \n" +
+                    "INNER JOIN users u ON u.id = r.referrer_pd_user_id \n" +
+                    "INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id \n" +
+                    "WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) \n" +
+                    "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
+                    "AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
+                    "AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+            nativeQuery = true)
+    Page<Object[]> getListOfAllTheReferrerPds(String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
+
+
+    @Query(value = "SELECT SUM(e.trees_earned) as total_trees_earned " +
+            "FROM referrals r " +
+            "LEFT JOIN earning e ON r.referred_pd_user_id = e.user_id " +
+            "WHERE r.referrer_pd_user_id = :referrerPdUserId", nativeQuery = true)
+    BigDecimal getTotalTreesEarnedByReferredPdUsers(@Param("referrerPdUserId") String referrerPdUserId);
+
+    @Query(value = "SELECT SUM(e.leafs_earned) as total_leafs_earned " +
+            "FROM referrals r " +
+            "LEFT JOIN earning e ON r.referred_pd_user_id = e.user_id " +
+            "WHERE r.referrer_pd_user_id = :referrerPdUserId", nativeQuery = true)
+    BigDecimal getTotalLeafsEarnedByReferredPdUsers(@Param("referrerPdUserId") String referrerPdUserId);
 }
