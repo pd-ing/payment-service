@@ -7,7 +7,9 @@ import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
 import com.pding.paymentservice.service.LedgerService;
+import com.pding.paymentservice.service.ReferralCommissionService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.service.WalletService;
 import com.pding.paymentservice.service.WithdrawalService;
@@ -58,6 +60,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Autowired
     ReferenceTabService referenceTabService;
+
+    @Autowired
+    ReferralCommissionService referralCommissionService;
 
 
     @Transactional
@@ -167,5 +172,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     public Page<ReferredPdDetails> getReferredPdDetails(String referrerPdUserId, int page, int size) {
         return referenceTabService.getReferredPdDetails(referrerPdUserId, page, size);
+    }
+
+    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+        return referralCommissionService.listReferredPdDetails(referrerPdUserId, startDate, endDate, searchString, page, size);
     }
 }
