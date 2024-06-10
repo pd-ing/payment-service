@@ -77,6 +77,7 @@ public class LeafsChargeServiceController {
         }
 
         try {
+            pdLogger.logInfo("GIFT_TEST", "buyCallOrMessage API HIT, giftId : " + giftId + " , leafsToCharge : " + leafsToCharge);
             String userId = authHelper.getUserId();
             String message = "";
 
