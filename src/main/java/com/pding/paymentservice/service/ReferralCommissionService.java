@@ -105,9 +105,9 @@ public class ReferralCommissionService {
     }
 
     @Transactional
-    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+    public Page<ReferredPDDetailsRecord> listReferredPdDetailsEOL(String referrerPdUserId, LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferredPds(referrerPdUserId, startDate, endDate, searchString, pageable);
+        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferredPdsEOL(referrerPdUserId, startDate, endDate, searchString, pageable);
 
         List<ReferredPDDetailsRecord> referredPdDetailsRecords = new ArrayList<>();
         for (Object[] referredPdObj : referredPdDetailsPage.getContent()) {
@@ -140,19 +140,17 @@ public class ReferralCommissionService {
     }
 
     @Transactional
-    public Page<ReferredPDWithdrawalRecord> getWithdrawalHistoryForReferredPds(String referredPdUserId, int page, int size) {
+    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> referredPdWithdrawalDetailsPage = otherServicesTablesNativeQueryRepository.getWithdrawalHistoryForReferredPds(referredPdUserId, pageable);
-        String referralPdGrade = otherServicesTablesNativeQueryRepository.getReferralPdGrade(referredPdUserId);
+        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferredPds(referrerPdUserId, pageable);
 
-        List<ReferredPDWithdrawalRecord> referredPDWithdrawalRecords = new ArrayList<>();
-        for (Object[] referredPdObj : referredPdWithdrawalDetailsPage.getContent()) {
-            ReferredPDWithdrawalRecord referredPDWithdrawalRecord = ReferredPDWithdrawalRecord.fromObjectArray(referredPdObj);
-            referredPDWithdrawalRecord.setReferralPdGrade(referralPdGrade);
-            referredPDWithdrawalRecords.add(referredPDWithdrawalRecord);
+        List<ReferredPDDetailsRecord> referredPDDetailsRecords = new ArrayList<>();
+        for (Object[] referredPdObj : referredPdDetailsPage.getContent()) {
+            ReferredPDDetailsRecord referredPDDetailsRecord = ReferredPDDetailsRecord.fromObjectArray(referredPdObj);
+            referredPDDetailsRecords.add(referredPDDetailsRecord);
         }
 
-        return new PageImpl<>(referredPDWithdrawalRecords, pageable, referredPdWithdrawalDetailsPage.getTotalElements());
+        return new PageImpl<>(referredPDDetailsRecords, pageable, referredPdDetailsPage.getTotalElements());
     }
 
     @Transactional

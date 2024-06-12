@@ -11,6 +11,7 @@ import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
+import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
@@ -346,8 +347,8 @@ public class AdminDashboardUserPaymentStatsController {
     }
 
     // PD Settlement Details tab (FE)
-    @GetMapping("/listReferredPds")
-    ResponseEntity<?> listReferredPdDetails(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+    @GetMapping("/listReferredPdsEOL")
+    ResponseEntity<?> listReferredPdDetailsEOL(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                                             @RequestParam(required = false) String searchString,
                                             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -362,7 +363,7 @@ public class AdminDashboardUserPaymentStatsController {
             if (endDate != null) {
                 endDate = endDate.plusDays(1L);
             }
-            Page<ReferredPDDetailsRecord> referredPDDetailsRecords = adminDashboardUserPaymentStatsService.listReferredPdDetails(referrerPdUserId, startDate, endDate, searchString, page, size);
+            Page<ReferredPDDetailsRecord> referredPDDetailsRecords = adminDashboardUserPaymentStatsService.listReferredPdDetailsEOL(referrerPdUserId, startDate, endDate, searchString, page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDDetailsRecords));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -387,6 +388,19 @@ public class AdminDashboardUserPaymentStatsController {
             }
             Page<ReferrerPDDetailsRecord> referredPDDetailsRecords = adminDashboardUserPaymentStatsService.listReferrerPdDetails(referredPdUserId, startDate, endDate, searchString, page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDDetailsRecords));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping("/listReferredPds")
+    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "referrerPdUserId") String referrerPdUserId, @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                         @RequestParam(defaultValue = "10") @Min(1) int size) {
+
+        try {
+            // String referrerPdUserId = authHelper.getUserId();
+            Page<ReferredPDDetailsRecord> referredPDWithdrawalRecords = adminDashboardUserPaymentStatsService.listReferredPdDetails(referrerPdUserId, page, size);
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDWithdrawalRecords));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
