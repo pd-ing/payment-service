@@ -73,19 +73,6 @@ public class ReferralCommissionController {
         }
     }
 
-    @GetMapping("/getWithdrawalHistoryForReferredPds")
-    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "pdUserId") String pdUserId, @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                         @RequestParam(defaultValue = "10") @Min(1) int size) {
-
-        try {
-            // String referrerPdUserId = authHelper.getUserId();
-            Page<ReferredPDWithdrawalRecord> referredPDWithdrawalRecords = referralCommissionService.getWithdrawalHistoryForReferredPds(pdUserId, page, size);
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDWithdrawalRecords));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
     // PD Settlement Details tab (FE)
     @GetMapping("/getReferralCommissionDetailsWithFilters")
     ResponseEntity<?> getReferralCommissionDetailsWithFilters(@RequestParam(defaultValue = "0") @Min(0) int page,

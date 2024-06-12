@@ -15,20 +15,23 @@ public class ReferredPDDetailsRecord {
 
     private String referredPdNickname;
     private String referredPdEmail;
-    private BigDecimal totalTreesInEarningWallet;
     private String registrationDate;
-    private String referenceCode;
     private String referredPdGrade;
+    private BigDecimal totalTreesInEarningWallet;
+    private String lastWithdrawRequest;
+    private BigDecimal exchangedTrees;
 
     public static ReferredPDDetailsRecord fromObjectArray(Object[] objectArr) {
         ReferredPDDetailsRecord referredPDDetailsRecord = new ReferredPDDetailsRecord();
 
         referredPDDetailsRecord.setReferredPdNickname(objectArr[0].toString());
         referredPDDetailsRecord.setReferredPdEmail(objectArr[1].toString());
-        referredPDDetailsRecord.setTotalTreesInEarningWallet((BigDecimal) objectArr[2]);
-        referredPDDetailsRecord.setRegistrationDate(objectArr[3].toString());
-        referredPDDetailsRecord.setReferenceCode(objectArr[4].toString());
-        referredPDDetailsRecord.setReferredPdGrade(objectArr[5].toString());
+        referredPDDetailsRecord.setRegistrationDate(objectArr[2].toString());
+        referredPDDetailsRecord.setReferredPdGrade(objectArr[3].toString());
+        referredPDDetailsRecord.setTotalTreesInEarningWallet((BigDecimal) objectArr[4]);
+        referredPDDetailsRecord.setLastWithdrawRequest(objectArr[5].toString());
+        referredPDDetailsRecord.setExchangedTrees((BigDecimal) objectArr[6]);
+
 
         return referredPDDetailsRecord;
     }
