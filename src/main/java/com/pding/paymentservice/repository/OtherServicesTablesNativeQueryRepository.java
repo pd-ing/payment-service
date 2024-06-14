@@ -77,7 +77,9 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "    COALESCE(u.pd_type, ' ') AS pd_type,\n" +
             "    COALESCE(ew.trees_earned, 0.00) AS trees_earned, \n" +
             "    COALESCE(w.latest_withdrawal_date, ' ') AS withdrawal_date, \n" +
-            "    COALESCE(w.trees, 0.00) AS trees_exchanged\n" +
+            "    COALESCE(w.trees, 0.00) AS trees_exchanged, \n" +
+            "    COALESCE(w.leafs, 0.00) AS leaves_exchanged, \n" +
+            "    COALESCE(ew.leafs_earned, 0.00) AS leafs_earned \n" +
             "FROM referrals r \n" +
             "INNER JOIN users u ON u.id = r.referred_pd_user_id \n" +
             "LEFT JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referred_pd_user_id \n" +
@@ -85,6 +87,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "    SELECT \n" +
             "        wd.pd_user_id,\n" +
             "        wd.trees,\n" +
+            "        wd.leafs,\n" +
             "        wd.created_date AS latest_withdrawal_date\n" +
             "    FROM withdrawals wd\n" +
             "    INNER JOIN (\n" +
@@ -180,11 +183,13 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "COALESCE(u.email, '') AS referredPdUserEmail, " +
             "COALESCE(u.nickname, '') AS referredPdUserNickname, " +
             "COALESCE(e.trees_earned, 0) AS treesEarned, " +
-            "COALESCE(w.total_trees_withdrawn, 0) AS totalTreesWithdrawn " +
+            "COALESCE(w.total_trees_withdrawn, 0) AS totalTreesWithdrawn, " +
+            "COALESCE(w.total_leaves_withdrawn, 0) AS totalTreesWithdrawn, " +
+            "COALESCE(e.leafs_earned, 0) AS leavesEarned " +
             "FROM referrals r " +
             "JOIN users u ON r.referred_pd_user_id = u.id " +
-            "LEFT JOIN (SELECT user_id, SUM(trees_earned) AS trees_earned FROM earning GROUP BY user_id) e ON e.user_id = u.id " +
-            "LEFT JOIN (SELECT pd_user_id, SUM(trees) AS total_trees_withdrawn FROM withdrawals GROUP BY pd_user_id) w ON w.pd_user_id = u.id " +
+            "LEFT JOIN (SELECT user_id, SUM(trees_earned) AS trees_earned, SUM(leafs_earned) AS leafs_earned FROM earning GROUP BY user_id) e ON e.user_id = u.id " +
+            "LEFT JOIN (SELECT pd_user_id, SUM(trees) AS total_trees_withdrawn, SUM(leafs) AS total_leaves_withdrawn FROM withdrawals GROUP BY pd_user_id) w ON w.pd_user_id = u.id " +
             "WHERE r.referrer_pd_user_id = :referrerPdUserId",
             countQuery = "SELECT COUNT(*) " +
                     "FROM referrals r " +
