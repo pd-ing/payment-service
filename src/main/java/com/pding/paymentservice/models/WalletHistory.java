@@ -1,5 +1,6 @@
 package com.pding.paymentservice.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,6 +37,7 @@ public class WalletHistory {
 
     private LocalDateTime purchaseDate;
 
+    @Column(unique = true)
     private String transactionId;
 
     private String transactionStatus;
