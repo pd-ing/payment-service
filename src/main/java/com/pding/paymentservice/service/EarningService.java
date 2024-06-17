@@ -13,6 +13,7 @@ import com.pding.paymentservice.payload.response.custompagination.PaginationInfo
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.service.AdminDashboard.TreeSummaryTabService;
+import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,9 @@ public class EarningService {
     @Autowired
     TreeSummaryTabService treeSummaryTabService;
 
+    @Autowired
+    FirebaseRealtimeDbHelper firebaseRealtimeDbHelper;
+
     @Transactional
     public void addTreesToEarning(String userId, BigDecimal trees) {
         Optional<Earning> earning = earningRepository.findByUserId(userId);
@@ -58,6 +62,8 @@ public class EarningService {
             earningObj = new Earning(userId, trees, new BigDecimal(0));
         }
         earningRepository.save(earningObj);
+
+        firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
         pdLogger.logInfo("BUY_VIDEO", "Earning details recorded for UserUd: " + userId + ", trees : " + trees);
     }
 
@@ -81,6 +87,8 @@ public class EarningService {
             earningObj = new Earning(userId, new BigDecimal(0), leafs);
         }
         earningRepository.save(earningObj);
+
+        firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
     }
 
 
@@ -95,9 +103,11 @@ public class EarningService {
 
             earningRepository.save(earningObj);
 
+            firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
             return earningRepository.findByUserId(userId);
         }
 
+        firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earning.get().getLeafsEarned(), earning.get().getTreesEarned());
         return earning;
     }
 
@@ -115,6 +125,7 @@ public class EarningService {
                 if (newTreesBalance.compareTo(BigDecimal.ZERO) >= 0) {
                     earningObj.setTreesEarned(newTreesBalance);
                     earningRepository.save(earningObj);
+                    firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
                 } else {
                     log.error("Insufficient trees. Cannot perform transaction.");
                     throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");
@@ -143,6 +154,7 @@ public class EarningService {
                 if (newLeafsBalance.compareTo(BigDecimal.ZERO) >= 0) {
                     earningObj.setLeafsEarned(newLeafsBalance);
                     earningRepository.save(earningObj);
+                    firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
                 } else {
                     log.error("Insufficient leafs. Cannot perform transaction.");
                     throw new InsufficientLeafsException("Insufficient Leafs. Cannot perform transaction.");

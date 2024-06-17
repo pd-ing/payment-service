@@ -13,7 +13,7 @@ import java.util.Map;
 public class FirebaseRealtimeDbHelper extends BaseService {
 
 
-    public void updateWalletBalanceInFirebase(String userId, BigDecimal leafBalance, BigDecimal treesBalance) {
+    public void updateSpendingWalletBalanceInFirebase(String userId, BigDecimal leafBalance, BigDecimal treesBalance) {
         try {
             Float leaf = null;
             Float trees = null;
@@ -23,17 +23,36 @@ public class FirebaseRealtimeDbHelper extends BaseService {
             if (treesBalance != null) {
                 trees = treesBalance.floatValue();
             }
-            updateWalletBalanceInFirebase(userId, leaf, trees);
+            DatabaseReference spendingWalletRef = FirebaseDatabase.getInstance()
+                    .getReference(generateSpendingWalletPath(userId));
+
+            updateSpendingWalletBalanceInFirebase(userId, leaf, trees, spendingWalletRef);
         } catch (Exception ex) {
             pdLogger.logException(ex);
         }
     }
 
-    private void updateWalletBalanceInFirebase(String userId, Float leafBalance, Float treesBalance) {
 
-        DatabaseReference walletRef = FirebaseDatabase.getInstance()
-                .getReference(generatePath(userId));
+    public void updateEarningWalletBalanceInFirebase(String userId, BigDecimal leafBalance, BigDecimal treesBalance) {
+        try {
+            Float leaf = null;
+            Float trees = null;
+            if (leafBalance != null) {
+                leaf = leafBalance.floatValue();
+            }
+            if (treesBalance != null) {
+                trees = treesBalance.floatValue();
+            }
+            DatabaseReference earningWalletRef = FirebaseDatabase.getInstance()
+                    .getReference(generateEarningWalletPath(userId));
 
+            updateSpendingWalletBalanceInFirebase(userId, leaf, trees, earningWalletRef);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+        }
+    }
+
+    private void updateSpendingWalletBalanceInFirebase(String userId, Float leafBalance, Float treesBalance, DatabaseReference walletRef) {
         Map<String, Object> map = new HashMap<>();
         if (leafBalance != null) {
             map.put("leaf", leafBalance);
@@ -51,8 +70,11 @@ public class FirebaseRealtimeDbHelper extends BaseService {
         });
     }
 
-    public String generatePath(String userId) {
+    private String generateSpendingWalletPath(String userId) {
         return "/pding/users/" + userId + "/wallet";
     }
 
+    private String generateEarningWalletPath(String userId) {
+        return "/pding/users/" + userId + "/earning";
+    }
 }
