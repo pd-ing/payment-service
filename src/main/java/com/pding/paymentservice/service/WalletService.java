@@ -62,7 +62,7 @@ public class WalletService {
             wallet = new Wallet(userId, trees, leafs, lastPurchasedDate);
             walletRepository.save(wallet);
         }
-        firebaseRealtimeDbHelper.updateWalletBalanceInFirebase(userId, wallet.getLeafs(), wallet.getTrees());
+        firebaseRealtimeDbHelper.updateSpendingWalletBalanceInFirebase(userId, wallet.getLeafs(), wallet.getTrees());
         return wallet;
     }
 
@@ -78,7 +78,7 @@ public class WalletService {
             newWallet.setTotalTransactions(0);
 
             walletRepository.save(newWallet);
-            firebaseRealtimeDbHelper.updateWalletBalanceInFirebase(userId, newWallet.getLeafs(), newWallet.getTrees());
+            firebaseRealtimeDbHelper.updateSpendingWalletBalanceInFirebase(userId, newWallet.getLeafs(), newWallet.getTrees());
             return walletRepository.findWalletByUserId(userId);
         }
         return wallet;
@@ -107,7 +107,7 @@ public class WalletService {
                 if (newTreesBalance.compareTo(BigDecimal.ZERO) >= 0) {
                     walletObj.setTrees(newTreesBalance);
                     walletRepository.save(walletObj);
-                    firebaseRealtimeDbHelper.updateWalletBalanceInFirebase(userId, walletObj.getLeafs(), walletObj.getTrees());
+                    firebaseRealtimeDbHelper.updateSpendingWalletBalanceInFirebase(userId, walletObj.getLeafs(), walletObj.getTrees());
                     pdLogger.logInfo("BUY_VIDEO", "Deducted " + treesToDeduct + " trees  for userId : " + userId);
                 } else {
                     log.error("Insufficient trees. Cannot perform transaction.");
@@ -139,7 +139,7 @@ public class WalletService {
                 if (newLeafBalance.compareTo(BigDecimal.ZERO) >= 0) {
                     walletObj.setLeafs(newLeafBalance);
                     walletRepository.save(walletObj);
-                    firebaseRealtimeDbHelper.updateWalletBalanceInFirebase(userId, walletObj.getLeafs(), walletObj.getTrees());
+                    firebaseRealtimeDbHelper.updateSpendingWalletBalanceInFirebase(userId, walletObj.getLeafs(), walletObj.getTrees());
                 } else {
                     log.error("Insufficient leafs. Cannot perform transaction.");
                     throw new InsufficientLeafsException("Insufficient leafs. Cannot perform transaction.");
