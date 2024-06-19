@@ -22,6 +22,7 @@ public class ReferredPDDetailsRecord {
     private String lastWithdrawRequest;
     private BigDecimal exchangedTrees;
     private BigDecimal exchangedLeaves;
+    private String referredPdUserId;
 
     public static ReferredPDDetailsRecord fromObjectArray(Object[] objectArr) {
         ReferredPDDetailsRecord referredPDDetailsRecord = new ReferredPDDetailsRecord();
@@ -35,6 +36,7 @@ public class ReferredPDDetailsRecord {
         referredPDDetailsRecord.setLastWithdrawRequest(objectArr[5].toString());
         referredPDDetailsRecord.setExchangedTrees((BigDecimal) objectArr[6]);
         referredPDDetailsRecord.setExchangedLeaves((BigDecimal) objectArr[7]);
+        referredPDDetailsRecord.setReferredPdUserId(objectArr[9].toString());
 
         return referredPDDetailsRecord;
     }
