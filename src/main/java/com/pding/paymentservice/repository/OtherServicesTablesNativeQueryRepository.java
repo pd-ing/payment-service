@@ -79,7 +79,8 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "    COALESCE(w.latest_withdrawal_date, ' ') AS withdrawal_date, \n" +
             "    COALESCE(w.trees, 0.00) AS trees_exchanged, \n" +
             "    COALESCE(w.leafs, 0.00) AS leaves_exchanged, \n" +
-            "    COALESCE(ew.leafs_earned, 0.00) AS leafs_earned \n" +
+            "    COALESCE(ew.leafs_earned, 0.00) AS leafs_earned, \n" +
+            "    COALESCE(r.referred_pd_user_id, ' ') AS userId \n" +
             "FROM referrals r \n" +
             "INNER JOIN users u ON u.id = r.referred_pd_user_id \n" +
             "LEFT JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referred_pd_user_id \n" +
