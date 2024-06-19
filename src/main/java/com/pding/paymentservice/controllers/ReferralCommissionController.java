@@ -44,19 +44,19 @@ public class ReferralCommissionController {
     @Autowired
     AuthHelper authHelper;
 
-    @PostMapping("/completeReferralCommission")
-    ResponseEntity<?> completeReferralCommission(@RequestBody ReferralCommissionRequest referralCommissionRequest) {
-        if (referralCommissionRequest.getReferralCommissionId() == null || referralCommissionRequest.getReferralCommissionId().isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
-        }
-        try {
-            String message = referralCommissionService.updateReferralCommissionEntryToCompletedState(referralCommissionRequest.getReferralCommissionId());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, message));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.COMPLETE_REFERRAL_COMMISSION, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
+//    @PostMapping("/completeReferralCommission")
+//    ResponseEntity<?> completeReferralCommission(@RequestBody ReferralCommissionRequest referralCommissionRequest) {
+//        if (referralCommissionRequest.getReferralCommissionId() == null || referralCommissionRequest.getReferralCommissionId().isEmpty()) {
+//            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
+//        }
+//        try {
+//            String message = referralCommissionService.updateReferralCommissionEntryToCompletedState(referralCommissionRequest.getReferralCommissionId());
+//            return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+//        } catch (Exception e) {
+//            pdLogger.logException(PdLogger.EVENT.COMPLETE_REFERRAL_COMMISSION, e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+//        }
+//    }
 
     // PD Registration status tab (FE)
     @GetMapping("/getDetailsOfAllTheReferredPd")

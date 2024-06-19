@@ -1,6 +1,8 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
+import com.pding.paymentservice.payload.request.ReferralCommissionRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
@@ -42,6 +44,9 @@ import java.time.LocalDate;
 public class AdminDashboardUserPaymentStatsController {
     @Autowired
     AdminDashboardUserPaymentStatsService adminDashboardUserPaymentStatsService;
+
+    @Autowired
+    PdLogger pdLogger;
 
     @PostMapping(value = "/addTrees")
     public ResponseEntity<?> addTreesFromBackend(@Valid @RequestBody AddOrRemoveTreesRequest addOrRemoveTreesRequest) {
@@ -403,6 +408,20 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDWithdrawalRecords));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping("/completeReferralCommission")
+    ResponseEntity<?> completeReferralCommission(@RequestBody ReferralCommissionRequest referralCommissionRequest) {
+        if (referralCommissionRequest.getReferralCommissionId() == null || referralCommissionRequest.getReferralCommissionId().isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
+        }
+        try {
+            String message = adminDashboardUserPaymentStatsService.updateReferralCommissionEntryToCompletedState(referralCommissionRequest.getReferralCommissionId());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.COMPLETE_REFERRAL_COMMISSION, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 

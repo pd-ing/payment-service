@@ -180,18 +180,33 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     @Query(value = "SELECT COUNT(DISTINCT referred_pd_user_id) FROM referrals", nativeQuery = true)
     Integer totalNumberOfReferredPdInSystem();
 
-    @Query(value = "SELECT COALESCE(u.id, '') AS referredPdUserId, " +
-            "COALESCE(u.email, '') AS referredPdUserEmail, " +
-            "COALESCE(u.nickname, '') AS referredPdUserNickname, " +
-            "COALESCE(e.trees_earned, 0) AS treesEarned, " +
-            "COALESCE(w.total_trees_withdrawn, 0) AS totalTreesWithdrawn, " +
-            "COALESCE(w.total_leaves_withdrawn, 0) AS totalTreesWithdrawn, " +
-            "COALESCE(e.leafs_earned, 0) AS leavesEarned " +
-            "FROM referrals r " +
-            "JOIN users u ON r.referred_pd_user_id = u.id " +
-            "LEFT JOIN (SELECT user_id, SUM(trees_earned) AS trees_earned, SUM(leafs_earned) AS leafs_earned FROM earning GROUP BY user_id) e ON e.user_id = u.id " +
-            "LEFT JOIN (SELECT pd_user_id, SUM(trees) AS total_trees_withdrawn, SUM(leafs) AS total_leaves_withdrawn FROM withdrawals GROUP BY pd_user_id) w ON w.pd_user_id = u.id " +
-            "WHERE r.referrer_pd_user_id = :referrerPdUserId",
+    @Query(value = "SELECT \n" +
+            "    COALESCE(u.id, '') AS referredPdUserId, \n" +
+            "    COALESCE(u.email, '') AS referredPdUserEmail, \n" +
+            "    COALESCE(u.nickname, '') AS referredPdUserNickname, \n" +
+            "    COALESCE(e.trees_earned, 0) AS treesEarned, \n" +
+            "    COALESCE(w.trees, 0) AS treesExchanged, \n" +
+            "    COALESCE(w.leafs, 0) AS leavesExchanged, \n" +
+            "    COALESCE(e.leafs_earned, 0) AS leavesEarned \n" +
+            "FROM referrals r \n" +
+            "JOIN users u ON r.referred_pd_user_id = u.id \n" +
+            "LEFT JOIN earning e ON e.user_id = u.id \n" +
+            "LEFT JOIN ( \n" +
+            "    SELECT \n" +
+            "        wd.pd_user_id, \n" +
+            "        wd.trees, \n" +
+            "        wd.leafs, \n" +
+            "        wd.created_date AS latest_withdrawal_date \n" +
+            "    FROM withdrawals wd \n" +
+            "    INNER JOIN ( \n" +
+            "        SELECT \n" +
+            "            pd_user_id, \n" +
+            "            MAX(created_date) AS latest_withdrawal_date \n" +
+            "        FROM withdrawals \n" +
+            "        GROUP BY pd_user_id \n" +
+            "    ) latest_wd ON wd.pd_user_id = latest_wd.pd_user_id AND wd.created_date = latest_wd.latest_withdrawal_date \n" +
+            ") w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = e.user_id \n" +
+            "WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",
             countQuery = "SELECT COUNT(*) " +
                     "FROM referrals r " +
                     "JOIN users u ON r.referred_pd_user_id = u.id " +
