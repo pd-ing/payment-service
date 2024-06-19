@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LeafItem {
-    private int giftId;
+    private String giftId;
     private int leafAmount;
     private String imageUrl;
     private String animationUrl;

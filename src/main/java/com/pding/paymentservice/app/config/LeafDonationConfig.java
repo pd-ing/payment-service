@@ -18,19 +18,19 @@ public class LeafDonationConfig {
     List<LeafItem> Signature;
 
     public static LeafDonationConfig createConfig() {
-        LeafItem basicItem1 = new LeafItem(1, 3, "https://pdpd.b-cdn.net/public/3_leafs_dice_cube.png", null);
-        LeafItem basicItem2 = new LeafItem(2, 10, "https://pdpd.b-cdn.net/public/10_leafs_robot.png", null);
-        LeafItem basicItem3 = new LeafItem(3, 20, "https://pdpd.b-cdn.net/public/20_leafs_piggy_bank.png", null);
-        LeafItem basicItem4 = new LeafItem(4, 33, "https://pdpd.b-cdn.net/public/33_leafs_pink_heart.png", null);
-        LeafItem basicItem5 = new LeafItem(5, 50, "https://pdpd.b-cdn.net/public/50_leafs_pink_gift_box.png", null);
-        LeafItem basicItem6 = new LeafItem(6, 77, "https://pdpd.b-cdn.net/public/77_leafs_lucky_cat.png", null);
+        LeafItem basicItem1 = new LeafItem("BASIC_1", 3, "https://pdpd.b-cdn.net/public/3_leafs_dice_cube.svg", null);
+        LeafItem basicItem2 = new LeafItem("BASIC_2", 10, "https://pdpd.b-cdn.net/public/10_leafs_robot.svg", null);
+        LeafItem basicItem3 = new LeafItem("BASIC_3", 20, "https://pdpd.b-cdn.net/public/20_leafs_piggy_bank.svg", null);
+        LeafItem basicItem4 = new LeafItem("BASIC_4", 33, "https://pdpd.b-cdn.net/public/33_leafs_pink_heart.svg", null);
+        LeafItem basicItem5 = new LeafItem("BASIC_5", 50, "https://pdpd.b-cdn.net/public/50_leafs_pink_gift_box.svg", null);
+        LeafItem basicItem6 = new LeafItem("BASIC_6", 77, "https://pdpd.b-cdn.net/public/77_leafs_lucky_cat.svg", null);
 
-        LeafItem basicItem7 = new LeafItem(7, 100, "https://pdpd.b-cdn.net/public/100_leafs_birthday_cake.png", null);
-        LeafItem basicItem8 = new LeafItem(8, 1000, "https://pdpd.b-cdn.net/public/1000_leafs_diamond.png", null);
-        LeafItem basicItem9 = new LeafItem(9, 2000, "https://pdpd.b-cdn.net/public/2000_leafs_envelope.png", null);
-        LeafItem basicItem10 = new LeafItem(10, 3000, "https://pdpd.b-cdn.net/public/3000_leafs_key.png", null);
-        LeafItem basicItem11 = new LeafItem(11, 5000, "https://pdpd.b-cdn.net/public/5000_leafs_cute_unicorn.png", null);
-        LeafItem basicItem12 = new LeafItem(12, 10000, "https://pdpd.b-cdn.net/public/10000_leafs_light_bulb.png", null);
+        LeafItem basicItem7 = new LeafItem("BASIC_7", 100, "https://pdpd.b-cdn.net/public/100_leafs_birthday_cake.svg", null);
+        LeafItem basicItem8 = new LeafItem("BASIC_8", 1000, "https://pdpd.b-cdn.net/public/1000_leafs_diamond.svg", null);
+        LeafItem basicItem9 = new LeafItem("BASIC_9", 2000, "https://pdpd.b-cdn.net/public/2000_leafs_envelope.svg", null);
+        LeafItem basicItem10 = new LeafItem("BASIC_10", 3000, "https://pdpd.b-cdn.net/public/3000_leafs_key.svg", null);
+        LeafItem basicItem11 = new LeafItem("BASIC_11", 5000, "https://pdpd.b-cdn.net/public/5000_leafs_cute_unicorn.svg", null);
+        LeafItem basicItem12 = new LeafItem("BASIC_12", 10000, "https://pdpd.b-cdn.net/public/10000_leafs_light_bulb.svg", null);
 
         List<LeafItem> basic = new ArrayList<>();
         basic.add(basicItem1);

@@ -10,6 +10,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.CallPurchaseService;
+import com.pding.paymentservice.service.FcmService;
 import com.pding.paymentservice.service.MessagePurchaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,7 +49,9 @@ public class LeafsChargeServiceController {
                                      @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge,
                                      @RequestParam(value = "callType") String callType,
                                      @RequestParam(value = "callOrMessageId") String callOrMessageId,
-                                     @RequestParam(value = "giftId", required = false) String giftId) {
+                                     @RequestParam(value = "giftId", required = false) String giftId,
+                                     @RequestParam(value = "notifyPd", required = false, defaultValue = "false") Boolean notifyPd
+    ) {
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."), null));
         }
@@ -86,7 +89,7 @@ public class LeafsChargeServiceController {
 
             if (transactionType.equals(TransactionType.TEXT_MESSAGE)) {
                 boolean isGift = giftId != null && !giftId.isEmpty();
-                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId, isGift, giftId);
+                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId, isGift, giftId, notifyPd);
             }
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
