@@ -64,7 +64,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/completeWithDraw").authenticated()
                                 .requestMatchers("/api/payment/failWithDraw").authenticated()
                                 .requestMatchers("/api/payment/withDrawTransactions").authenticated()
-                                .requestMatchers("/api/payment/completeReferralCommission").authenticated()
+                                .requestMatchers("/api/payment/admin/completeReferralCommission").authenticated()
                                 .requestMatchers("/api/payment/getDetailsOfAllTheReferredPd").authenticated()
                                 .requestMatchers("/api/payment/getReferralCommissionDetailsWithFilters").authenticated()
                                 .requestMatchers("/api/payment/tokens/register").authenticated()

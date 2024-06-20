@@ -1,6 +1,8 @@
 package com.pding.paymentservice.service.AdminDashboard;
 
+import com.pding.paymentservice.models.ReferralCommission;
 import com.pding.paymentservice.models.Wallet;
+import com.pding.paymentservice.models.enums.CommissionTransferStatus;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
@@ -186,6 +188,10 @@ public class AdminDashboardUserPaymentStatsService {
 
     public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, int page, int size) {
         return referralCommissionService.listReferredPdDetails(referrerPdUserId, page, size);
+    }
+
+    public String updateReferralCommissionEntryToCompletedState(String referralCommissionId) throws Exception {
+        return referralCommissionService.updateReferralCommissionEntryToCompletedState(referralCommissionId);
     }
 
 }
