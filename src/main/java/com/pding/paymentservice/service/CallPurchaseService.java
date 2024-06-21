@@ -9,6 +9,7 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.repository.CallPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,9 +49,17 @@ public class CallPurchaseService {
     @Autowired
     AuthHelper authHelper;
 
+    @Autowired
+    FirebaseRealtimeDbHelper firebaseRealtimeDbHelper;
+
+    public String CreateCallTransaction(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType, String callId) {
+        String returnVal = CreateCallTransactionHelper(userId, pddUserId, leafsToCharge, callType, callId);
+        addCallTransactionEntryToRealTimeDatabase(callId);
+        return returnVal;
+    }
 
     @Transactional
-    public String CreateCallTransaction(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType, String callId) {
+    private String CreateCallTransactionHelper(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType, String callId) {
         walletService.deductLeafsFromWallet(userId, leafsToCharge);
 
         CallPurchase callPurchase = new CallPurchase(userId, pddUserId, leafsToCharge, callType, callId);
@@ -60,6 +69,23 @@ public class CallPurchaseService {
         ledgerService.saveToLedger(callPurchase.getId(), new BigDecimal(0), leafsToCharge, callType, userId);
 
         return "Leafs charge was successful";
+    }
+
+    public void addCallTransactionEntryToRealTimeDatabase(String callId) {
+        try {
+            List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
+            for (Object[] callPurchase : callPurchaseList) {
+                String userId = callPurchase[0].toString();
+                String pdUserID = callPurchase[1].toString();
+                String leafsTransacted = callPurchase[2].toString();
+
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(userId, callId, new BigDecimal(leafsTransacted), new BigDecimal(0));
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(pdUserID, callId, new BigDecimal(0), new BigDecimal(leafsTransacted));
+            }
+        } catch (Exception e) {
+            pdLogger.logException(e);
+        }
+
     }
 
     List<CallPurchase> fetchCallDetailsHistoryForPd(String pdUserId) {
