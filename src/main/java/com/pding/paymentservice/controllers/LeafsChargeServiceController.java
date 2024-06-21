@@ -106,6 +106,13 @@ public class LeafsChargeServiceController {
         }
     }
 
+
+    @GetMapping(value = "/addBuyCallOrMessageEntryInRealTimeDb")
+    public ResponseEntity<?> addBuyCallOrMessageEntryInRealTimeDb(@RequestParam(value = "callId") String callId) {
+        callPurchaseService.addCallTransactionEntryToRealTimeDatabase(callId);
+        return ResponseEntity.ok().body(new GenericStringResponse(null, "DONE"));
+    }
+
     @GetMapping(value = "/callHistoryForPd")
     public ResponseEntity<?> getCallHistoryForPd(@RequestParam(value = "pdUserId", required = false) String pdUserId) {
         return callPurchaseService.callDetailsHistoryForPd(authHelper.getUserId());

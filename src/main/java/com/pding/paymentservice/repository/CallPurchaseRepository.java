@@ -37,6 +37,12 @@ public interface CallPurchaseRepository extends JpaRepository<CallPurchase, Stri
             "ORDER BY leafsTransacted DESC " +
             "LIMIT :limit")
     List<Object[]> findTopCallerUsers(@Param("userId") String userId, @Param("limit") Long limit);
+
+    @Query("SELECT cp.userId, cp.pdUserId, SUM(cp.leafsTransacted) " +
+            "FROM CallPurchase cp " +
+            "WHERE cp.callId = :callId " +
+            "GROUP BY cp.userId, cp.pdUserId")
+    List<Object[]> findUserIdPdUserIdAndSumLeafsTransactedByCallId(@Param("callId") String callId);
 }
 
 
