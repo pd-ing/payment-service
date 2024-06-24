@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Comparator;
 
@@ -352,6 +353,10 @@ public class WithdrawalService {
         wdList.sort(customComparator);
         withdrawHistoryForPd.setWithdrawHistoryForAdminDashboardList(new PageImpl<>(wdList, pageRequest, whadPage.getTotalElements()));
         return withdrawHistoryForPd;
+    }
+
+    public Optional<Withdrawal> findById(String id) {
+        return withdrawalRepository.findById(id);
     }
 
 }

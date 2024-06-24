@@ -1,9 +1,13 @@
 package com.pding.paymentservice.service.AdminDashboard;
 
 import com.pding.paymentservice.models.ReferralCommission;
+import com.pding.paymentservice.models.Withdrawal;
+import com.pding.paymentservice.models.enums.WithdrawalStatus;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
+import com.pding.paymentservice.repository.WithdrawalRepository;
+import com.pding.paymentservice.service.WithdrawalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -13,12 +17,16 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReferenceTabService {
 
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
+    @Autowired
+    WithdrawalService withdrawalService;
 
     public Page<ReferralCommissionHistory> getReferralCommissionHistoryForAdminDashboard(int page, int size, String searchString) throws Exception {
         Pageable pageable = PageRequest.of(page, size);
@@ -28,14 +36,18 @@ public class ReferenceTabService {
         List<ReferralCommissionHistory> referralCommissionHistoryList = new ArrayList<>();
         for (Object[] innerObject : pageObject.getContent()) {
             ReferralCommissionHistory referralCommissionHistory = ReferralCommissionHistory.fromObjectArray(innerObject);
-            Integer pdCountReferredByCurrentPd = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdByCurrentPd(referralCommissionHistory.getReferrerPdUserId());
-            Integer totalPdReferredInTheSystem = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdInSystem();
 
-            String pdAffiliated = pdCountReferredByCurrentPd.toString() + " / " + totalPdReferredInTheSystem.toString();
+            // Show/Return the details of the referral commission only if the withdrawal request of the referredPD has been completed.
+            if (isReferredPdWithDrawalRequestComplete(referralCommissionHistory.getWithdrawalId())) {
+                Integer pdCountReferredByCurrentPd = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdByCurrentPd(referralCommissionHistory.getReferrerPdUserId());
+                Integer totalPdReferredInTheSystem = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdInSystem();
 
-            referralCommissionHistory.setPdAffiliated(pdAffiliated);
+                String pdAffiliated = pdCountReferredByCurrentPd.toString() + " / " + totalPdReferredInTheSystem.toString();
 
-            referralCommissionHistoryList.add(referralCommissionHistory);
+                referralCommissionHistory.setPdAffiliated(pdAffiliated);
+
+                referralCommissionHistoryList.add(referralCommissionHistory);
+            }
         }
 
         return new PageImpl<>(referralCommissionHistoryList, pageable, pageObject.getTotalElements());
@@ -56,4 +68,14 @@ public class ReferenceTabService {
         return new PageImpl<>(referredPdDetailsList, pageable, pageObject.getTotalElements());
     }
 
+    private Boolean isReferredPdWithDrawalRequestComplete(String withdrawalId) {
+        Optional<Withdrawal> withdrawalOptional = withdrawalService.findById(withdrawalId);
+
+        if (withdrawalOptional.isPresent()) {
+            Withdrawal withdrawal = withdrawalOptional.get();
+            return withdrawal.getStatus().equals(WithdrawalStatus.COMPLETE);
+        }
+
+        return false;
+    }
 }
