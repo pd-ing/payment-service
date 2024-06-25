@@ -156,7 +156,8 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "FROM referral_commission rc " +
             "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
             "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
-            "WHERE (:searchString IS NULL " +
+            "WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)" +
+            "AND (:searchString IS NULL " +
             "       OR u.email LIKE %:searchString% " +
             "       OR u.nickname LIKE %:searchString%) " +
             "ORDER BY " +
@@ -165,7 +166,8 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             countQuery = "SELECT COUNT(*) FROM referral_commission rc " +
                     "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
                     "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
-                    "WHERE (:searchString IS NULL " +
+                    "WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) " +
+                    "AND (:searchString IS NULL " +
                     "       OR u.email LIKE %:searchString% " +
                     "       OR u.nickname LIKE %:searchString%)",
             nativeQuery = true)
@@ -185,28 +187,28 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "    COALESCE(u.email, '') AS referredPdUserEmail, \n" +
             "    COALESCE(u.nickname, '') AS referredPdUserNickname, \n" +
             "    COALESCE(e.trees_earned, 0) AS treesEarned, \n" +
-            "    COALESCE(w.trees, 0) AS treesExchanged, \n" +
-            "    COALESCE(w.leafs, 0) AS leavesExchanged, \n" +
+            "    COALESCE(w.trees, 0) AS treesExchangedLatest, \n" +
+            "    COALESCE(w.leafs, 0) AS leavesExchangedLatest, \n" +
             "    COALESCE(e.leafs_earned, 0) AS leavesEarned \n" +
-            "FROM referrals r \n" +
-            "JOIN users u ON r.referred_pd_user_id = u.id \n" +
-            "LEFT JOIN earning e ON e.user_id = u.id \n" +
-            "LEFT JOIN ( \n" +
-            "    SELECT \n" +
-            "        wd.pd_user_id, \n" +
-            "        wd.trees, \n" +
-            "        wd.leafs, \n" +
-            "        wd.created_date AS latest_withdrawal_date \n" +
-            "    FROM withdrawals wd \n" +
-            "    INNER JOIN ( \n" +
+            "FROM \n" +
+            "    referrals r \n" +
+            "JOIN \n" +
+            "    users u ON r.referred_pd_user_id = u.id \n" +
+            "LEFT JOIN \n" +
+            "    earning e ON e.user_id = u.id \n" +
+            "LEFT JOIN \n" +
+            "    ( \n" +
             "        SELECT \n" +
-            "            pd_user_id, \n" +
-            "            MAX(created_date) AS latest_withdrawal_date \n" +
-            "        FROM withdrawals \n" +
-            "        GROUP BY pd_user_id \n" +
-            "    ) latest_wd ON wd.pd_user_id = latest_wd.pd_user_id AND wd.created_date = latest_wd.latest_withdrawal_date \n" +
-            ") w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = e.user_id \n" +
-            "WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",
+            "            wd.pd_user_id, \n" +
+            "            SUM(wd.trees) AS trees, \n" +
+            "            SUM(wd.leafs) AS leafs, \n" +
+            "            wd.created_date AS latest_withdrawal_date \n" +
+            "        FROM \n" +
+            "            withdrawals wd \n" +
+            "            WHERE DATE(wd.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) \n" +
+            "            GROUP BY  wd.pd_user_id, wd.created_date \n" +
+            "    ) w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = e.user_id " +
+            " WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",
             countQuery = "SELECT COUNT(*) " +
                     "FROM referrals r " +
                     "JOIN users u ON r.referred_pd_user_id = u.id " +
