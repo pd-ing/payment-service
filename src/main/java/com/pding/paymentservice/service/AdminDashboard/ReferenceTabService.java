@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +50,40 @@ public class ReferenceTabService {
                 referralCommissionHistoryList.add(referralCommissionHistory);
             }
         }
+
+        //here
+        ReferralCommissionHistory refch = null;
+
+        for (ReferralCommissionHistory temp : referralCommissionHistoryList){
+
+            if(refch == null) {
+                // first object in te list
+                refch = temp;
+            }
+            else {
+                //concatenate results
+                refch.setReferralCommissionId(refch.getReferralCommissionId() + ", " + temp.getReferralCommissionId());
+                refch.setWithdrawalId(refch.getWithdrawalId() + ", " + temp.getWithdrawalId());
+                refch.setReferrerCommissionAmountInTrees(new BigDecimal(refch.getReferrerCommissionAmountInTrees())
+                        .add(new BigDecimal(temp.getReferrerCommissionAmountInTrees()))
+                        .toString());
+                refch.setReferrerCommissionAmountInLeafs(new BigDecimal(refch.getReferrerCommissionAmountInLeafs())
+                        .add(new BigDecimal(temp.getReferrerCommissionAmountInLeafs()))
+                        .toString());
+                refch.setReferrerCommissionCreatedDate(refch.getReferrerCommissionCreatedDate() + ", " + temp.getReferrerCommissionCreatedDate());
+                refch.setReferrerCommissionUpdatedDate(refch.getReferrerCommissionUpdatedDate() + ", " + temp.getReferrerCommissionUpdatedDate());
+                refch.setReferrerCommissionTransferStatus(refch.getReferrerCommissionTransferStatus() + ", " + temp.getReferrerCommissionTransferStatus());
+                refch.setReferredPdUserId(refch.getReferredPdUserId() + ", " + temp.getReferredPdUserId());
+            }
+        }
+
+        System.out.println(referralCommissionHistoryList);
+
+        //clear the list and add concatenated result
+        referralCommissionHistoryList.clear();
+
+        // Add a new object
+        referralCommissionHistoryList.add(refch);
 
         return new PageImpl<>(referralCommissionHistoryList, pageable, pageObject.getTotalElements());
     }
