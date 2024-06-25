@@ -156,7 +156,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "FROM referral_commission rc " +
             "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
             "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
-            "WHERE w.created_date = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)" +
+            "WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)" +
             "AND (:searchString IS NULL " +
             "       OR u.email LIKE %:searchString% " +
             "       OR u.nickname LIKE %:searchString%) " +
@@ -166,7 +166,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             countQuery = "SELECT COUNT(*) FROM referral_commission rc " +
                     "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
                     "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
-                    "WHERE w.created_date = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) " +
+                    "WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) " +
                     "AND (:searchString IS NULL " +
                     "       OR u.email LIKE %:searchString% " +
                     "       OR u.nickname LIKE %:searchString%)",
@@ -205,7 +205,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "            wd.created_date AS latest_withdrawal_date \n" +
             "        FROM \n" +
             "            withdrawals wd \n" +
-            "            WHERE wd.created_date = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) \n" +
+            "            WHERE DATE(wd.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) \n" +
             "            GROUP BY  wd.pd_user_id, wd.created_date \n" +
             "    ) w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = e.user_id " +
             " WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",

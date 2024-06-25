@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ReferenceTabService {
@@ -35,6 +36,7 @@ public class ReferenceTabService {
         Page<Object[]> pageObject = otherServicesTablesNativeQueryRepository.getReferralCommissionHistoryForAdminDashboard(pageable, searchString);
 
         List<ReferralCommissionHistory> referralCommissionHistoryList = new ArrayList<>();
+        List<ReferralCommissionHistory> referralCommissionHistoryListConcatenated = new ArrayList<>();
         for (Object[] innerObject : pageObject.getContent()) {
             ReferralCommissionHistory referralCommissionHistory = ReferralCommissionHistory.fromObjectArray(innerObject);
 
@@ -51,41 +53,46 @@ public class ReferenceTabService {
             }
         }
 
-        //here
-        ReferralCommissionHistory refch = null;
+        List<String> referrerPdIds = new ArrayList<>();
 
-        for (ReferralCommissionHistory temp : referralCommissionHistoryList){
+        for (ReferralCommissionHistory item : referralCommissionHistoryList){
+            String referrerPdId = item.getReferrerPdUserId();
 
-            if(refch == null) {
-                // first object in te list
-                refch = temp;
+            if(referrerPdIds.contains(referrerPdId))
+                continue;
+
+            referrerPdIds.add(referrerPdId);
+            List<ReferralCommissionHistory> filteredList = referralCommissionHistoryList.stream()
+                    .filter(obj -> obj.getReferrerPdUserId().equals(referrerPdId))
+                    .collect(Collectors.toList());
+
+            ReferralCommissionHistory refch = null;
+
+            for(ReferralCommissionHistory temp : filteredList){
+                if(refch == null) {
+                    // first object in te list
+                    refch = temp;
+                }
+                else {
+                    //concatenate results
+                    refch.setReferralCommissionId(refch.getReferralCommissionId() + ", " + temp.getReferralCommissionId());
+                    refch.setWithdrawalId(refch.getWithdrawalId() + ", " + temp.getWithdrawalId());
+                    refch.setReferrerCommissionAmountInTrees(new BigDecimal(refch.getReferrerCommissionAmountInTrees())
+                            .add(new BigDecimal(temp.getReferrerCommissionAmountInTrees()))
+                            .toString());
+                    refch.setReferrerCommissionAmountInLeafs(new BigDecimal(refch.getReferrerCommissionAmountInLeafs())
+                            .add(new BigDecimal(temp.getReferrerCommissionAmountInLeafs()))
+                            .toString());
+                    refch.setReferrerCommissionCreatedDate(refch.getReferrerCommissionCreatedDate() + ", " + temp.getReferrerCommissionCreatedDate());
+                    refch.setReferrerCommissionUpdatedDate(refch.getReferrerCommissionUpdatedDate() + ", " + temp.getReferrerCommissionUpdatedDate());
+                    refch.setReferrerCommissionTransferStatus(refch.getReferrerCommissionTransferStatus() + ", " + temp.getReferrerCommissionTransferStatus());
+                    refch.setReferredPdUserId(refch.getReferredPdUserId() + ", " + temp.getReferredPdUserId());
+                }
             }
-            else {
-                //concatenate results
-                refch.setReferralCommissionId(refch.getReferralCommissionId() + ", " + temp.getReferralCommissionId());
-                refch.setWithdrawalId(refch.getWithdrawalId() + ", " + temp.getWithdrawalId());
-                refch.setReferrerCommissionAmountInTrees(new BigDecimal(refch.getReferrerCommissionAmountInTrees())
-                        .add(new BigDecimal(temp.getReferrerCommissionAmountInTrees()))
-                        .toString());
-                refch.setReferrerCommissionAmountInLeafs(new BigDecimal(refch.getReferrerCommissionAmountInLeafs())
-                        .add(new BigDecimal(temp.getReferrerCommissionAmountInLeafs()))
-                        .toString());
-                refch.setReferrerCommissionCreatedDate(refch.getReferrerCommissionCreatedDate() + ", " + temp.getReferrerCommissionCreatedDate());
-                refch.setReferrerCommissionUpdatedDate(refch.getReferrerCommissionUpdatedDate() + ", " + temp.getReferrerCommissionUpdatedDate());
-                refch.setReferrerCommissionTransferStatus(refch.getReferrerCommissionTransferStatus() + ", " + temp.getReferrerCommissionTransferStatus());
-                refch.setReferredPdUserId(refch.getReferredPdUserId() + ", " + temp.getReferredPdUserId());
-            }
+            referralCommissionHistoryListConcatenated.add(refch);
         }
 
-        System.out.println(referralCommissionHistoryList);
-
-        //clear the list and add concatenated result
-        referralCommissionHistoryList.clear();
-
-        // Add a new object
-        referralCommissionHistoryList.add(refch);
-
-        return new PageImpl<>(referralCommissionHistoryList, pageable, pageObject.getTotalElements());
+        return new PageImpl<>(referralCommissionHistoryListConcatenated, pageable, pageObject.getTotalElements());
     }
 
     public Page<ReferredPdDetails> getReferredPdDetails(String referrerPdUserId, int page, int size) {
