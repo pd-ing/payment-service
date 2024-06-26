@@ -59,6 +59,7 @@ public class MessagePurchaseService {
                 data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
                 data.put("GiftId", giftId);
                 data.put("UserId", pdUserId);
+                data.put("leafsTransacted", leafsTransacted.toString());
                 fcmService.sendNotification(pdUserId, data);
             } catch (Exception e) {
                 pdLogger.logException(e);
