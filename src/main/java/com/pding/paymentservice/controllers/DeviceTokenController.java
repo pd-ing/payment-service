@@ -1,5 +1,6 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.payload.request.fcm.DeviceTokenRequest;
 import com.pding.paymentservice.payload.request.fcm.SendNotificationRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
@@ -19,6 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -60,7 +64,11 @@ public class DeviceTokenController {
     @PostMapping("/sendNotification")
     public ResponseEntity<?> sendNotification(@Valid @RequestBody SendNotificationRequest sendNotificationRequest) {
         try {
-            String message = fcmService.sendNotification(sendNotificationRequest.getUserId(), sendNotificationRequest.getTitle(), sendNotificationRequest.getBody());
+            Map<String, String> data = new HashMap<>();
+            data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+            data.put("GiftId", sendNotificationRequest.getGiftId());
+            data.put("UserId", sendNotificationRequest.getUserId());
+            String message = fcmService.sendNotification(sendNotificationRequest.getUserId(), data);
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

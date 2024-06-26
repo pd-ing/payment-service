@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SendNotificationRequest {
     String userId;
-    String title;
-    String body;
+    String giftId;
 }

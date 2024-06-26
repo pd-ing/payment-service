@@ -9,27 +9,29 @@ import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.Message;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FcmService {
     @Autowired
     private DeviceTokenService deviceTokenService;
 
-    public String sendNotification(String userId, String title, String body) throws Exception {
+    public String sendNotification(String userId, Map<String, String> data) throws Exception {
         List<DeviceToken> tokens = deviceTokenService.getTokensByUserId(userId);
 
         if (tokens.isEmpty())
             return "No token found for the provided userId";
-        
+
         for (DeviceToken deviceToken : tokens) {
-            Notification notification = Notification.builder()
-                    .setTitle(title)
-                    .setBody(body)
-                    .build();
+//            Notification notification = Notification.builder()
+//                    .setTitle(title)
+//                    .setBody(body)
+//                    .build();
 
             Message message = Message.builder()
                     .setToken(deviceToken.getToken())
-                    .setNotification(notification)
+                    //                   .setNotification(notification)
+                    .putAllData(data)
                     .build();
 
 

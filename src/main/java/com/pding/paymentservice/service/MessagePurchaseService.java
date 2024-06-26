@@ -3,6 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.MessagePurchase;
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.repository.MessagePurchaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class MessagePurchaseService {
@@ -52,7 +55,11 @@ public class MessagePurchaseService {
 
         if (notifyPd) {
             try {
-                fcmService.sendNotification(pdUserId, "Gift Received", "GiftId : " + giftId);
+                Map<String, String> data = new HashMap<>();
+                data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+                data.put("GiftId", giftId);
+                data.put("UserId", pdUserId);
+                fcmService.sendNotification(pdUserId, data);
             } catch (Exception e) {
                 pdLogger.logException(e);
             }
