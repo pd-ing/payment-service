@@ -46,7 +46,7 @@ public class WebhookController {
     @Autowired
     WalletHistoryService walletHistoryService;
 
-    Long valueOfOneTreeInCents = 11L;
+    Double valueOfOneTreeInCents = 8.8;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody String payload,
@@ -83,12 +83,12 @@ public class WebhookController {
                     Charge charge = (Charge) event.getData().getObject();
                     paymentIntentId = charge.getPaymentIntent();
                     Long amountToRefundInCents = charge.getAmountRefunded();
-                    long treesToRefund = amountToRefundInCents / valueOfOneTreeInCents;
+                    double treesToRefund = amountToRefundInCents / valueOfOneTreeInCents;
                     message = paymentService.completeRefundTrees(new BigDecimal(amountToRefundInCents), new BigDecimal(treesToRefund), paymentIntentId);
                     break;
                 case "charge.refund.updated":
                     Refund refund = (Refund) event.getData().getObject();
-                    long treesToAdd = (refund.getAmount() / valueOfOneTreeInCents);
+                    double treesToAdd = (refund.getAmount() / valueOfOneTreeInCents);
                     String transactionId = treesToAdd + "_trees_refunded_for_" + refund.getPaymentIntent();
                     if (refund.getStatus().equals("canceled")) {
                         message = paymentService.cancelRefundTrees(new BigDecimal(treesToAdd), transactionId);
