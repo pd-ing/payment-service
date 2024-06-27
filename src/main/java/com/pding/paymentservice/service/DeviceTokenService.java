@@ -16,17 +16,22 @@ public class DeviceTokenService {
 
     @Transactional
     public void saveOrUpdateDeviceToken(String token, String userId) {
-        Optional<DeviceToken> existingToken = deviceTokenRepository.findByToken(token);
-        if (existingToken.isPresent()) {
-            DeviceToken deviceToken = existingToken.get();
-            deviceToken.setUserId(userId);
-            deviceTokenRepository.save(deviceToken);
-        } else {
-            DeviceToken deviceToken = new DeviceToken();
-            deviceToken.setToken(token);
-            deviceToken.setUserId(userId);
-            deviceTokenRepository.save(deviceToken);
+        Optional<DeviceToken> optionalDeviceToken = deviceTokenRepository.findByToken(token);
+        if (optionalDeviceToken.isPresent()) {
+            throw new RuntimeException("Token is already registered");
         }
+
+        List<DeviceToken> existingTokens = deviceTokenRepository.findByUserId(userId);
+
+        if (existingTokens.size() >= 5) {
+            throw new RuntimeException("Can only add 5 device tokens at max");
+        }
+
+        DeviceToken deviceToken = new DeviceToken();
+        deviceToken.setToken(token);
+        deviceToken.setUserId(userId);
+        deviceTokenRepository.save(deviceToken);
+
     }
 
     public List<DeviceToken> getTokensByUserId(String userId) {
