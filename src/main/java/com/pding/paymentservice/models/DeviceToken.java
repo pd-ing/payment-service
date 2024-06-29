@@ -24,6 +24,9 @@ public class DeviceToken {
     @Column(unique = true, nullable = false)
     private String token;
 
+    @Column(unique = true, nullable = false)
+    private String deviceId;
+
     @Column(nullable = false)
     private String userId;
 }

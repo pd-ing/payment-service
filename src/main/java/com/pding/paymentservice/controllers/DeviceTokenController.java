@@ -42,18 +42,17 @@ public class DeviceTokenController {
     public ResponseEntity<?> registerDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
             String userId = authHelper.getUserId();
-            deviceTokenService.saveOrUpdateDeviceToken(deviceTokenRequest.getToken(), userId);
+            deviceTokenService.saveOrUpdateDeviceToken(deviceTokenRequest.getDeviceId(), deviceTokenRequest.getDeviceToken(), userId);
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Registered/Updated Successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
-
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
-            deviceTokenService.deleteToken(deviceTokenRequest.getToken());
+            deviceTokenService.deleteToken(deviceTokenRequest.getDeviceToken());
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
