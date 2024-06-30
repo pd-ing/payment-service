@@ -33,4 +33,8 @@ public class DeviceToken {
     private String userId;
 
     private LocalDateTime createdDate;
+
+    public String getDeviceId() {
+        return deviceId;
+    }
 }

@@ -16,11 +16,13 @@ import static org.springframework.data.domain.PageRequest.*;
 public interface DeviceTokenRepository extends JpaRepository<DeviceToken, String> {
     Optional<DeviceToken> findByToken(String token);
 
+    Optional<DeviceToken> findByDeviceId(String deviceId);
+
     Optional<DeviceToken> findByDeviceIdAndToken(String deviceId, String token);
 
     List<DeviceToken> findByUserId(String userId);
 
-    void deleteByToken(String token);
+    void deleteByDeviceId(String deviceId);
 
     @Query("SELECT dt FROM DeviceToken dt WHERE dt.userId = :userId ORDER BY dt.createdDate ASC")
     List<DeviceToken> findDeviceTokensByUserId(@Param("userId") String userId, Pageable pageable);

@@ -42,8 +42,8 @@ public class DeviceTokenController {
     public ResponseEntity<?> registerDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
             String userId = authHelper.getUserId();
-            deviceTokenService.saveOrUpdateDeviceToken(deviceTokenRequest.getDeviceId(), deviceTokenRequest.getDeviceToken(), userId);
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Registered/Updated Successfully"));
+            String msg = deviceTokenService.saveOrUpdateDeviceToken(deviceTokenRequest.getDeviceId(), deviceTokenRequest.getDeviceToken(), userId);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, msg + "Device Token Registered/Updated Successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
@@ -52,8 +52,14 @@ public class DeviceTokenController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
-            deviceTokenService.deleteToken(deviceTokenRequest.getDeviceToken());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
+            if(deviceTokenRequest.getDeviceId() != null && !deviceTokenRequest.getDeviceId().trim().isEmpty()){
+                if(deviceTokenService.deleteToken(deviceTokenRequest.getDeviceId()))
+                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
+                else
+                    return ResponseEntity.badRequest().body(new GenericStringResponse(null, "Not Found : Device Token Not Deleted"));
+            }
+            else
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Device ID cannot be null or empty"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
