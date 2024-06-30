@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ public class DeviceTokenService {
 
         List<DeviceToken> existingTokens = deviceTokenRepository.findByUserId(userId);
 
+        Optional<DeviceToken> deviceTokenOptional1 = deviceTokenRepository.findOldestDeviceTokenByUserId(userId);
         if (existingTokens.size() >= 5) {
             throw new RuntimeException("Can only add 5 device tokens at max");
         }
@@ -31,6 +33,7 @@ public class DeviceTokenService {
         deviceTokenObj.setDeviceId(deviceId);
         deviceTokenObj.setToken(deviceToken);
         deviceTokenObj.setUserId(userId);
+        deviceTokenObj.setCreatedDate(LocalDateTime.now());
 
         deviceTokenRepository.save(deviceTokenObj);
     }

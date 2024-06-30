@@ -10,6 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "DeviceToken")
 @Data
@@ -29,4 +31,6 @@ public class DeviceToken {
 
     @Column(nullable = false)
     private String userId;
+
+    private LocalDateTime createdDate;
 }

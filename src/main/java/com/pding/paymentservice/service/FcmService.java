@@ -2,6 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.DeviceToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,9 @@ import java.util.Map;
 public class FcmService {
     @Autowired
     private DeviceTokenService deviceTokenService;
+
+    @Autowired
+    PdLogger pdLogger;
 
     public String sendNotification(String userId, Map<String, String> data) throws Exception {
         List<DeviceToken> tokens = deviceTokenService.getTokensByUserId(userId);
@@ -35,7 +39,13 @@ public class FcmService {
                     .build();
 
 
-            String response = FirebaseMessaging.getInstance().send(message);
+            String response = "";
+            try {
+                response = FirebaseMessaging.getInstance().send(message);
+            } catch (Exception e) {
+                pdLogger.logException(e);
+            }
+
             System.out.println("Successfully sent message: " + response);
         }
 
