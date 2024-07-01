@@ -63,7 +63,7 @@ public class MessagePurchaseService {
         pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase details recorded in LEDGER MessageId : " + messagedId + ", leafs : " + leafsTransacted + ", TransactionType : " + TransactionType.TEXT_MESSAGE);
 
         if (notifyPd) {
-            addCallTransactionEntryToRealTimeDatabase(messagedId, leafsTransacted);
+            //addCallTransactionEntryToRealTimeDatabase(messagedId, leafsTransacted);
             try {
                 Map<String, String> data = new HashMap<>();
                 data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
@@ -81,31 +81,30 @@ public class MessagePurchaseService {
 
 
     //When sending the gift during call it is considered as the earning made during call
-    public void addCallTransactionEntryToRealTimeDatabase(String callId, BigDecimal leafsSpendToSendGift) {
-        try {
-            List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
-            for (Object[] callPurchase : callPurchaseList) {
-                String userId = callPurchase[0].toString();
-                String pdUserID = callPurchase[1].toString();
-                String leafsTransacted = callPurchase[2].toString();
-
-                //Update the info of user and his leafDeduction
-                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(
-                        userId,
-                        callId,
-                        new BigDecimal(leafsTransacted).add(leafsSpendToSendGift),
-                        new BigDecimal(0));
-
-                //Update the info of PD and his leaf Earning
-                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(
-                        pdUserID,
-                        callId,
-                        new BigDecimal(0),
-                        new BigDecimal(leafsTransacted).add(leafsSpendToSendGift));
-            }
-        } catch (Exception e) {
-            pdLogger.logException(e);
-        }
-
-    }
+//    public void addCallTransactionEntryToRealTimeDatabase(String callId, BigDecimal leafsSpendToSendGift) {
+//        try {
+//            List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
+//            for (Object[] callPurchase : callPurchaseList) {
+//                String userId = callPurchase[0].toString();
+//                String pdUserID = callPurchase[1].toString();
+//                String leafsTransacted = callPurchase[2].toString();
+//
+//                //Update the info of user and his leafDeduction
+//                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(
+//                        userId,
+//                        callId,
+//                        new BigDecimal(leafsTransacted).add(leafsSpendToSendGift),
+//                        new BigDecimal(0));
+//
+//                //Update the info of PD and his leaf Earning
+//                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(
+//                        pdUserID,
+//                        callId,
+//                        new BigDecimal(0),
+//                        new BigDecimal(leafsTransacted).add(leafsSpendToSendGift));
+//            }
+//        } catch (Exception e) {
+//            pdLogger.logException(e);
+//        }
+//    }
 }

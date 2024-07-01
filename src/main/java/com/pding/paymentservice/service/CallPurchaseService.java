@@ -2,6 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.CallPurchase;
+import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,20 +54,39 @@ public class CallPurchaseService {
     @Autowired
     FirebaseRealtimeDbHelper firebaseRealtimeDbHelper;
 
-    public String CreateCallTransaction(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType, String callId) {
-        String returnVal = CreateCallTransactionHelper(userId, pddUserId, leafsToCharge, callType, callId);
+    @Autowired
+    FcmService fcmService;
+
+    @Transactional
+    public String CreateCallTransaction(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
+        String returnVal = CreateCallTransactionHelper(userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
+
         addCallTransactionEntryToRealTimeDatabase(callId);
+
+        if (notifyPd) {
+            try {
+                Map<String, String> data = new HashMap<>();
+                data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+                data.put("GiftId", giftId);
+                data.put("UserId", pdUserId);
+                data.put("leafsTransacted", leafsToCharge.toString());
+                fcmService.sendNotification(pdUserId, data);
+            } catch (Exception e) {
+                pdLogger.logException(e);
+            }
+        }
+
         return returnVal;
     }
 
     @Transactional
-    private String CreateCallTransactionHelper(String userId, String pddUserId, BigDecimal leafsToCharge, TransactionType callType, String callId) {
+    private String CreateCallTransactionHelper(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
         walletService.deductLeafsFromWallet(userId, leafsToCharge);
 
-        CallPurchase callPurchase = new CallPurchase(userId, pddUserId, leafsToCharge, callType, callId);
+        CallPurchase callPurchase = new CallPurchase(userId, pdUserId, leafsToCharge, callType, callId, giftId);
         callPurchaseRepository.save(callPurchase);
 
-        earningService.addLeafsToEarning(pddUserId, leafsToCharge);
+        earningService.addLeafsToEarning(pdUserId, leafsToCharge);
         ledgerService.saveToLedger(callPurchase.getId(), new BigDecimal(0), leafsToCharge, callType, userId);
 
         return "Leafs charge was successful";
@@ -74,14 +95,30 @@ public class CallPurchaseService {
     public void addCallTransactionEntryToRealTimeDatabase(String callId) {
         try {
             List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
+            Map<String, BigDecimal> userLeafsSpentMapping = new HashMap<>();
+
+            BigDecimal leafsToaAdd = new BigDecimal(0);
             for (Object[] callPurchase : callPurchaseList) {
                 String userId = callPurchase[0].toString();
                 String pdUserID = callPurchase[1].toString();
                 String leafsTransacted = callPurchase[2].toString();
 
-                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(userId, callId, new BigDecimal(leafsTransacted), new BigDecimal(0));
-                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(pdUserID, callId, new BigDecimal(0), new BigDecimal(leafsTransacted));
+                leafsToaAdd = leafsToaAdd.add(new BigDecimal(leafsTransacted)); //Add this balance in PdUserIds Earning Wallet
+
+                // Adding the spending info in Map as in one call there can be multiple users
+                BigDecimal balanceBeforeThisTxn = userLeafsSpentMapping.get(userId);
+                if (balanceBeforeThisTxn == null) {
+                    balanceBeforeThisTxn = new BigDecimal(leafsTransacted);
+                } else {
+                    balanceBeforeThisTxn = balanceBeforeThisTxn.add(new BigDecimal(leafsTransacted));
+                }
+
+                userLeafsSpentMapping.put(userId, balanceBeforeThisTxn);
+
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(userId, callId, balanceBeforeThisTxn, new BigDecimal(0));
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(pdUserID, callId, new BigDecimal(0), leafsToaAdd);
             }
+
         } catch (Exception e) {
             pdLogger.logException(e);
         }
