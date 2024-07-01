@@ -42,6 +42,7 @@ public class FcmService {
             String response = "";
             try {
                 response = FirebaseMessaging.getInstance().send(message);
+                pdLogger.logInfo("SEND_FCM", "FCM message sent successfully to the userId " + deviceToken.getUserId() + " , FCMToken : " + deviceToken.getToken() + " , DeviceId : " + deviceToken.getDeviceId());
             } catch (Exception e) {
                 pdLogger.logException(e);
             }
