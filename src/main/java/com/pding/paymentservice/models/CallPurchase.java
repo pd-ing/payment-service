@@ -38,14 +38,17 @@ public class CallPurchase {
 
     String callId;
 
+    String giftId;
+
     private LocalDateTime lastUpdateDate;
 
-    public CallPurchase(String userId, String pdUserId, BigDecimal leafsTransacted, TransactionType callType, String callId) {
+    public CallPurchase(String userId, String pdUserId, BigDecimal leafsTransacted, TransactionType callType, String callId, String giftId) {
         this.userId = userId;
         this.pdUserId = pdUserId;
         this.leafsTransacted = leafsTransacted;
         this.callType = callType;
         this.lastUpdateDate = LocalDateTime.now();
         this.callId = callId;
+        this.giftId = giftId;
     }
 }

@@ -27,14 +27,14 @@ public class FcmService {
             return "No token found for the provided userId";
 
         for (DeviceToken deviceToken : tokens) {
-//            Notification notification = Notification.builder()
-//                    .setTitle(title)
-//                    .setBody(body)
-//                    .build();
+            Notification notification = Notification.builder()
+                    .setTitle("Notification :" + data.get("NotificationType"))
+                    .setBody("leafsTransacted :" + data.get("leafsTransacted"))
+                    .build();
 
             Message message = Message.builder()
                     .setToken(deviceToken.getToken())
-                    //                   .setNotification(notification)
+                    .setNotification(notification)
                     .putAllData(data)
                     .build();
 
@@ -48,7 +48,6 @@ public class FcmService {
 
             System.out.println("Successfully sent message: " + response);
         }
-
         return "Successfully sent message";
     }
 }

@@ -85,7 +85,7 @@ public class LeafsChargeServiceController {
             String message = "";
 
             if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL))
-                message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId);
+                message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId, giftId, notifyPd);
 
             if (transactionType.equals(TransactionType.TEXT_MESSAGE)) {
                 boolean isGift = giftId != null && !giftId.isEmpty();
