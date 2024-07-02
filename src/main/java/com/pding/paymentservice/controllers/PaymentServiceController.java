@@ -226,6 +226,7 @@ public class PaymentServiceController {
             if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getPurchaseToken())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
             } else {
+                pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
                 ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
                 InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(buyLeafsRequest.getProductId());
 
@@ -247,7 +248,7 @@ public class PaymentServiceController {
                     String paymentMethod = "Google_Play_Store";
                     String currency = inAppProduct.getDefaultPrice().get("currency").toString();
                     String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
-                    
+
 
                     String message = paymentService.completePaymentToBuyLeafs(
                             userId,
