@@ -1,7 +1,6 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
-import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -11,6 +10,8 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.*;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
@@ -336,6 +337,29 @@ public class VideoPurchaseService {
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.IS_VIDEO_PURCHASED, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
+        }
+    }
+
+    public ResponseEntity<?> getPaidUnpaidFollowerList(String userId, int size, int page) {
+        if (userId == null || userId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
+        }
+        try {
+            String paidUsers = "";
+            String unpaidUsers = "";
+
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Object[]> followerPage = videoPurchaseRepository.getFollowersList(userId, pageable);
+            for (Object innerObject : followerPage.getContent()){
+                Object[] followerRecord = (Object[]) innerObject;
+                if(followerRecord[1] == null)
+                    unpaidUsers = unpaidUsers.trim() + followerRecord[0].toString() + ", ";
+                else
+                    paidUsers = paidUsers.trim() + followerRecord[0].toString() + ", ";
+            }
+            return ResponseEntity.ok().body(new PaidUnpaidFollowerResponse(null, paidUsers, unpaidUsers));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 
