@@ -72,13 +72,16 @@ public class VideoPurchaseServiceController {
     }
 
     @GetMapping(value = "/paidUnpaidFollowerList")
-    public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId", required = false) String userId,
-                                                    @RequestParam(value = "size", defaultValue = "20") int size,
-                                                    @RequestParam(value = "page", defaultValue = "0") int page)
+    public ResponseEntity<?> getPaidUnpaidFollowerList(@RequestParam(value = "userId", required = false) String userId)
     {
-        return videoPurchaseService.getPaidUnpaidFollowerList(authHelper.getUserId(), size, page);
+        return videoPurchaseService.getPaidUnpaidFollowerList(authHelper.getUserId());
     }
 
+    @GetMapping(value = "/paidUnpaidFollowerCount")
+    public ResponseEntity<?> getPaidUnpaidFollowerCount(@RequestParam(value = "userId", required = false) String userId)
+    {
+        return videoPurchaseService.getPaidUnpaidFollowerCount(authHelper.getUserId());
+    }
 
     @GetMapping(value = "/videoEarningAndSales")
     public ResponseEntity<?> videoEarningAndSales(@RequestParam(value = "videoIds") String videoIds) {

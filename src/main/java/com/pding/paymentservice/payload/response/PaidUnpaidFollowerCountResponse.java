@@ -6,12 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaidUnpaidFollowerResponse {
+public class PaidUnpaidFollowerCountResponse {
     ErrorResponse errorResponse;
-    String paidFollowers;
-    String unpaidFollowers;
+    BigInteger paidFollowerCount;
+    BigInteger unpaidFollowerCount;
 }
