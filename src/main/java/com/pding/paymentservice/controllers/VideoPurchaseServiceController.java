@@ -71,11 +71,11 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
     }
 
-    @GetMapping(value = "/paidUnpaidFollowerList")
-    public ResponseEntity<?> getPaidUnpaidFollowerList(@RequestParam(value = "userId", required = false) String userId)
-    {
-        return videoPurchaseService.getPaidUnpaidFollowerList(authHelper.getUserId());
-    }
+//    @GetMapping(value = "/paidUnpaidFollowerList")
+//    public ResponseEntity<?> getPaidUnpaidFollowerList(@RequestParam(value = "userId", required = false) String userId)
+//    {
+//        return videoPurchaseService.getPaidUnpaidFollowerList(authHelper.getUserId());
+//    }
 
     @GetMapping(value = "/paidUnpaidFollowerCount")
     public ResponseEntity<?> getPaidUnpaidFollowerCount(@RequestParam(value = "userId", required = false) String userId)
