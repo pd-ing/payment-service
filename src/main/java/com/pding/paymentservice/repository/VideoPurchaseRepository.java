@@ -105,9 +105,8 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "FROM user_followings uf LEFT join video_purchase vp \n" +
             "ON uf.follower = vp.user_id\n" +
             "WHERE uf.following = :userId",
-            countQuery = "SELECT COUNT(DISTINCT uf.follower) FROM user_followings uf WHERE uf.following = :userId",
             nativeQuery = true)
-    Page<Object[]> getFollowersList(String userId, Pageable pageable);
+    List<Object[]> getFollowersList(String userId);
 
     @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
             "COALESCE(v.title, ''), " +
