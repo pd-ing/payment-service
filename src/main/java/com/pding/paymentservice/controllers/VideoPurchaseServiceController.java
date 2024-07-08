@@ -83,6 +83,7 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.getPaidUnpaidFollowerCount(authHelper.getUserId());
     }
 
+
     @GetMapping(value = "/videoEarningAndSales")
     public ResponseEntity<?> videoEarningAndSales(@RequestParam(value = "videoIds") String videoIds) {
         return videoPurchaseService.videoEarningAndSales(videoIds);
