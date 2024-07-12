@@ -83,7 +83,7 @@ public class DeviceTokenController {
 
     // This endpoint will be used to send generic notification
     @PostMapping("/sendGenericNotification")
-    public ResponseEntity<?> sendGenericNotification(@Valid @RequestBody SendGenericNotificationRequest sendGenericNotificationRequest) {
+    public ResponseEntity<?> sendGenericNotification(@RequestBody SendGenericNotificationRequest sendGenericNotificationRequest) {
         try {
             Map<String, String> data = new HashMap<>();
             String message = fcmService.sendGenericNotification(sendGenericNotificationRequest.getUserId(), data, sendGenericNotificationRequest.getNotificationTitle(), sendGenericNotificationRequest.getNotificationBody());
