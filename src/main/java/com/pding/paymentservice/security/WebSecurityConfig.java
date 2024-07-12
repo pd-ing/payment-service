@@ -73,6 +73,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/tokens/register").authenticated()
                                 .requestMatchers("/api/payment/tokens/delete").authenticated()
                                 .requestMatchers("/api/payment/tokens/sendNotification").authenticated()
+                                .requestMatchers("/api/payment/tokens/sendGenericNotification").permitAll()
                                 .requestMatchers("/api/payment/admin/pendingWithDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/admin/allWithDrawTransactions").authenticated()
                                 .requestMatchers("/api/payment/admin/balanceTrees").permitAll()
