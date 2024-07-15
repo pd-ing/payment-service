@@ -34,7 +34,16 @@ public class DeviceTokenService {
     }
 
     @Transactional
-    public void deleteToken(String token) {
-        deviceTokenRepository.deleteByToken(token);
+    public boolean deleteToken(String token, String userId) {
+        Optional<DeviceToken> tokenToBeDeleted = deviceTokenRepository.findByTokenAndUserId(token, userId);
+        if(tokenToBeDeleted.isPresent())
+        {
+            deviceTokenRepository.deleteByTokenAndUserId(token, userId);
+            Optional<DeviceToken> deletedToken = deviceTokenRepository.findByTokenAndUserId(token, userId);
+            return deletedToken.isEmpty();
+        }
+        else
+            return false;
+
     }
 }

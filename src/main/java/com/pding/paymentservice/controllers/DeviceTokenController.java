@@ -53,8 +53,12 @@ public class DeviceTokenController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
-            deviceTokenService.deleteToken(deviceTokenRequest.getToken());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
+            String userId = authHelper.getUserId();
+            boolean isDeleted = deviceTokenService.deleteToken(deviceTokenRequest.getToken(), userId);
+            if(isDeleted)
+                return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
+            else
+                return ResponseEntity.badRequest().body(  new ErrorResponse(HttpStatus.BAD_REQUEST.value(),"Failed to delete"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
