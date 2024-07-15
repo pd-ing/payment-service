@@ -63,22 +63,16 @@ public class DeviceTokenService {
     }
 
     @Transactional
-    public boolean deleteToken(String deviceId) {
-        // Check if the device token exists before deletion
-        Optional<DeviceToken> tokenBeforeDeletion = deviceTokenRepository.findByDeviceId(deviceId);
-
-        if (tokenBeforeDeletion.isPresent()) {
-            // Delete the device token
-            deviceTokenRepository.deleteByDeviceId(deviceId);
-
-            // Check if the device token still exists after deletion
-            Optional<DeviceToken> tokenAfterDeletion = deviceTokenRepository.findByDeviceId(deviceId);
-
-            // Return true if the token no longer exists, meaning it was successfully deleted
-            return tokenAfterDeletion.isEmpty();
-        } else {
-            // The device token did not exist before deletion attempt
-            return false;
+    public boolean deleteToken(String token, String userId) {
+        Optional<DeviceToken> tokenToBeDeleted = deviceTokenRepository.findByTokenAndUserId(token, userId);
+        if(tokenToBeDeleted.isPresent())
+        {
+            deviceTokenRepository.deleteByTokenAndUserId(token, userId);
+            Optional<DeviceToken> deletedToken = deviceTokenRepository.findByTokenAndUserId(token, userId);
+            return deletedToken.isEmpty();
         }
+        else
+            return false;
+
     }
 }
