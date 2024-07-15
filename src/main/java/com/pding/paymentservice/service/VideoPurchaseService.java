@@ -1,7 +1,6 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
-import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
@@ -11,6 +10,8 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.*;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -339,6 +341,57 @@ public class VideoPurchaseService {
         }
     }
 
+//    public ResponseEntity<?> getPaidUnpaidFollowerList(String userId) {
+//        if (userId == null || userId.isEmpty()) {
+//            return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
+//        }
+//        try {
+//            String paidUsers = "";
+//            String unpaidUsers = "";
+//
+//            List<Object[]> followerList = videoPurchaseRepository.getFollowersList(userId);
+//            for (Object[] followerRecord : followerList) {
+//                if(followerRecord[1] == null)
+//                    unpaidUsers = unpaidUsers.trim() + followerRecord[0].toString() + ", ";
+//                else
+//                    paidUsers = paidUsers.trim() + followerRecord[0].toString() + ", ";
+//            }
+//
+//            // Remove the trailing comma and space if they exist
+//            if (paidUsers.length() > 0) {
+//                paidUsers = paidUsers.substring(0, paidUsers.length() - 2);
+//            }
+//            if (unpaidUsers.length() > 0) {
+//                unpaidUsers = unpaidUsers.substring(0, unpaidUsers.length() - 2);
+//            }
+//
+//            return ResponseEntity.ok().body(new PaidUnpaidFollowerResponse(null, paidUsers, unpaidUsers));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
+//        }
+//    }
+
+    public ResponseEntity<?> getPaidUnpaidFollowerCount(String userId) {
+        if (userId == null || userId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
+        }
+        try {
+            List<String> paidUsers = new ArrayList<String>();
+            List<String> unpaidUsers = new ArrayList<String>();
+
+            List<Object[]> followerList = videoPurchaseRepository.getFollowersList(userId);
+            for (Object[] followerRecord : followerList) {
+                if(followerRecord[1] == null)
+                    unpaidUsers.add(followerRecord[0].toString());
+                else
+                    paidUsers.add(followerRecord[0].toString());
+            }
+
+            return ResponseEntity.ok().body(new PaidUnpaidFollowerCountResponse(null, BigInteger.valueOf(paidUsers.size()), BigInteger.valueOf(unpaidUsers.size())));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaidUnpaidFollowerCountResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), BigInteger.valueOf(0), BigInteger.valueOf(0)));
+        }
+    }
 
     public ResponseEntity<?> videoEarningAndSales(String videoIds) {
         if (videoIds == null || videoIds.isEmpty()) {

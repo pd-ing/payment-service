@@ -386,6 +386,7 @@ public class PaymentService {
 
             ledgerService.saveToLedger(wallet.getId(), new BigDecimal(0), purchasedLeafs, TransactionType.LEAF_PURCHASE, userId);
 
+            pdLogger.logInfo("BUY_LEAFS", "Leaves added successfully for userId " + userId);
             return "Leaves added successfully for user";
         } catch (Exception e) {
             log.error(e.getMessage());

@@ -2,6 +2,7 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.payload.request.fcm.DeviceTokenRequest;
+import com.pding.paymentservice.payload.request.fcm.SendGenericNotificationRequest;
 import com.pding.paymentservice.payload.request.fcm.SendNotificationRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
@@ -42,29 +43,29 @@ public class DeviceTokenController {
     public ResponseEntity<?> registerDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
             String userId = authHelper.getUserId();
-            deviceTokenService.saveOrUpdateDeviceToken(deviceTokenRequest.getToken(), userId);
-            return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Registered/Updated Successfully"));
+            String msg = deviceTokenService.saveOrUpdateDeviceToken(deviceTokenRequest.getDeviceId(), deviceTokenRequest.getDeviceToken(), userId);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, msg + "Device Token Registered/Updated Successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
-
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
             String userId = authHelper.getUserId();
-            boolean isDeleted = deviceTokenService.deleteToken(deviceTokenRequest.getToken(), userId);
-            if(isDeleted)
+            boolean isDeleted = deviceTokenService.deleteToken(deviceTokenRequest.getDeviceToken(), userId);
+            if (isDeleted)
                 return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
             else
-                return ResponseEntity.badRequest().body(  new ErrorResponse(HttpStatus.BAD_REQUEST.value(),"Failed to delete"));
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to delete"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
 
     }
 
+    // This endpoint will be used only to send gift related notification
     @PostMapping("/sendNotification")
     public ResponseEntity<?> sendNotification(@Valid @RequestBody SendNotificationRequest sendNotificationRequest) {
         try {
@@ -73,6 +74,20 @@ public class DeviceTokenController {
             data.put("GiftId", sendNotificationRequest.getGiftId());
             data.put("UserId", sendNotificationRequest.getUserId());
             String message = fcmService.sendNotification(sendNotificationRequest.getUserId(), data);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    // This endpoint will be used to send generic notification
+    @PostMapping("/sendGenericNotification")
+    public ResponseEntity<?> sendGenericNotification(@RequestBody SendGenericNotificationRequest sendGenericNotificationRequest) {
+        try {
+            Map<String, String> data = new HashMap<>();
+            if (sendGenericNotificationRequest.getData() != null)
+                data = sendGenericNotificationRequest.getData();
+            String message = fcmService.sendGenericNotification(sendGenericNotificationRequest.getUserId(), data, sendGenericNotificationRequest.getNotificationTitle(), sendGenericNotificationRequest.getNotificationBody());
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));

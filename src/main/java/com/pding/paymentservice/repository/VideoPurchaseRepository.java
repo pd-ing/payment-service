@@ -101,6 +101,13 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             nativeQuery = true)
     Page<Object[]> getSalesHistoryByUserIdAndDates(String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
+    @Query(value = "SELECT DISTINCT uf.follower, vp.user_id \n" +
+            "FROM user_followings uf LEFT join video_purchase vp \n" +
+            "ON uf.follower = vp.user_id\n" +
+            "WHERE uf.following = :userId",
+            nativeQuery = true)
+    List<Object[]> getFollowersList(String userId);
+
     @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
             "COALESCE(v.title, ''), " +
             "COALESCE(v.trees, ''), " +

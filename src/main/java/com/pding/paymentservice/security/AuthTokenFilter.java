@@ -67,7 +67,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/modalForReferenceTab",
             "/api/payment/admin/listReferredPdsEOL",
             "/api/payment/admin/listReferrerPds",
-            "/api/payment/admin/listReferredPds"
+            "/api/payment/admin/listReferredPds",
+            "/api/payment/tokens/sendGenericNotification"
     );
 
     @Override
