@@ -23,7 +23,7 @@ public class DeviceToken {
     @UuidGenerator
     private String id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String token;
 
     @Column(unique = true, nullable = false)
@@ -33,8 +33,4 @@ public class DeviceToken {
     private String userId;
 
     private LocalDateTime createdDate;
-
-    public String getDeviceId() {
-        return deviceId;
-    }
 }
