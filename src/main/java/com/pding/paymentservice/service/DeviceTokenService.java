@@ -19,29 +19,27 @@ public class DeviceTokenService {
     public String saveOrUpdateDeviceToken(String deviceId, String deviceToken, String userId) {
         String resultMessage = " ";
         Optional<DeviceToken> optionalDeviceToken = deviceTokenRepository.findByDeviceIdAndToken(deviceId, deviceToken);
-        if (optionalDeviceToken.isPresent()) {
-            throw new RuntimeException("Token is already registered");
-        }
+//        if (optionalDeviceToken.isPresent()) {
+//            throw new RuntimeException("Token is already registered");
+//        }
         optionalDeviceToken = deviceTokenRepository.findByDeviceId(deviceId);
-        if(optionalDeviceToken.isPresent()){
+        if (optionalDeviceToken.isPresent()) {
             //update token for existing device
             DeviceToken deviceTokenToUpdate = optionalDeviceToken.get();
             deviceTokenToUpdate.setToken(deviceToken);
             deviceTokenRepository.save(deviceTokenToUpdate);
             resultMessage = resultMessage.trim() + "Device exists, Updating Device : " + deviceTokenToUpdate.getDeviceId() + ". ";
-        }
-        else {
+        } else {
             // add new device-token combination
             List<DeviceToken> existingTokens = deviceTokenRepository.findByUserId(userId);
 
             Optional<DeviceToken> deviceTokenOptional1 = deviceTokenRepository.findOldestDeviceTokenByUserId(userId);
             if (existingTokens.size() >= 5) {
                 // throw new RuntimeException("Can only add 5 device tokens at max");
-                if(deviceTokenOptional1.isPresent()){
+                if (deviceTokenOptional1.isPresent()) {
                     resultMessage = resultMessage.trim() + "Device limit reached, deleting oldest device : " + deviceTokenOptional1.get().getDeviceId() + ". ";
                     deviceTokenRepository.delete(deviceTokenOptional1.get());
-                }
-                else
+                } else
                     throw new RuntimeException("Can only add 5 device tokens at max, Device to Delete Not Found!");
             }
 
@@ -63,22 +61,14 @@ public class DeviceTokenService {
     }
 
     @Transactional
-    public boolean deleteToken(String deviceId) {
-        // Check if the device token exists before deletion
-        Optional<DeviceToken> tokenBeforeDeletion = deviceTokenRepository.findByDeviceId(deviceId);
-
-        if (tokenBeforeDeletion.isPresent()) {
-            // Delete the device token
-            deviceTokenRepository.deleteByDeviceId(deviceId);
-
-            // Check if the device token still exists after deletion
-            Optional<DeviceToken> tokenAfterDeletion = deviceTokenRepository.findByDeviceId(deviceId);
-
-            // Return true if the token no longer exists, meaning it was successfully deleted
-            return tokenAfterDeletion.isEmpty();
-        } else {
-            // The device token did not exist before deletion attempt
+    public boolean deleteToken(String token, String userId) {
+        Optional<DeviceToken> tokenToBeDeleted = deviceTokenRepository.findByTokenAndUserId(token, userId);
+        if (tokenToBeDeleted.isPresent()) {
+            deviceTokenRepository.deleteByTokenAndUserId(token, userId);
+            Optional<DeviceToken> deletedToken = deviceTokenRepository.findByTokenAndUserId(token, userId);
+            return deletedToken.isEmpty();
+        } else
             return false;
-        }
+
     }
 }
