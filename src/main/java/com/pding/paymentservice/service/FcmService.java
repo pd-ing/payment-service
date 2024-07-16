@@ -60,8 +60,8 @@ public class FcmService {
 
         for (DeviceToken deviceToken : tokens) {
             Notification notification = Notification.builder()
-                    .setTitle("Title :" + title)
-                    .setBody("Body :" + body)
+                    .setTitle(title)
+                    .setBody(body)
                     .build();
 
             Message message = Message.builder()
