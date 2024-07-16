@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<VideoPurchase, String> {
     @Query(value = "SELECT id, COALESCE(email, '') AS email, COALESCE(pd_type, '') AS pdType, COALESCE(nickname, '') AS nickname, COALESCE(linked_stripe_id, '') AS linkedStripeId FROM users WHERE id = :userId", nativeQuery = true)
@@ -254,4 +255,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "LEFT JOIN earning e ON r.referred_pd_user_id = e.user_id " +
             "WHERE r.referrer_pd_user_id = :referrerPdUserId", nativeQuery = true)
     BigDecimal getTotalLeafsEarnedByReferredPdUsers(@Param("referrerPdUserId") String referrerPdUserId);
+
+    @Query(value = "SELECT language FROM user_config WHERE id = :userId", nativeQuery = true)
+    Optional<String> findLanguageById(@Param("userId") String userId);
 }

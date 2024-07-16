@@ -13,7 +13,5 @@ import java.util.Map;
 @NoArgsConstructor
 public class SendGenericNotificationRequest {
     String userId;
-    String notificationTitle;
-    String notificationBody;
     Map<String, String> data;
 }
