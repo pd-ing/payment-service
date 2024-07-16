@@ -88,14 +88,8 @@ public class DeviceTokenController {
 
             if (sendGenericNotificationRequest.getData() != null)
                 data = sendGenericNotificationRequest.getData();
-
-            String notificationType = data.get("NotificationType");
-
-            // Fetch title and body messages dynamically based on notificationType
-            String titleKey = "notification." + notificationType + ".title";
-            String bodyKey = "notification." + notificationType + ".body";
             
-            String message = fcmService.sendGenericNotification(sendGenericNotificationRequest.getUserId(), data, sendGenericNotificationRequest.getNotificationTitle(), sendGenericNotificationRequest.getNotificationBody());
+            String message = fcmService.sendGenericNotification(sendGenericNotificationRequest.getUserId(), data);
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
