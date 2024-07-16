@@ -85,9 +85,11 @@ public class DeviceTokenController {
     public ResponseEntity<?> sendGenericNotification(@RequestBody SendGenericNotificationRequest sendGenericNotificationRequest) {
         try {
             Map<String, String> data = new HashMap<>();
+
             if (sendGenericNotificationRequest.getData() != null)
                 data = sendGenericNotificationRequest.getData();
-            String message = fcmService.sendGenericNotification(sendGenericNotificationRequest.getUserId(), data, sendGenericNotificationRequest.getNotificationTitle(), sendGenericNotificationRequest.getNotificationBody());
+            
+            String message = fcmService.sendGenericNotification(sendGenericNotificationRequest.getUserId(), data);
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
