@@ -79,13 +79,18 @@ public class LeafsChargeServiceController {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid callType passed,Valid callTyle is audio or video"), null));
         }
 
+        if (giftId != null && !giftId.isEmpty()) {
+            notifyPd = true;
+        }
+
         try {
             pdLogger.logInfo("GIFT_TEST", "buyCallOrMessage API HIT, giftId : " + giftId + " , leafsToCharge : " + leafsToCharge);
             String userId = authHelper.getUserId();
             String message = "";
 
-            if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL))
+            if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL)) {
                 message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId, giftId, notifyPd);
+            }
 
             if (transactionType.equals(TransactionType.TEXT_MESSAGE)) {
                 boolean isGift = giftId != null && !giftId.isEmpty();
