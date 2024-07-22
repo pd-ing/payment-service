@@ -1,5 +1,6 @@
 package com.pding.paymentservice.controllers;
 
+import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
 import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
@@ -12,12 +13,12 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.security.AppPaymentInitializer;
+import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
+import com.pding.paymentservice.paymentclients.ios.IOSPaymentInitializer;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.PaymentService;
-import com.pding.paymentservice.stripe.StripeClient;
-import com.pding.paymentservice.stripe.StripeClientResponse;
-import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
+import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.paymentclients.stripe.StripeClientResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -62,10 +64,17 @@ public class PaymentServiceController {
     @Autowired
     AuthHelper authHelper;
 
+    @Autowired
+    IOSPaymentInitializer iosPaymentInitializer;
+
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
-        return ResponseEntity.ok()
-                .body(new MessageResponse("This is test API, With JWT Validation"));
+        try {
+            return ResponseEntity.ok()
+                    .body(new MessageResponse("This is test API, With JWT Validation"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
     }
 
     @PostMapping("/charge")
@@ -268,6 +277,16 @@ public class PaymentServiceController {
                     return ResponseEntity.ok().body(new GenericStringResponse(null, "Cannot add leafs to the user's wallet as the purchase state is not completed"));
                 }
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping("/getIosTransactionDetails")
+    ResponseEntity<?> getIosTransactionDetails(@RequestParam(value = "transactionId") String transactionId) {
+        try {
+            String transactionDetails = iosPaymentInitializer.getTransactionDetails(transactionId);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, transactionDetails));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
