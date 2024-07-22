@@ -292,6 +292,16 @@ public class PaymentServiceController {
         }
     }
 
+    @GetMapping("/getIosAppStoreConnectToken")
+    ResponseEntity<?> getIosAppStoreConnectToken() {
+        try {
+            String token = iosPaymentInitializer.generateTokenForAppStoreConnect();
+            return ResponseEntity.ok().body(new GenericStringResponse(null, token));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {

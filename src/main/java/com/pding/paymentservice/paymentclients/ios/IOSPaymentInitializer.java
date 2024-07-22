@@ -1,6 +1,7 @@
 package com.pding.paymentservice.paymentclients.ios;
 
 import com.apple.itunes.storekit.client.AppStoreServerAPIClient;
+import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
 import com.apple.itunes.storekit.model.Environment;
 import com.apple.itunes.storekit.model.TransactionInfoResponse;
 
@@ -8,8 +9,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+import java.security.KeyFactory;
+import java.security.interfaces.ECPrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -20,26 +29,31 @@ public class IOSPaymentInitializer {
     @Value("${app.ios.payment.issuerId}")
     String issuerId;
 
-    @Value("${app.ios.payment.keyId}")
-    String keyId;
-
     @Value("${app.ios.payment.bundleId}")
     String bundleId;
 
-    @Value("${app.ios.payment.private.key}")
-    String encodedKey;
+    @Value("${app.ios.payment.inapp.purchase.keyId}")
+    String inAppPurchaseKeyId;
+
+    @Value("${app.ios.payment.inapp.purchase.private.key}")
+    String inAppPurchasePrivateKey;
+
+
+    @Value("${app.ios.payment.appstore.connect.keyId}")
+    String appStoreConnectKeyId;
+
+    @Value("${app.ios.payment.appstore.connect.private.key}")
+    String appStoreConnectPrivateKey;
+
 
     @Value("${app.ios.payment.environment}")
     String environmentType;
 
-    public String getTransactionDetails(String transactionId) throws Exception {
-//        String issuerId = "b4268b91-6668-437c-b8f6-2b50ddcb1274";
-//        String keyId = "DQZM7PSLJX";
-//        String bundleId = "com.pding.ping-mobile.dev";
-//        Path filePath = Path.of("/Users/darshanmestry/Documents/Work/PDing/InAppPurchaseKeyIos.p8");
-//        String encodedKey = Files.readString(filePath);
-//        Environment environment = Environment.SANDBOX;
 
+    @Value("${app.ios.payment.appId}")
+    String appId;
+
+    public String getTransactionDetails(String transactionId) throws Exception {
         Environment environmentIOS;
         if (environmentType.equalsIgnoreCase("production")) {
             environmentIOS = Environment.PRODUCTION;
@@ -47,13 +61,22 @@ public class IOSPaymentInitializer {
             environmentIOS = Environment.SANDBOX;
         }
 
-        AppStoreServerAPIClient client = new AppStoreServerAPIClient(encodedKey, keyId, issuerId, bundleId, environmentIOS);
+        AppStoreServerAPIClient client = new AppStoreServerAPIClient(inAppPurchasePrivateKey, inAppPurchaseKeyId, issuerId, bundleId, environmentIOS);
 
         TransactionInfoResponse transactionInfoResponse = client.getTransactionInfo(transactionId);
 
         return getTransactionBodyFromEncodedTransactionResponse(transactionInfoResponse.getSignedTransactionInfo());
     }
 
+    public String getProductDetails(String productId) throws Exception {
+        String token = generateTokenForAppStoreConnect();
+
+        // Call This API , And pass the above token as header
+        String getProductsUrl = "https://api.appstoreconnect.apple.com/v1/apps/" + appId + "/inAppPurchasesV2";
+
+
+        return token;
+    }
 
     private String getTransactionBodyFromEncodedTransactionResponse(String jwtToken) throws Exception {
         System.out.println("------------ Decode JWT ------------");
@@ -72,5 +95,37 @@ public class IOSPaymentInitializer {
         String body = new String(base64Url.decode(base64EncodedBody));
         System.out.println("JWT Body : " + body);
         return body;
+    }
+
+    public String generateTokenForAppStoreConnect() throws Exception {
+        ECPrivateKey privateKey = convertPemToPrivateKey(appStoreConnectPrivateKey);
+
+        Instant now = Instant.now();
+        String jwtToken = Jwts.builder()
+                .setHeaderParam("alg", "ES256")
+                .setHeaderParam("kid", appStoreConnectKeyId)
+                .setHeaderParam("typ", "JWT")
+                .setIssuer(issuerId)
+                .setAudience("appstoreconnect-v1")
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plusSeconds(900))) // 15 minutes
+                // .addClaims(claims)
+                .signWith(privateKey, SignatureAlgorithm.ES256)
+                .compact();
+
+        return jwtToken;
+    }
+
+    public ECPrivateKey convertPemToPrivateKey(String pemKey) throws Exception {
+        String cleanedPem = pemKey.replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+
+        byte[] decoded = java.util.Base64.getDecoder().decode(cleanedPem);
+
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
+
+        KeyFactory keyFactory = KeyFactory.getInstance("EC");
+        return (ECPrivateKey) keyFactory.generatePrivate(keySpec);
     }
 }
