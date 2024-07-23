@@ -5,6 +5,11 @@ import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
 import com.apple.itunes.storekit.model.Environment;
 import com.apple.itunes.storekit.model.TransactionInfoResponse;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +17,8 @@ import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -70,14 +77,76 @@ public class IOSPaymentInitializer {
 
     public String getProductDetails(String productId) throws Exception {
         String token = generateTokenForAppStoreConnect();
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
 
         // Call This API , And pass the above token as header
         String getProductsUrl = "https://api.appstoreconnect.apple.com/v1/apps/" + appId + "/inAppPurchasesV2";
 
+        // Build the request
+        Request request = new Request.Builder()
+                .url(getProductsUrl)
+                .method("GET", null) // No need for a request body in a GET request
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
 
-        return token;
+        // Execute the request
+        Response response = client.newCall(request).execute();
+        String responseBody = response.body().string();
+        JSONObject jsonObject = new JSONObject(responseBody);
+        JSONArray dataArray = jsonObject.getJSONArray("data");
+
+        // Parse the response to find the matching productId and return the name
+        for (int i = 0; i < dataArray.length(); i++) {
+            JSONObject dataObject = dataArray.getJSONObject(i);
+            JSONObject attributes = dataObject.getJSONObject("attributes");
+
+            String currentProductId = attributes.getString("productId");
+            if (currentProductId.equals(productId)) {
+                return attributes.getString("name");
+            }
+        }
+
+        // If no matching productId is found
+        return null;
     }
 
+    public TransactionDetails getLeafsToAdd(String transactionId) throws Exception {
+        try {
+            new TransactionDetails();
+            TransactionDetails txnDetails;
+            String transaction = getTransactionDetails(transactionId);
+            JSONObject jsonObject = new JSONObject(transaction);
+            txnDetails = parseTransaction(jsonObject);
+            txnDetails.setLeafs(new BigDecimal(getProductDetails(txnDetails.getProductId())));
+            return txnDetails;
+        }
+        catch (Exception ex) {
+            throw ex;
+        }
+    }
+
+    public static TransactionDetails parseTransaction(JSONObject jsonObject) {
+        TransactionDetails transaction = new TransactionDetails();
+
+        transaction.setTransactionId(jsonObject.getString("transactionId"));
+        transaction.setOriginalTransactionId(jsonObject.getString("originalTransactionId"));
+        transaction.setBundleId(jsonObject.getString("bundleId"));
+        transaction.setProductId(jsonObject.getString("productId"));
+        transaction.setPurchaseDate(jsonObject.getLong("purchaseDate"));
+        transaction.setOriginalPurchaseDate(jsonObject.getLong("originalPurchaseDate"));
+        transaction.setQuantity(jsonObject.getInt("quantity"));
+        transaction.setType(jsonObject.getString("type"));
+        transaction.setInAppOwnershipType(jsonObject.getString("inAppOwnershipType"));
+        transaction.setSignedDate(jsonObject.getLong("signedDate"));
+        transaction.setEnvironment(jsonObject.getString("environment"));
+        transaction.setTransactionReason(jsonObject.getString("transactionReason"));
+        transaction.setStorefront(jsonObject.getString("storefront"));
+        transaction.setStorefrontId(jsonObject.getString("storefrontId"));
+        transaction.setPrice(new BigDecimal(jsonObject.getInt("price")));
+        transaction.setCurrency(jsonObject.getString("currency"));
+
+        return transaction;
+    }
     private String getTransactionBodyFromEncodedTransactionResponse(String jwtToken) throws Exception {
         System.out.println("------------ Decode JWT ------------");
         String[] split_string = jwtToken.split("\\.");

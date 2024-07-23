@@ -6,6 +6,7 @@ import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.BuyLeafsRequest;
+import com.pding.paymentservice.payload.request.BuyLeafsiOSRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
@@ -15,6 +16,7 @@ import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
 import com.pding.paymentservice.paymentclients.ios.IOSPaymentInitializer;
+import com.pding.paymentservice.paymentclients.ios.TransactionDetails;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -62,10 +65,11 @@ public class PaymentServiceController {
     AppPaymentInitializer appPaymentInitializer;
 
     @Autowired
-    AuthHelper authHelper;
+    IOSPaymentInitializer iosPaymentInitializer;
 
     @Autowired
-    IOSPaymentInitializer iosPaymentInitializer;
+    AuthHelper authHelper;
+
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
@@ -297,6 +301,44 @@ public class PaymentServiceController {
         try {
             String token = iosPaymentInitializer.generateTokenForAppStoreConnect();
             return ResponseEntity.ok().body(new GenericStringResponse(null, token));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping("/buyLeafsiOS")
+    ResponseEntity<?> buyLeafsiOS(@Valid @RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
+        try {
+            if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getTransactionId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+            } else {
+                pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
+                TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getTransactionId());
+
+                String productId = txnDetails.getProductId();
+                BigDecimal purchaseLeaves = txnDetails.getLeafs();
+                String userId = authHelper.getUserId();
+                String txnId = txnDetails.getTransactionId();
+                String paymentMethod = "iOS_Store";
+                String currency = txnDetails.getCurrency();
+                BigDecimal amountInCents = txnDetails.getPrice();
+
+
+                String message = paymentService.completePaymentToBuyLeafs(
+                        userId,
+                        new BigDecimal(0),
+                        purchaseLeaves,
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(txnDetails.getOriginalPurchaseDate()), ZoneId.systemDefault()),
+                        txnId,
+                        TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                        amountInCents,
+                        paymentMethod,
+                        currency,
+                        "Added " + purchaseLeaves + " leafs successfully for user.",
+                        null
+                );
+                return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
