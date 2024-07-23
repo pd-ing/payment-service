@@ -306,8 +306,8 @@ public class PaymentServiceController {
         }
     }
 
-    @PostMapping("/buyLeafsiOS")
-    ResponseEntity<?> buyLeafsiOS(@Valid @RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
+    @PostMapping("/buyLeafsIOS")
+    ResponseEntity<?> buyLeafsIOS(@Valid @RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
         try {
             if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getTransactionId())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
