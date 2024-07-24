@@ -145,7 +145,7 @@ public class IOSPaymentInitializer {
         transaction.setTransactionReason(jsonObject.getString("transactionReason"));
         transaction.setStorefront(jsonObject.getString("storefront"));
         transaction.setStorefrontId(jsonObject.getString("storefrontId"));
-        transaction.setPrice(new BigDecimal(jsonObject.getInt("price")));
+        transaction.setPrice(new BigDecimal(jsonObject.getLong("price")));
         transaction.setCurrency(jsonObject.getString("currency"));
 
         return transaction;
