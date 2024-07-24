@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BuyLeafsiOSRequest {
 
-    String transactionId;
+    String appReceiptId;
 }
