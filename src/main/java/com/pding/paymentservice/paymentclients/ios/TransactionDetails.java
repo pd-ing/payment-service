@@ -1,4 +1,5 @@
 package com.pding.paymentservice.paymentclients.ios;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -6,7 +7,6 @@ import java.math.BigInteger;
 
 @Data
 public class TransactionDetails {
-
     private String transactionId;
     private String originalTransactionId;
     private String bundleId;
@@ -24,5 +24,4 @@ public class TransactionDetails {
     private BigDecimal leafs;
     private BigDecimal price;
     private String currency;
-
 }
