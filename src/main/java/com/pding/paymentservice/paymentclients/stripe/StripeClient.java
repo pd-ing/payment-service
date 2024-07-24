@@ -1,39 +1,29 @@
-package com.pding.paymentservice.stripe;
+package com.pding.paymentservice.paymentclients.stripe;
 
 import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Charge;
-import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Price;
 import com.stripe.model.Product;
 import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
-import com.stripe.net.RequestOptions;
-import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PriceListParams;
-import com.stripe.param.ProductListParams;
 import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.stripe.param.checkout.SessionCreateParams.Mode.PAYMENT;
 

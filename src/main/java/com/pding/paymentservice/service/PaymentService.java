@@ -1,6 +1,5 @@
 package com.pding.paymentservice.service;
 
-import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InvalidTransactionIDException;
 import com.pding.paymentservice.models.WalletHistory;
@@ -8,26 +7,18 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
-import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
-import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.repository.WalletHistoryRepository;
 import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
-import com.pding.paymentservice.stripe.StripeClient;
+import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.stripe.model.checkout.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
