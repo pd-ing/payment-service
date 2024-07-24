@@ -1,20 +1,30 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.PdLogger.EVENT;
 import com.pding.paymentservice.models.WalletHistory;
+import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.WalletHistoryResponse;
 import com.pding.paymentservice.repository.WalletHistoryRepository;
 import com.pding.paymentservice.repository.WalletRepository;
-import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.stripe.StripeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +68,7 @@ public class WalletHistoryService {
 
     public Page<WalletHistory> fetchPurchasedLeafWalletHistoryByUserId(String userId, int page, int size, Boolean sortAsc) {
         List<String> statuses = Arrays.asList("paymentCompleted", "success");
-
+        
         Pageable pageable = PageRequest.of(page, size, Sort.by("purchaseDate").descending());
         if (sortAsc)
             pageable = PageRequest.of(page, size, Sort.by("purchaseDate").ascending());
