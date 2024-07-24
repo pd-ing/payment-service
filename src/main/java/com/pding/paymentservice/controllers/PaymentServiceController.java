@@ -1,10 +1,12 @@
 package com.pding.paymentservice.controllers;
 
+import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
 import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.BuyLeafsRequest;
+import com.pding.paymentservice.payload.request.BuyLeafsiOSRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
@@ -12,12 +14,13 @@ import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.security.AppPaymentInitializer;
+import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
+import com.pding.paymentservice.paymentclients.ios.IOSPaymentInitializer;
+import com.pding.paymentservice.paymentclients.ios.TransactionDetails;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.PaymentService;
-import com.pding.paymentservice.stripe.StripeClient;
-import com.pding.paymentservice.stripe.StripeClientResponse;
-import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
+import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.paymentclients.stripe.StripeClientResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -34,9 +37,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -60,12 +65,20 @@ public class PaymentServiceController {
     AppPaymentInitializer appPaymentInitializer;
 
     @Autowired
+    IOSPaymentInitializer iosPaymentInitializer;
+
+    @Autowired
     AuthHelper authHelper;
+
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
-        return ResponseEntity.ok()
-                .body(new MessageResponse("This is test API, With JWT Validation"));
+        try {
+            return ResponseEntity.ok()
+                    .body(new MessageResponse("This is test API, With JWT Validation"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
     }
 
     @PostMapping("/charge")
@@ -268,6 +281,65 @@ public class PaymentServiceController {
                     return ResponseEntity.ok().body(new GenericStringResponse(null, "Cannot add leafs to the user's wallet as the purchase state is not completed"));
                 }
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping("/getIosTransactionDetails")
+    ResponseEntity<?> getIosTransactionDetails(@RequestParam(value = "appReceiptId") String appReceiptId) {
+        try {
+            String transactionDetails = iosPaymentInitializer.getTransactionDetails(appReceiptId);
+            return ResponseEntity.ok().body(new GenericStringResponse(null, transactionDetails));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @GetMapping("/getIosAppStoreConnectToken")
+    ResponseEntity<?> getIosAppStoreConnectToken() {
+        try {
+            String token = iosPaymentInitializer.generateTokenForAppStoreConnect();
+            return ResponseEntity.ok().body(new GenericStringResponse(null, token));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping("/buyLeafsIOS")
+    ResponseEntity<?> buyLeafsIOS(@Valid @RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
+        try {
+
+            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
+            TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getAppReceiptId());
+
+            if (paymentService.checkIfTxnIdExists(txnDetails.getTransactionId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+            } else {
+                BigDecimal purchaseLeaves = txnDetails.getLeafs();
+                String userId = authHelper.getUserId();
+                String txnId = txnDetails.getTransactionId();
+                String paymentMethod = "IOS_Store";
+                String currency = txnDetails.getCurrency();
+                BigDecimal amountInCents = txnDetails.getPrice();
+
+
+                String message = paymentService.completePaymentToBuyLeafs(
+                        userId,
+                        new BigDecimal(0),
+                        purchaseLeaves,
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(txnDetails.getOriginalPurchaseDate()), ZoneId.systemDefault()),
+                        txnId,
+                        TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                        amountInCents,
+                        paymentMethod,
+                        currency,
+                        "Added " + purchaseLeaves + " leafs successfully for user.",
+                        null
+                );
+                return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+            }
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
