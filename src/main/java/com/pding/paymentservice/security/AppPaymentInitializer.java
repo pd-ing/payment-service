@@ -1,4 +1,4 @@
-package com.pding.paymentservice.paymentclients.google;
+package com.pding.paymentservice.security;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;

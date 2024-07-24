@@ -1,4 +1,4 @@
-package com.pding.paymentservice.paymentclients.stripe;
+package com.pding.paymentservice.stripe;
 
 import com.stripe.model.Product;
 import com.stripe.model.checkout.Session;
