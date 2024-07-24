@@ -287,9 +287,9 @@ public class PaymentServiceController {
     }
 
     @GetMapping("/getIosTransactionDetails")
-    ResponseEntity<?> getIosTransactionDetails(@RequestParam(value = "transactionId") String transactionId) {
+    ResponseEntity<?> getIosTransactionDetails(@RequestParam(value = "appReceiptId") String appReceiptId) {
         try {
-            String transactionDetails = iosPaymentInitializer.getTransactionDetails(transactionId);
+            String transactionDetails = iosPaymentInitializer.getTransactionDetails(appReceiptId);
             return ResponseEntity.ok().body(new GenericStringResponse(null, transactionDetails));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -309,17 +309,17 @@ public class PaymentServiceController {
     @PostMapping("/buyLeafsIOS")
     ResponseEntity<?> buyLeafsIOS(@Valid @RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
         try {
-            if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getTransactionId())) {
+
+            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
+            TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getAppReceiptId());
+
+            if (paymentService.checkIfTxnIdExists(txnDetails.getTransactionId())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
             } else {
-                pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
-                TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getTransactionId());
-
-                String productId = txnDetails.getProductId();
                 BigDecimal purchaseLeaves = txnDetails.getLeafs();
                 String userId = authHelper.getUserId();
                 String txnId = txnDetails.getTransactionId();
-                String paymentMethod = "iOS_Store";
+                String paymentMethod = "IOS_Store";
                 String currency = txnDetails.getCurrency();
                 BigDecimal amountInCents = txnDetails.getPrice();
 
@@ -339,6 +339,7 @@ public class PaymentServiceController {
                 );
                 return ResponseEntity.ok().body(new GenericStringResponse(null, message));
             }
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }

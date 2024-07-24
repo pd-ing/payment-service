@@ -2,6 +2,7 @@ package com.pding.paymentservice.paymentclients.ios;
 
 import com.apple.itunes.storekit.client.AppStoreServerAPIClient;
 import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
+import com.apple.itunes.storekit.migration.ReceiptUtility;
 import com.apple.itunes.storekit.model.Environment;
 import com.apple.itunes.storekit.model.TransactionInfoResponse;
 
@@ -60,13 +61,16 @@ public class IOSPaymentInitializer {
     @Value("${app.ios.payment.appId}")
     String appId;
 
-    public String getTransactionDetails(String transactionId) throws Exception {
+    public String getTransactionDetails(String appReceiptId) throws Exception {
         Environment environmentIOS;
         if (environmentType.equalsIgnoreCase("production")) {
             environmentIOS = Environment.PRODUCTION;
         } else {
             environmentIOS = Environment.SANDBOX;
         }
+
+        ReceiptUtility receiptUtil = new ReceiptUtility();
+        String transactionId = receiptUtil.extractTransactionIdFromAppReceipt(appReceiptId);
 
         AppStoreServerAPIClient client = new AppStoreServerAPIClient(inAppPurchasePrivateKey, inAppPurchaseKeyId, issuerId, bundleId, environmentIOS);
 
@@ -110,17 +114,16 @@ public class IOSPaymentInitializer {
         return null;
     }
 
-    public TransactionDetails getLeafsToAdd(String transactionId) throws Exception {
+    public TransactionDetails getLeafsToAdd(String appReceiptId) throws Exception {
         try {
             new TransactionDetails();
             TransactionDetails txnDetails;
-            String transaction = getTransactionDetails(transactionId);
+            String transaction = getTransactionDetails(appReceiptId);
             JSONObject jsonObject = new JSONObject(transaction);
             txnDetails = parseTransaction(jsonObject);
             txnDetails.setLeafs(new BigDecimal(getProductDetails(txnDetails.getProductId())));
             return txnDetails;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw ex;
         }
     }
@@ -147,6 +150,7 @@ public class IOSPaymentInitializer {
 
         return transaction;
     }
+
     private String getTransactionBodyFromEncodedTransactionResponse(String jwtToken) throws Exception {
         System.out.println("------------ Decode JWT ------------");
         String[] split_string = jwtToken.split("\\.");
