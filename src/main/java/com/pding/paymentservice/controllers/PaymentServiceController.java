@@ -1,12 +1,11 @@
 package com.pding.paymentservice.controllers;
 
-import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
 import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.BuyLeafsRequest;
-import com.pding.paymentservice.payload.request.BuyLeafsiOSRequest;
+import com.pding.paymentservice.payload.request.BuyLeafsIOSRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
@@ -25,7 +24,6 @@ import com.pding.paymentservice.paymentclients.stripe.StripeClientResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,11 +37,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -288,9 +284,9 @@ public class PaymentServiceController {
     }
 
     @GetMapping("/getIosTransactionDetails")
-    ResponseEntity<?> getIosTransactionDetails(@RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
+    ResponseEntity<?> getIosTransactionDetails(@RequestBody BuyLeafsIOSRequest buyLeafsRequest) {
         try {
-            TransactionDetails transactionDetailsObj = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getAppReceiptId());
+            TransactionDetails transactionDetailsObj = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getTransactionIdBase64Decoded(), buyLeafsRequest.getProductIdBase64Decoded());
             return ResponseEntity.ok().body(new GenericClassResponse<>(null, transactionDetailsObj));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericClassResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -308,11 +304,11 @@ public class PaymentServiceController {
     }
 
     @PostMapping("/buyLeafsIOS")
-    ResponseEntity<?> buyLeafsIOS(@Valid @RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
+    ResponseEntity<?> buyLeafsIOS(@Valid @RequestBody BuyLeafsIOSRequest buyLeafsRequest) {
         try {
 
             pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
-            TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getAppReceiptId());
+            TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getTransactionIdBase64Decoded(), buyLeafsRequest.getProductIdBase64Decoded());
 
             if (paymentService.checkIfTxnIdExists(txnDetails.getTransactionId())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
