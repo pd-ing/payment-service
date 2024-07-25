@@ -72,7 +72,6 @@ public class PaymentServiceController {
     @Autowired
     AuthHelper authHelper;
 
-
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
         try {
