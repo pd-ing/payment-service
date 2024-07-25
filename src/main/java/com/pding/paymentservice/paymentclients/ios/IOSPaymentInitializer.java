@@ -61,16 +61,13 @@ public class IOSPaymentInitializer {
     @Value("${app.ios.payment.appId}")
     String appId;
 
-    public String getTransactionDetails(String appReceiptId) throws Exception {
+    public String getTransactionDetails(String transactionId) throws Exception {
         Environment environmentIOS;
         if (environmentType.equalsIgnoreCase("production")) {
             environmentIOS = Environment.PRODUCTION;
         } else {
             environmentIOS = Environment.SANDBOX;
         }
-
-        ReceiptUtility receiptUtil = new ReceiptUtility();
-        String transactionId = receiptUtil.extractTransactionIdFromAppReceipt(appReceiptId);
 
         AppStoreServerAPIClient client = new AppStoreServerAPIClient(inAppPurchasePrivateKey, inAppPurchaseKeyId, issuerId, bundleId, environmentIOS);
 
@@ -114,18 +111,19 @@ public class IOSPaymentInitializer {
         return null;
     }
 
-    public TransactionDetails getLeafsToAdd(String appReceiptId) throws Exception {
-        try {
-            new TransactionDetails();
-            TransactionDetails txnDetails;
-            String transaction = getTransactionDetails(appReceiptId);
-            JSONObject jsonObject = new JSONObject(transaction);
-            txnDetails = parseTransaction(jsonObject);
-            txnDetails.setLeafs(new BigDecimal(getProductDetails(txnDetails.getProductId())));
-            return txnDetails;
-        } catch (Exception ex) {
-            throw ex;
-        }
+    public TransactionDetails getLeafsToAdd(String transactionId, String productId) throws Exception {
+        TransactionDetails txnDetails;
+        String transaction = getTransactionDetails(transactionId);
+        JSONObject jsonObject = new JSONObject(transaction);
+        txnDetails = parseTransaction(jsonObject);
+
+        // This is extra validation which we have added for security purpose, We take productId from App and validate it with the productId,
+        // which we got in the transactionDetails
+        if (!productId.equalsIgnoreCase(txnDetails.getProductId()))
+            throw new RuntimeException("ProductId Provided in the payload dosent match with the productId found in Transaction Details");
+
+        txnDetails.setLeafs(new BigDecimal(getProductDetails(txnDetails.getProductId())));
+        return txnDetails;
     }
 
     public static TransactionDetails parseTransaction(JSONObject jsonObject) {
