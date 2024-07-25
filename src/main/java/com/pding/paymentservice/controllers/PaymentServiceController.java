@@ -11,6 +11,7 @@ import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
@@ -24,6 +25,7 @@ import com.pding.paymentservice.paymentclients.stripe.StripeClientResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -287,12 +289,12 @@ public class PaymentServiceController {
     }
 
     @GetMapping("/getIosTransactionDetails")
-    ResponseEntity<?> getIosTransactionDetails(@RequestParam(value = "appReceiptId") String appReceiptId) {
+    ResponseEntity<?> getIosTransactionDetails(@RequestBody BuyLeafsiOSRequest buyLeafsRequest) {
         try {
-            String transactionDetails = iosPaymentInitializer.getTransactionDetails(appReceiptId);
-            return ResponseEntity.ok().body(new GenericStringResponse(null, transactionDetails));
+            TransactionDetails transactionDetailsObj = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getAppReceiptId());
+            return ResponseEntity.ok().body(new GenericClassResponse<>(null, transactionDetailsObj));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericClassResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
 
