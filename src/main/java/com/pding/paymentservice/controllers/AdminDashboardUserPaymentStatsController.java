@@ -1,7 +1,12 @@
 package com.pding.paymentservice.controllers;
 
+import com.google.api.services.androidpublisher.model.InAppProduct;
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.payload.request.AddLeafsRequest;
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
+import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.ReferralCommissionRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
@@ -36,7 +41,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -69,6 +77,15 @@ public class AdminDashboardUserPaymentStatsController {
             }
             String strResponse = adminDashboardUserPaymentStatsService.removeTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
             return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping(value = "/addLeafs")
+    public ResponseEntity<?> addLeafsFromBackend(@Valid @RequestBody AddLeafsRequest addLeafsRequest) {
+        try {
+            return adminDashboardUserPaymentStatsService.addLeafsFromBackend(addLeafsRequest.getProductId(), addLeafsRequest.getPurchaseToken(), addLeafsRequest.getEmail());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }

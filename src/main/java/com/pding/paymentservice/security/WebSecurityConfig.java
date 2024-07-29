@@ -82,6 +82,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/listReferredPds").permitAll()
                                 .requestMatchers("/api/payment/admin/addTrees").permitAll()
                                 .requestMatchers("/api/payment/admin/removeTrees").permitAll()
+                                .requestMatchers("/api/payment/admin/addLeafs").permitAll()
                                 .requestMatchers("/api/payment/admin/statusTab").permitAll()
                                 .requestMatchers("/api/payment/admin/statusTabForPd").permitAll()
                                 .requestMatchers("/api/payment/admin/viewingHistoryTab").permitAll()
