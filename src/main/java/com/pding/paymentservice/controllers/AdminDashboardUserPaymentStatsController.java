@@ -91,6 +91,19 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @PostMapping(value = "/refundLeafs")
+    public ResponseEntity<?> refundLeafsFromBackend(@RequestBody AddLeafsRequest addLeafsRequest) {
+        try {
+            if (addLeafsRequest.getPurchaseToken() == null || addLeafsRequest.getPurchaseToken().isEmpty()) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "purchaseToken parameter should be not null"));
+            }
+            String strResponse = adminDashboardUserPaymentStatsService.refundLeafsFromBackend(addLeafsRequest.getPurchaseToken());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
 
     @GetMapping(value = "/statusTab")
     public ResponseEntity<?> getStatusTabDetailsController(@RequestParam(value = "userId") String userId) {
@@ -371,11 +384,11 @@ public class AdminDashboardUserPaymentStatsController {
     // PD Settlement Details tab (FE)
     @GetMapping("/listReferredPdsEOL")
     ResponseEntity<?> listReferredPdDetailsEOL(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                                            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                                            @RequestParam(required = false) String searchString,
-                                            @RequestParam(defaultValue = "0") @Min(0) int page,
-                                            @RequestParam(defaultValue = "10") @Min(1) int size,
-                                            @RequestParam String referrerPdUserId) {
+                                               @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                               @RequestParam(required = false) String searchString,
+                                               @RequestParam(defaultValue = "0") @Min(0) int page,
+                                               @RequestParam(defaultValue = "10") @Min(1) int size,
+                                               @RequestParam String referrerPdUserId) {
 
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {

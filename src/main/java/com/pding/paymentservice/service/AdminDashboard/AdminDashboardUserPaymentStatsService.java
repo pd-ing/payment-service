@@ -267,4 +267,8 @@ public class AdminDashboardUserPaymentStatsService {
         return referralCommissionService.updateReferralCommissionEntryToCompletedState(referralCommissionId);
     }
 
+    public String refundLeafsFromBackend(String purchaseToken) {
+        return paymentService.completeRefundLeafs(purchaseToken);
+
+    }
 }
