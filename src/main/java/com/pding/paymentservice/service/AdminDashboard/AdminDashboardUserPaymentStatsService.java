@@ -21,6 +21,7 @@ import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.service.*;
+import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -129,58 +130,52 @@ public class AdminDashboardUserPaymentStatsService {
     }
 
     @Transactional
-    public ResponseEntity<?> addLeafsFromBackend(String product, String purchaseToken, String email) {
+    public String addLeafsFromBackend(String product, String purchaseToken, String email) {
         try {
             if (paymentService.checkIfTxnIdExists(purchaseToken)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
-            } else {
-                pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
-                ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(product, purchaseToken);
-                InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(product);
-
-                // check if purchase is complete; 0: purchased successfully, 1: canceled, 2: pending
-                if (productPurchase.getPurchaseState() == 0) {
-
-                    int purchaseLeaves = 0;
-                    String productId = product;
-
-                    // If any of trees or leaf is null then init it with 0.
-                    if (productId != null && productId.contains("_")) {
-                        purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
-                    } else {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Product Id is not valid, cannot fetch leafs to add from productId"), null));
-                    }
-
-                    String userId = otherServicesTablesNativeQueryRepository.getUserIdFromEmail(email);
-                    String txnId = purchaseToken;
-                    String paymentMethod = "Google_Play_Store";
-                    String currency = inAppProduct.getDefaultPrice().get("currency").toString();
-                    String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
-
-
-                    String message = paymentService.completePaymentToBuyLeafs(
-                            userId,
-                            new BigDecimal(0),
-                            new BigDecimal(purchaseLeaves),
-                            LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
-                            txnId,
-                            TransactionType.PAYMENT_COMPLETED.getDisplayName(),
-                            new BigDecimal(amountInCents),
-                            paymentMethod,
-                            currency,
-                            "Added " + purchaseLeaves + " leafs successfully for user.",
-                            null
-                    );
-                    return ResponseEntity.ok().body(new GenericStringResponse(null, message));
-                } else {
-                    return ResponseEntity.ok().body(new GenericStringResponse(null, "Cannot add leafs to the user's wallet as the purchase state is not completed"));
-                }
+                throw new ValidationException("Transaction Id already present in DB");
             }
+
+            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
+            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(product, purchaseToken);
+            InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(product);
+
+            if (productPurchase.getPurchaseState() != 0) {
+                throw new ValidationException("Cannot add leafs to the user's wallet as the purchase state is not completed");
+            }
+
+            int purchaseLeaves = 0;
+            String productId = product;
+
+            if (productId != null && productId.contains("_")) {
+                purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
+            } else {
+                throw new ValidationException("Product Id is not valid, cannot fetch leafs to add from productId");
+            }
+
+            String userId = otherServicesTablesNativeQueryRepository.getUserIdFromEmail(email);
+            String txnId = purchaseToken;
+            String paymentMethod = "Google_Play_Store";
+            String currency = inAppProduct.getDefaultPrice().get("currency").toString();
+            String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
+
+            return paymentService.completePaymentToBuyLeafs(
+                    userId,
+                    new BigDecimal(0),
+                    new BigDecimal(purchaseLeaves),
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
+                    txnId,
+                    TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                    new BigDecimal(amountInCents),
+                    paymentMethod,
+                    currency,
+                    "Added " + purchaseLeaves + " leafs successfully for user.",
+                    null
+            );
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            throw new RuntimeException("Internal server error: " + e.getMessage(), e);
         }
     }
-
 
     public Status getStatusTabDetails(String userId) {
         return statusTabService.getStatusTabDetails(userId);

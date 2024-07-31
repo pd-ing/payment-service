@@ -22,6 +22,7 @@ import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawa
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
@@ -85,8 +86,11 @@ public class AdminDashboardUserPaymentStatsController {
     @PostMapping(value = "/addLeafs")
     public ResponseEntity<?> addLeafsFromBackend(@Valid @RequestBody AddLeafsRequest addLeafsRequest) {
         try {
-            return adminDashboardUserPaymentStatsService.addLeafsFromBackend(addLeafsRequest.getProductId(), addLeafsRequest.getPurchaseToken(), addLeafsRequest.getEmail());
-        } catch (Exception e) {
+            String result = adminDashboardUserPaymentStatsService.addLeafsFromBackend(addLeafsRequest.getProductId(), addLeafsRequest.getPurchaseToken(), addLeafsRequest.getEmail());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, result));
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }

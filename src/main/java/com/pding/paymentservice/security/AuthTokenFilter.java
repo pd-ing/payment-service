@@ -41,7 +41,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/balanceTrees",
             "/api/payment/admin/addTrees",
             "/api/payment/admin/removeTrees",
-            "/api/payment/admin/addLeafs",
             "/api/payment/admin/statusTab",
             "/api/payment/admin/statusTabForPd",
             "/api/payment/clearPendingAndStalePayments",
