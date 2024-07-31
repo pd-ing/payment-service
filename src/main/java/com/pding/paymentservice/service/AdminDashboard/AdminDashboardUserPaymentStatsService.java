@@ -1,31 +1,40 @@
 package com.pding.paymentservice.service.AdminDashboard;
 
+import com.google.api.services.androidpublisher.model.InAppProduct;
+import com.google.api.services.androidpublisher.model.ProductPurchase;
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.ReferralCommission;
 import com.pding.paymentservice.models.Wallet;
 import com.pding.paymentservice.models.enums.CommissionTransferStatus;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
-import com.pding.paymentservice.service.LedgerService;
-import com.pding.paymentservice.service.ReferralCommissionService;
-import com.pding.paymentservice.service.WalletHistoryService;
-import com.pding.paymentservice.service.WalletService;
-import com.pding.paymentservice.service.WithdrawalService;
+import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
+import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
+import com.pding.paymentservice.service.*;
+import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -68,6 +77,18 @@ public class AdminDashboardUserPaymentStatsService {
     @Autowired
     ReferralCommissionService referralCommissionService;
 
+    @Autowired
+    PaymentService paymentService;
+
+    @Autowired
+    PdLogger pdLogger;
+
+    @Autowired
+    AppPaymentInitializer appPaymentInitializer;
+
+    @Autowired
+    OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
 
     @Transactional
     public String addTreesFromBackend(String userId, BigDecimal purchasedTrees) throws Exception {
@@ -108,6 +129,53 @@ public class AdminDashboardUserPaymentStatsService {
         }
     }
 
+    @Transactional
+    public String addLeafsFromBackend(String product, String purchaseToken, String email) {
+        try {
+            if (paymentService.checkIfTxnIdExists(purchaseToken)) {
+                throw new ValidationException("Transaction Id already present in DB");
+            }
+
+            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
+            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(product, purchaseToken);
+            InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(product);
+
+            if (productPurchase.getPurchaseState() != 0) {
+                throw new ValidationException("Cannot add leafs to the user's wallet as the purchase state is not completed");
+            }
+
+            int purchaseLeaves = 0;
+            String productId = product;
+
+            if (productId != null && productId.contains("_")) {
+                purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
+            } else {
+                throw new ValidationException("Product Id is not valid, cannot fetch leafs to add from productId");
+            }
+
+            String userId = otherServicesTablesNativeQueryRepository.getUserIdFromEmail(email);
+            String txnId = purchaseToken;
+            String paymentMethod = "Google_Play_Store";
+            String currency = inAppProduct.getDefaultPrice().get("currency").toString();
+            String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
+
+            return paymentService.completePaymentToBuyLeafs(
+                    userId,
+                    new BigDecimal(0),
+                    new BigDecimal(purchaseLeaves),
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
+                    txnId,
+                    TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                    new BigDecimal(amountInCents),
+                    paymentMethod,
+                    currency,
+                    "Added " + purchaseLeaves + " leafs successfully for user.",
+                    null
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Internal server error: " + e.getMessage(), e);
+        }
+    }
 
     public Status getStatusTabDetails(String userId) {
         return statusTabService.getStatusTabDetails(userId);
@@ -194,4 +262,8 @@ public class AdminDashboardUserPaymentStatsService {
         return referralCommissionService.updateReferralCommissionEntryToCompletedState(referralCommissionId);
     }
 
+    public String refundLeafsFromBackend(String purchaseToken) {
+        return paymentService.completeRefundLeafs(purchaseToken);
+
+    }
 }

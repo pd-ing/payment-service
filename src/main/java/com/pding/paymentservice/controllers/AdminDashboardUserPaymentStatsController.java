@@ -1,7 +1,12 @@
 package com.pding.paymentservice.controllers;
 
+import com.google.api.services.androidpublisher.model.InAppProduct;
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.payload.request.AddLeafsRequest;
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
+import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.ReferralCommissionRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
@@ -17,6 +22,7 @@ import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawa
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
@@ -36,7 +42,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -68,6 +77,31 @@ public class AdminDashboardUserPaymentStatsController {
                 return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
             }
             String strResponse = adminDashboardUserPaymentStatsService.removeTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping(value = "/addLeafs")
+    public ResponseEntity<?> addLeafsFromBackend(@Valid @RequestBody AddLeafsRequest addLeafsRequest) {
+        try {
+            String result = adminDashboardUserPaymentStatsService.addLeafsFromBackend(addLeafsRequest.getProductId(), addLeafsRequest.getPurchaseToken(), addLeafsRequest.getEmail());
+            return ResponseEntity.ok().body(new GenericStringResponse(null, result));
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
+    @PostMapping(value = "/refundLeafs")
+    public ResponseEntity<?> refundLeafsFromBackend(@RequestBody AddLeafsRequest addLeafsRequest) {
+        try {
+            if (addLeafsRequest.getPurchaseToken() == null || addLeafsRequest.getPurchaseToken().isEmpty()) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "purchaseToken parameter should be not null"));
+            }
+            String strResponse = adminDashboardUserPaymentStatsService.refundLeafsFromBackend(addLeafsRequest.getPurchaseToken());
             return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
@@ -354,11 +388,11 @@ public class AdminDashboardUserPaymentStatsController {
     // PD Settlement Details tab (FE)
     @GetMapping("/listReferredPdsEOL")
     ResponseEntity<?> listReferredPdDetailsEOL(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                                            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                                            @RequestParam(required = false) String searchString,
-                                            @RequestParam(defaultValue = "0") @Min(0) int page,
-                                            @RequestParam(defaultValue = "10") @Min(1) int size,
-                                            @RequestParam String referrerPdUserId) {
+                                               @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                               @RequestParam(required = false) String searchString,
+                                               @RequestParam(defaultValue = "0") @Min(0) int page,
+                                               @RequestParam(defaultValue = "10") @Min(1) int size,
+                                               @RequestParam String referrerPdUserId) {
 
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
