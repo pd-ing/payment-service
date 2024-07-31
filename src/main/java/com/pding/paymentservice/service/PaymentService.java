@@ -385,4 +385,61 @@ public class PaymentService {
         }
     }
 
+    public String completeRefundLeafs(String purchaseToken) {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(purchaseToken);
+        //Check if refund is already done for this TxnId
+        String txnIdPattern = "_leafs_refunded_for_" + purchaseToken;
+        if (walletHistoryService.findByTransactionIdWithPattern(txnIdPattern).size() > 0) {
+            return "Refund is already done for the given purchaseToken";
+        }
+
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+
+            BigDecimal leafsToRefund = walletHistory.getPurchasedLeafs();
+            if (leafsToRefund.compareTo(new BigDecimal("0")) <= 0) {
+                throw new RuntimeException("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId :" + walletHistory.getUserId() +
+                        ", leafsToRefund:" + leafsToRefund);
+            }
+            Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
+
+            if (userWallet.getLeafs().compareTo(leafsToRefund) < 0) {
+                throw new RuntimeException("Cannot complete the refund request, because of insufficient leafs balance, For userId :" + walletHistory.getUserId() +
+                        " , refundRequestAmtInTrees:" + leafsToRefund);
+            }
+
+
+            String transactionId = leafsToRefund + "_leafs_refunded_for_" + walletHistory.getTransactionId();
+            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(transactionId);
+//            if (walletHistoryRefundEntryOptional.isPresent()) {
+//                WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
+//                String description = walletHistoryRefundRecord.getDescription() + ", Refund completed successfully";
+//                walletHistoryRefundRecord.setDescription(description);
+//                walletHistoryRefundRecord.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
+//                walletHistoryService.save(walletHistoryRefundRecord);
+//            } else {
+//                walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
+//                        walletHistory.getUserId(),
+//                        new BigDecimal(0),
+//                        leafsToRefund,
+//                        LocalDateTime.now(),
+//                        transactionId,
+//                        TransactionType.REFUND_COMPLETED.getDisplayName(),
+//                        walletHistory.getAmount(),
+//                        "Refunded leafs through backend",
+//                        walletHistory.getCurrency(),
+//                        "Refund completed successfully",
+//                        walletHistory.getIpAddress()
+//                );
+//            }
+
+            //walletService.deductLeafsFromWallet(walletHistory.getUserId(), leafsToRefund);
+            //ledgerService.saveToLedger(walletHistory.getWalletId(), new BigDecimal(0), leafsToRefund, TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
+
+            return "Refund completed successFully for the purchaseToken : " + transactionId + " , UserId :" + walletHistory.getUserId() + ", leafsToRefund:" + leafsToRefund;
+        } else {
+            throw new RuntimeException("Refund failed because record not found in wallet history for transactionId:" + purchaseToken);
+        }
+    }
+
 }

@@ -26,6 +26,10 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             " WHERE referred_pd_user_id COLLATE utf8mb4_unicode_ci = :referredPdUserId", nativeQuery = true)
     String getReferralPdGrade(@Param("referredPdUserId") String referredPdUserId);
 
+    @Query(value = "SELECT COALESCE(u.id, '') \n" +
+            " FROM users u WHERE email = :email", nativeQuery = true)
+    String getUserIdFromEmail(@Param("email") String email);
+
     @Query(value = "SELECT COALESCE(u.nickname, '') as nickname, " +
             "COALESCE(u.pd_type, '') as pd_type, " +
             "COALESCE(u.created_date, '') as created_date, " +
