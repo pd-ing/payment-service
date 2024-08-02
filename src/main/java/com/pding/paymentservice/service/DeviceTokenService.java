@@ -18,15 +18,16 @@ public class DeviceTokenService {
     @Transactional
     public String saveOrUpdateDeviceToken(String deviceId, String deviceToken, String userId) {
         String resultMessage = " ";
-        Optional<DeviceToken> optionalDeviceToken = deviceTokenRepository.findByDeviceIdAndToken(deviceId, deviceToken);
+        Optional<DeviceToken> optionalDeviceToken = deviceTokenRepository.findByDeviceId(deviceId);
 //        if (optionalDeviceToken.isPresent()) {
 //            throw new RuntimeException("Token is already registered");
 //        }
-        optionalDeviceToken = deviceTokenRepository.findByDeviceId(deviceId);
+
         if (optionalDeviceToken.isPresent()) {
             //update token for existing device
             DeviceToken deviceTokenToUpdate = optionalDeviceToken.get();
             deviceTokenToUpdate.setToken(deviceToken);
+            deviceTokenToUpdate.setCreatedDate(LocalDateTime.now());
             deviceTokenRepository.save(deviceTokenToUpdate);
             resultMessage = resultMessage.trim() + "Device exists, Updating Device : " + deviceTokenToUpdate.getDeviceId() + ". ";
         } else {
@@ -61,14 +62,12 @@ public class DeviceTokenService {
     }
 
     @Transactional
-    public boolean deleteToken(String token, String userId) {
-        Optional<DeviceToken> tokenToBeDeleted = deviceTokenRepository.findByTokenAndUserId(token, userId);
-        if (tokenToBeDeleted.isPresent()) {
-            deviceTokenRepository.deleteByTokenAndUserId(token, userId);
-            Optional<DeviceToken> deletedToken = deviceTokenRepository.findByTokenAndUserId(token, userId);
-            return deletedToken.isEmpty();
-        } else
+    public boolean deleteTokenByDeviceId(String deviceId, String userId) {
+        try {
+            deviceTokenRepository.deleteByDeviceAndUserId(deviceId, userId);
+        } catch (Exception e) {
             return false;
-
+        }
+        return true;
     }
 }
