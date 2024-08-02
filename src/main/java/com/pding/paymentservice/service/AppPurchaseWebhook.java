@@ -34,7 +34,7 @@ public class AppPurchaseWebhook {
     public void messageReceiver(String payload) throws Exception {
         Gson gson = new Gson();
         if (payload.contains("oneTimeProductNotification")) {
-            LOGGER.info("OneTimeProductNotification received! Payload: " + payload);
+            pdLogger.logInfo("one-time-product-notification","OneTimeProductNotification received! Payload: " + payload);
 
             Map<String, Object> payloadMap = gson.fromJson(payload, Map.class);
             Map<String, String> oneTimeProductNotificationMap = (Map<String, String>) payloadMap.get("oneTimeProductNotification");
@@ -94,7 +94,7 @@ public class AppPurchaseWebhook {
 
         // Check if is voided purchase notification
         if (payload.contains("voidedPurchaseNotification")) {
-            LOGGER.info("VoidedPurchaseNotification received! Payload: " + payload);
+            pdLogger.logInfo("voided-purchase-notification","VoidedPurchaseNotification received! Payload: " + payload);
 
             Map<String, Object> payloadMap = gson.fromJson(payload, Map.class);
             Map<String, String> voidedPurchaseNotificationMap = (Map<String, String>) payloadMap.get("voidedPurchaseNotification");
