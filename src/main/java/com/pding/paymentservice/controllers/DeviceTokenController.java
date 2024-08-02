@@ -54,7 +54,7 @@ public class DeviceTokenController {
     public ResponseEntity<?> deleteDeviceToken(@Valid @RequestBody DeviceTokenRequest deviceTokenRequest) {
         try {
             String userId = authHelper.getUserId();
-            boolean isDeleted = deviceTokenService.deleteToken(deviceTokenRequest.getDeviceToken(), userId);
+            boolean isDeleted = deviceTokenService.deleteTokenByDeviceId(deviceTokenRequest.getDeviceId(), userId);
             if (isDeleted)
                 return ResponseEntity.ok().body(new GenericStringResponse(null, "Device Token Deleted Successfully"));
             else
