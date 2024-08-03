@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class SendNotificationSqsMessage extends BaseService {
@@ -89,6 +90,16 @@ public class SendNotificationSqsMessage extends BaseService {
         try {
             String json = objectMapper.writeValueAsString(map);
             sqsTemplate.send("NotificationQueue.fifo", json);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+        }
+    }
+
+
+    public void sendFcmNotification(Map<String, String> map) {
+        try {
+            String json = objectMapper.writeValueAsString(map);
+            sqsTemplate.send("FCMNotificationQueue", json);
         } catch (Exception ex) {
             pdLogger.logException(ex);
         }
