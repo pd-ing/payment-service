@@ -236,7 +236,7 @@ public class PaymentServiceController {
     ResponseEntity<?> buyLeafs(@Valid @RequestBody BuyLeafsRequest buyLeafsRequest) {
         try {
             if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getPurchaseToken())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+                return ResponseEntity.status(HttpStatus.OK).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
             } else {
                 pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
                 ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
