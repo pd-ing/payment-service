@@ -86,6 +86,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
                 pdLogger.logException(new Exception(databaseError.getMessage()));
                 pdLogger.logInfo("update_realtime_db_wallet", "userId:" + userId + " leafBalance: " + leafBalance + " treeBalance: " + treesBalance);
             }
+            System.out.println("RealtimeDB saved successfully userId = " + userId + " leafBalance = " + leafBalance + " treesBalance = " + treesBalance);
             // all good. data saved
         });
     }
