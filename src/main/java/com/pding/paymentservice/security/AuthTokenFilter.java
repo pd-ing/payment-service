@@ -36,6 +36,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     List<String> permitAllEndpoints = Arrays.asList(
             "/api/payment/webhook",
+            "/api/payment/ggPlayStoreWebhook",
             "/api/payment/videoEarningAndSales",
             "/api/payment/topEarners",
             "/api/payment/admin/balanceTrees",
@@ -72,18 +73,16 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     );
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith);
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String idToken = parseJwt(request);
         String serverToken = parseServerToken(request);
-
-        if (permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith) && idToken == null) {
-            // No need of authentication for this one.
-            SecurityContextHolder.getContext().setAuthentication(null);
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         setSentryScope(request, idToken, serverToken);
 
