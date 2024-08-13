@@ -24,6 +24,7 @@ import com.pding.paymentservice.paymentclients.stripe.StripeClientResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +68,7 @@ public class PaymentServiceController {
 
     @Autowired
     AuthHelper authHelper;
+
 
     @GetMapping(value = "/test")
     public ResponseEntity<?> sampleGet() {
@@ -234,7 +236,7 @@ public class PaymentServiceController {
     ResponseEntity<?> buyLeafs(@Valid @RequestBody BuyLeafsRequest buyLeafsRequest) {
         try {
             if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getPurchaseToken())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+                return ResponseEntity.status(HttpStatus.OK).body(new GenericStringResponse(new ErrorResponse(HttpStatus.OK.value(), "Transaction Id already present in DB"), null));
             } else {
                 pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
                 ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());

@@ -51,7 +51,7 @@ public class WalletHistoryService {
 
     public Page<WalletHistory> fetchWalletHistoryByUserId(String userId, int page, int size) {
         List<String> statuses = Arrays.asList("paymentCompleted", "success");
-        Pageable pageable = PageRequest.of(page, size, Sort.by("purchaseDate").ascending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("purchaseDate").descending());
         return walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, statuses, pageable);
     }
 

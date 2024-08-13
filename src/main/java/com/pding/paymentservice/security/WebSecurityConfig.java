@@ -20,10 +20,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
+    @Autowired
+    public AuthTokenFilter authenticationJwtTokenFilter;
 
 
     @Bean
@@ -54,6 +52,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/donate").authenticated()
                                 .requestMatchers("/api/payment/topDonorsList").permitAll()
                                 .requestMatchers("/api/payment/webhook").permitAll()
+                                .requestMatchers("/api/payment/ggPlayStoreWebhook").permitAll()
+                                .requestMatchers("/api/payment/appStoreWebhook").permitAll()
                                 .requestMatchers("/api/payment/videoEarningAndSales").permitAll()
                                 .requestMatchers("/api/payment/videoPurchaseReplacement").permitAll()
                                 .requestMatchers("/api/payment/getAllPdWhoseVideosArePurchasedByUser").authenticated()
@@ -124,7 +124,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                 );
 
 
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authenticationJwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
