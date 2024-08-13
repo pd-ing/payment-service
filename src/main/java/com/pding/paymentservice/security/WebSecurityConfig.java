@@ -121,6 +121,9 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/treeSummariesTotals").permitAll()
                                 .requestMatchers("/api/payment/admin/realTimeTreeUsageHistory").permitAll()
                                 .requestMatchers("/api/payment/admin/realTimeTreeUsageTotals").permitAll()
+                                .requestMatchers("/api/payment/internal/mediaTrading").permitAll()
+                                .requestMatchers("/api/payment/mediaTrading/buy").authenticated()
+                                .requestMatchers("/api/payment/mediaTrading/cancel").authenticated()
                 );
 
 
