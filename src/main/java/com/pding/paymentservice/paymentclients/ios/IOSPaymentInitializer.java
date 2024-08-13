@@ -130,7 +130,9 @@ public class IOSPaymentInitializer {
         TransactionDetails transaction = new TransactionDetails();
 
         transaction.setTransactionId(jsonObject.getString("transactionId"));
-//        transaction.setAppAccountToken(jsonObject.getString("appAccountToken"));
+        if(jsonObject.has("appAccountToken")) {
+            transaction.setAppAccountToken(jsonObject.getString("appAccountToken"));
+        }
         transaction.setOriginalTransactionId(jsonObject.getString("originalTransactionId"));
         transaction.setBundleId(jsonObject.getString("bundleId"));
         transaction.setProductId(jsonObject.getString("productId"));

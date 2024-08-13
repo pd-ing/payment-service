@@ -6,6 +6,7 @@ import com.pding.paymentservice.payload.request.AppStoreWebhookPayload;
 import com.pding.paymentservice.payload.response.ResponseBodyV2DecodedPayload;
 import com.pding.paymentservice.service.AppStoreWebhookService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/payment")
 @RequiredArgsConstructor
+@Log4j2
 public class AppStoreWebhookController {
 
     private final PdLogger pdLogger;
@@ -42,7 +44,7 @@ public class AppStoreWebhookController {
         //TODO: verify signature
 
         ResponseBodyV2DecodedPayload decodedPayload = gson.fromJson(payload, ResponseBodyV2DecodedPayload.class);
-        pdLogger.logInfo("App Store Webhook", "App Store Callback Successfull for  " + gson.toJson(decodedPayload));
+        log.info("App Store Callback Successfull for  {}", gson.toJson(decodedPayload));
 
         appStoreWebhookService.handle(decodedPayload);
         return new ResponseEntity<>("Success", HttpStatus.OK);
