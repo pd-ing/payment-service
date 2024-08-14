@@ -53,6 +53,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/topDonorsList").permitAll()
                                 .requestMatchers("/api/payment/webhook").permitAll()
                                 .requestMatchers("/api/payment/ggPlayStoreWebhook").permitAll()
+                                .requestMatchers("/api/payment/appStoreWebhook").permitAll()
                                 .requestMatchers("/api/payment/videoEarningAndSales").permitAll()
                                 .requestMatchers("/api/payment/videoPurchaseReplacement").permitAll()
                                 .requestMatchers("/api/payment/getAllPdWhoseVideosArePurchasedByUser").authenticated()
@@ -120,6 +121,9 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/treeSummariesTotals").permitAll()
                                 .requestMatchers("/api/payment/admin/realTimeTreeUsageHistory").permitAll()
                                 .requestMatchers("/api/payment/admin/realTimeTreeUsageTotals").permitAll()
+                                .requestMatchers("/api/payment/internal/mediaTrading").permitAll()
+                                .requestMatchers("/api/payment/mediaTrading/buy").authenticated()
+                                .requestMatchers("/api/payment/mediaTrading/cancel").authenticated()
                 );
 
 

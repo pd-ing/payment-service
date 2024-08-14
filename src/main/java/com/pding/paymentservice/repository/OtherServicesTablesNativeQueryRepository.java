@@ -262,4 +262,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
 
     @Query(value = "SELECT language FROM user_config WHERE id = :userId", nativeQuery = true)
     Optional<String> findLanguageById(@Param("userId") String userId);
+
+    @Query(value = "SELECT id from users where uuid = :uuid", nativeQuery = true)
+    Optional<String> getUserIdByUUID(@Param("uuid") String uuid);
 }

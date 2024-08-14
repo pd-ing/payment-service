@@ -43,67 +43,48 @@ public class PlayStoreWebhookService {
             OneTimeProductNotification oneTimeProductNotification = gson.fromJson(gson.toJson(oneTimeProductNotificationMap), OneTimeProductNotification.class);
 
             String purchaseToken = oneTimeProductNotification.getPurchaseToken();
-//            String productId = oneTimeProductNotification.getSku();
-//            InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(productId);
-//            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(productId, purchaseToken);
-//
-//            String userId = productPurchase.getObfuscatedExternalAccountId();
-//            if (userId == null) return;
+            String productId = oneTimeProductNotification.getSku();
+            InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(productId);
+            ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(productId, purchaseToken);
 
-//            if (paymentService.checkIfTxnIdExists(purchaseToken)) {
-//                LOGGER.info("TransactionId already exists in DB, transactionId: " + purchaseToken);
-//                pdLogger.logInfo("BUY_LEAFS", "TransactionId already exists in DB, transactionId: " + purchaseToken);
-//                return;
-//            }
+            String userId = productPurchase.getObfuscatedExternalAccountId();
+            if (userId == null) return;
 
-//            switch (oneTimeProductNotification.getNotificationType()) {
-//                case 1:
-//                    // one-time product was successfully purchased by a user.
-//                    try {
-//                        int purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
-//                        String txnId = purchaseToken;
-//                        String paymentMethod = "Google_Play_Store";
-//                        String currency = inAppProduct.getDefaultPrice().get("currency").toString();
-//                        String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
-//                        BigDecimal amount = new BigDecimal(amountInCents).divide(new BigDecimal(1000000)).setScale(2);
-//
-//                        paymentService.completePaymentToBuyLeafs(
-//                                userId,
-//                                new BigDecimal(0),
-//                                new BigDecimal(purchaseLeaves),
-//                                LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
-//                                txnId,
-//                                TransactionType.PAYMENT_COMPLETED.getDisplayName(),
-//                                amount,
-//                                paymentMethod,
-//                                currency,
-//                                "Added " + purchaseLeaves + " leafs successfully for user.",
-//                                null
-//                        );
-//                        LOGGER.info("Successfully purchased by a user, transactionId: " + purchaseToken);
-//                    } catch (Exception e) {
-//                        pdLogger.logException(e);
-//                    } finally {
-//                        break;
-//                    }
-//                case 2:
-//                    // this event received when a user requests a refund for a one-time product.
-//                    try {
-//                        paymentService.completeRefundLeafs(purchaseToken);
-//                    } catch (Exception e) {
-//                        pdLogger.logException(e);
-//                    } finally {
-//                        break;
-//                    }
-//            }
-//            return;
+            if (paymentService.checkIfTxnIdExists(purchaseToken)) {
+                LOGGER.info("TransactionId already exists in DB, transactionId: " + purchaseToken);
+                return;
+            }
 
             switch (oneTimeProductNotification.getNotificationType()) {
                 case 1:
-                    LOGGER.info("do not handle this case");
                     // one-time product was successfully purchased by a user.
-                    // This is completed by /buyLeafs API
-                    break;
+                    try {
+                        int purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
+                        String txnId = purchaseToken;
+                        String paymentMethod = "Google_Play_Store";
+                        String currency = inAppProduct.getDefaultPrice().get("currency").toString();
+                        String amountInCents = inAppProduct.getDefaultPrice().get("priceMicros").toString();
+                        BigDecimal amount = new BigDecimal(amountInCents).divide(new BigDecimal(1000000)).setScale(2);
+
+                        paymentService.completePaymentToBuyLeafs(
+                                userId,
+                                new BigDecimal(0),
+                                new BigDecimal(purchaseLeaves),
+                                LocalDateTime.ofInstant(Instant.ofEpochMilli(productPurchase.getPurchaseTimeMillis()), ZoneId.systemDefault()),
+                                txnId,
+                                TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                                amount,
+                                paymentMethod,
+                                currency,
+                                "Added " + purchaseLeaves + " leafs successfully for user.",
+                                null
+                        );
+                        LOGGER.info("Successfully purchased by a user, transactionId: " + purchaseToken);
+                    } catch (Exception e) {
+                        pdLogger.logException(e);
+                    } finally {
+                        break;
+                    }
                 case 2:
                     // this event received when a user requests a refund for a one-time product.
                     try {
@@ -115,6 +96,24 @@ public class PlayStoreWebhookService {
                     }
             }
             return;
+
+//            switch (oneTimeProductNotification.getNotificationType()) {
+//                case 1:
+//                    LOGGER.info("do not handle this case");
+//                    // one-time product was successfully purchased by a user.
+//                    // This is completed by /buyLeafs API
+//                    break;
+//                case 2:
+//                    // this event received when a user requests a refund for a one-time product.
+//                    try {
+//                        paymentService.completeRefundLeafs(purchaseToken);
+//                    } catch (Exception e) {
+//                        pdLogger.logException(e);
+//                    } finally {
+//                        break;
+//                    }
+//            }
+//            return;
         }
 
         // Check if is voided purchase notification
