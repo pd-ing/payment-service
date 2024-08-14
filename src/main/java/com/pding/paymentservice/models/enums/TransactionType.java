@@ -27,7 +27,9 @@ public enum TransactionType {
 
     ADD_TREES_FROM_BACKEND("addTreesFromBackend"),
 
-    REMOVE_TREES_FROM_BACKEND("removeTreesFromBackend");
+    REMOVE_TREES_FROM_BACKEND("removeTreesFromBackend"),
+
+    MEDIA_TRADING("mediaTrading");
 
     private final String displayName;
 

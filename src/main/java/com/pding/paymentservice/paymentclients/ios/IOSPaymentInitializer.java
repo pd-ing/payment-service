@@ -130,6 +130,9 @@ public class IOSPaymentInitializer {
         TransactionDetails transaction = new TransactionDetails();
 
         transaction.setTransactionId(jsonObject.getString("transactionId"));
+        if(jsonObject.has("appAccountToken")) {
+            transaction.setAppAccountToken(jsonObject.getString("appAccountToken"));
+        }
         transaction.setOriginalTransactionId(jsonObject.getString("originalTransactionId"));
         transaction.setBundleId(jsonObject.getString("bundleId"));
         transaction.setProductId(jsonObject.getString("productId"));
@@ -149,7 +152,7 @@ public class IOSPaymentInitializer {
         return transaction;
     }
 
-    private String getTransactionBodyFromEncodedTransactionResponse(String jwtToken) throws Exception {
+    public static String getTransactionBodyFromEncodedTransactionResponse(String jwtToken) throws Exception {
         System.out.println("------------ Decode JWT ------------");
         String[] split_string = jwtToken.split("\\.");
         String base64EncodedHeader = split_string[0];

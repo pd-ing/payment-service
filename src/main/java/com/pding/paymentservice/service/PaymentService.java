@@ -432,9 +432,8 @@ public class PaymentService {
                         walletHistory.getIpAddress()
                 );
             }
-
-            walletService.deductLeafsFromWallet(walletHistory.getUserId(), leafsToRefund);
             ledgerService.saveToLedger(walletHistory.getWalletId(), new BigDecimal(0), leafsToRefund, TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
+            walletService.deductLeafsFromWallet(walletHistory.getUserId(), leafsToRefund);
 
             return "Refund completed successFully for the purchaseToken : " + transactionId + " , UserId :" + walletHistory.getUserId() + ", leafsToRefund:" + leafsToRefund;
         } else {

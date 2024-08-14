@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,11 +65,13 @@ public class MessagePurchaseService {
         if (notifyPd) {
             //addCallTransactionEntryToRealTimeDatabase(messagedId, leafsTransacted);
             try {
-                Map<String, String> data = new HashMap<>();
+                Map<String, String> data = new LinkedHashMap<>();
                 data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
                 data.put("GiftId", giftId);
                 data.put("UserId", pdUserId);
                 data.put("leafsTransacted", leafsTransacted.toString());
+                data.put("Title", "Gift received");
+                data.put("Content", "You got a gift of " + leafsTransacted + " leaf");
                 fcmService.sendNotification(pdUserId, data);
             } catch (Exception e) {
                 pdLogger.logException(e);
