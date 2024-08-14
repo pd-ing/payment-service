@@ -46,6 +46,7 @@ public class MediaTradingService {
                 .attachments(addMediaTrandingRequest.getAttachments())
                 .isCancel(addMediaTrandingRequest.getIsCancel())
                 .transactionStatus(addMediaTrandingRequest.getTransactionStatus())
+                .cid(addMediaTrandingRequest.getCid())
                 .build();
 
         return mediaTradingRepository.save(inChatMediaTrading);

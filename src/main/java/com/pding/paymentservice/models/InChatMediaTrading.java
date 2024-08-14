@@ -28,4 +28,5 @@ public class InChatMediaTrading {
     private String attachments;
     private Boolean isCancel;
     private String transactionStatus;
+    private String cid;
 }

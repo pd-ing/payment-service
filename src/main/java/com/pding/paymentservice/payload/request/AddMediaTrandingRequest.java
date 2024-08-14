@@ -14,4 +14,5 @@ public class AddMediaTrandingRequest {
     private String mediaType;
     private Boolean isCancel;
     private String transactionStatus;
+    private String cid;
 }
