@@ -1,5 +1,9 @@
 package com.pding.paymentservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.pding.paymentservice.models.InChatMediaTrading;
 import com.pding.paymentservice.models.enums.TransactionType;
@@ -54,7 +58,7 @@ public class MediaTradingService {
     }
 
     @Transactional
-    public InChatMediaTrading buyMediaTrade(String messageId) {
+    public InChatMediaTrading buyMediaTrade(String messageId) throws JsonProcessingException {
 
         InChatMediaTrading inChatMediaTrading = mediaTradingRepository.findByMessageId(messageId).orElseThrow(
                 () -> new RuntimeException("Media Trading not found")
@@ -81,8 +85,17 @@ public class MediaTradingService {
         mediaTradingRepository.save(inChatMediaTrading);
 
         //raise event to update message
-        Gson gson = new Gson();
-        sqsTemplate.send("InChatMediaTrading", gson.toJson(inChatMediaTrading));
+        final ObjectMapper mapper = new ObjectMapper();
+        ArrayNode attachments = (ArrayNode) mapper.readTree(inChatMediaTrading.getAttachments());
+        ObjectNode jsonNode = mapper.createObjectNode();
+        jsonNode.put("messageId", inChatMediaTrading.getMessageId());
+        jsonNode.put("pdId", inChatMediaTrading.getPdId());
+        jsonNode.put("attachments", attachments);
+        jsonNode.put("isCancel", inChatMediaTrading.getIsCancel());
+        jsonNode.put("transactionStatus", inChatMediaTrading.getTransactionStatus());
+        jsonNode.put("cid", inChatMediaTrading.getCid());
+
+        sqsTemplate.send("InChatMediaTrading", jsonNode.toString());
 
         return inChatMediaTrading;
     }

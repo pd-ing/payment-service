@@ -84,7 +84,18 @@ public class AppStoreWebhookService extends BaseService {
 
         if ("REFUND".equalsIgnoreCase(notificationType)) {
             paymentService.completeRefundLeafs(txnId);
+            return;
         }
+
+        if("REFUND_DECLINED".equalsIgnoreCase(notificationType) || "REFUND_REVERSED".equalsIgnoreCase(notificationType)) {
+            try {
+                paymentService.cancelRefundLeafs(txnId);
+            } catch (Exception e) {
+                pdLogger.logException(e);
+            }
+            return;
+        }
+
     }
 
 }

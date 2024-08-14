@@ -442,4 +442,52 @@ public class PaymentService {
         }
     }
 
+    @Transactional
+    public String cancelRefundLeafs(String transactionId) {
+
+        String txnIdPattern = "_leafs_refunded_for_" + transactionId;
+        List<WalletHistory> refundEntries = walletHistoryService.findByTransactionIdWithPattern(txnIdPattern);
+        if (refundEntries.isEmpty()) {
+            throw new RuntimeException("Refund is not done for the given transactionId");
+        }
+
+        // Retrieve the refund entry
+        WalletHistory refundEntry = refundEntries.get(0);
+
+        // Update the refund entry to indicate that the refund has been canceled
+        String cancelTransactionId = "cancelled_refunded_for_" + transactionId;
+
+        Optional<WalletHistory> cancelEntryOptional = walletHistoryService.findByTransactionId(cancelTransactionId);
+        if (cancelEntryOptional.isPresent()) {
+            throw new RuntimeException("Refund cancellation is already done for the given transactionId");
+        }
+
+        // Add the refunded leafs back to the user's wallet
+        BigDecimal leafsToAdd = refundEntry.getPurchasedLeafs();
+        walletService.addToWallet(refundEntry.getUserId(), new BigDecimal(0), leafsToAdd, LocalDateTime.now());
+
+        // Create a new WalletHistory entry for the refund cancellation
+        WalletHistory cancelEntry = WalletHistory.builder()
+                .walletId(refundEntry.getWalletId())
+                .userId(refundEntry.getUserId())
+                .purchasedTrees(new BigDecimal(0))
+                .purchasedLeafs(leafsToAdd)
+                .purchaseDate(LocalDateTime.now())
+                .transactionId(cancelTransactionId)
+                .transactionStatus(TransactionType.REFUND_CANCELLED.getDisplayName())
+                .amount(refundEntry.getAmount())
+                .paymentMethod(refundEntry.getPaymentMethod())
+                .currency(refundEntry.getCurrency())
+                .description(refundEntry.getDescription() + ", Refund cancelled")
+                .ipAddress(refundEntry.getIpAddress())
+                .build();
+        walletHistoryService.save(cancelEntry);
+
+        // Log the transaction in the ledger as a refund cancellation
+        ledgerService.saveToLedger(refundEntry.getWalletId(), new BigDecimal(0), leafsToAdd, TransactionType.REFUND_CANCELLED, refundEntry.getUserId());
+
+        return "Refund cancellation completed successfully for the transactionId: " + transactionId + ", UserId: " + refundEntry.getUserId() + ", leafsAddedBack: " + leafsToAdd;
+
+    }
+
 }
