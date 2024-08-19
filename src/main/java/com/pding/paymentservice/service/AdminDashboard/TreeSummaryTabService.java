@@ -43,6 +43,47 @@ public class TreeSummaryTabService {
         return treeSummary;
     }
 
+    public TreeSummary getTreesSummaryForPd(String pdId) {
+        TreeSummary treeSummary = new TreeSummary();
+        BigDecimal videoPurchaseTrees = treeSummaryTabRepository.getTotalTreesConsumedForVideosByPd(pdId, null, null);
+        BigDecimal totalTreesDonated = treeSummaryTabRepository.getTreesDonatedForPd(pdId, null, null);
+        BigDecimal totalTreeRevenue =videoPurchaseTrees.add(totalTreesDonated);
+        BigDecimal totalTreesExchanged = treeSummaryTabRepository.getTotalExchangedTreesForPd(pdId, null, null);
+        BigDecimal totalUnexchangedTrees = treeSummaryTabRepository.getTotalUnExchangedTreesForPd(pdId, null, null);
+
+        //get start date & end date of last month
+        LocalDate startDate = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+        LocalDate endDate = LocalDate.now().minusMonths(1).withDayOfMonth(LocalDate.now().minusMonths(1).lengthOfMonth());
+
+        BigDecimal lastMonthVideoPurchaseTrees = treeSummaryTabRepository.getTotalTreesConsumedForVideosByPd(pdId, startDate, endDate);
+        BigDecimal lastMonthtotalTreesDonated = treeSummaryTabRepository.getTreesDonatedForPd(pdId, startDate, endDate);
+        BigDecimal lastMonthTreeRevenue = lastMonthVideoPurchaseTrees.add(lastMonthtotalTreesDonated);
+
+        //get start date & end date of this month
+        startDate = LocalDate.now().withDayOfMonth(1);
+        endDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+
+        BigDecimal currentMonthVideoPurchaseTrees = treeSummaryTabRepository.getTotalTreesConsumedForVideosByPd(pdId, startDate, endDate);
+        BigDecimal currentMonthtotalTreesDonated = treeSummaryTabRepository.getTreesDonatedForPd(pdId, startDate, endDate);
+        BigDecimal currentMonthTreeRevenue = currentMonthVideoPurchaseTrees.add(currentMonthtotalTreesDonated);
+
+        //get month-over-month percent growth
+        BigDecimal monthOverMonthPercentGrowth = BigDecimal.ZERO;
+        if (lastMonthTreeRevenue.compareTo(BigDecimal.ZERO) != 0) {
+            monthOverMonthPercentGrowth = currentMonthTreeRevenue.subtract(lastMonthTreeRevenue).divide(lastMonthTreeRevenue, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+        }
+
+        treeSummary.setTotalTreeRevenue(totalTreeRevenue);
+        treeSummary.setTotalTreesExchanged(totalTreesExchanged);
+        treeSummary.setTotalUnexchangedTrees(totalUnexchangedTrees);
+        treeSummary.setTotalTreesDonated(totalTreesDonated);
+        treeSummary.setVideoPurchaseTrees(videoPurchaseTrees);
+        treeSummary.setLastMonthTreeRevenue(lastMonthTreeRevenue);
+        treeSummary.setCurrentMonthTreeRevenue(currentMonthTreeRevenue);
+        treeSummary.setMonthOverMonthPercentGrowth(monthOverMonthPercentGrowth);
+        return treeSummary;
+    }
+
 
     private List<UserObject> createTreeSummaryList(List<Object[]> userPage, LocalDate startDate, LocalDate endDate) {
         List<UserObject> userList = new ArrayList<>();

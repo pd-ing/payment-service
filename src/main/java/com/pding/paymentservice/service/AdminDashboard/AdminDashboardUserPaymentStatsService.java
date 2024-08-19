@@ -230,6 +230,10 @@ public class AdminDashboardUserPaymentStatsService {
         return treeSummaryTabService.getTreesSummaryTotals(startDate, endDate, searchString);
     }
 
+    public TreeSummary getTreesSummaryForPd(String pdUserId) {
+        return treeSummaryTabService.getTreesSummaryForPd(pdUserId);
+    }
+
     public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
         return realTimeTreeUsageTabService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
     }
