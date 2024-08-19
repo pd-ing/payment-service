@@ -314,6 +314,20 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/treeSummariesPd")
+    public ResponseEntity<?> getTreeSummaryByUserTabDetailsController(@RequestParam(value = "pdUserId") String pdUserId) {
+        TreeSummary treeSummary = null;
+        try {
+            if (pdUserId == null || pdUserId.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId cannot be null or empty"));
+            }
+            treeSummary = adminDashboardUserPaymentStatsService.getTreesSummaryForPd(pdUserId);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, treeSummary));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), treeSummary));
+        }
+    }
+
     @GetMapping(value = "/realTimeTreeUsageHistory")
     public ResponseEntity<?> getRealTimeTreeUsageHistoryDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                           @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,

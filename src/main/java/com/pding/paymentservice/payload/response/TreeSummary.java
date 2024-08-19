@@ -15,6 +15,9 @@ public class TreeSummary {
     private BigDecimal totalTreeRevenue;
     private BigDecimal totalTreesExchanged;
     private BigDecimal totalUnexchangedTrees;
-
-
+    private BigDecimal totalTreesDonated;
+    private BigDecimal videoPurchaseTrees;
+    private BigDecimal lastMonthTreeRevenue;
+    private BigDecimal currentMonthTreeRevenue;
+    private BigDecimal monthOverMonthPercentGrowth;
 }
