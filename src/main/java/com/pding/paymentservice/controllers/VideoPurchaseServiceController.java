@@ -46,6 +46,11 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.buyVideoV2(videoId);
     }
 
+    @PostMapping(value = "/v3/buyVideo")
+    public ResponseEntity<?> buyVideoV3(@RequestParam(value = "videoId") String videoId, @RequestParam("duration") String duration) {
+        return videoPurchaseService.buyVideoV3(videoId, duration);
+    }
+
     @GetMapping(value = "/videoPurchaseHistory")
     public ResponseEntity<?> getVideotransactions(@RequestParam(value = "userId", required = false) String userId, HttpServletRequest request) {
         return videoPurchaseService.getVideoTransactions(authHelper.getUserId());
@@ -68,6 +73,11 @@ public class VideoPurchaseServiceController {
 
     @GetMapping(value = "/isVideoPurchased")
     public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId) {
+        return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
+    }
+
+    @GetMapping(value = "/videoPurchase")
+    public ResponseEntity<?> getVideoPurchasedStatus(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId) {
         return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
     }
 
