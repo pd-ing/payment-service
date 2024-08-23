@@ -36,7 +36,6 @@ public class VideoPurchase {
 
     private String duration;
     private LocalDateTime expiryDate;
-    private Boolean isPermanent;
 
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
         this.userId = userId;
@@ -47,7 +46,7 @@ public class VideoPurchase {
         this.isReplacementOfDeletedVideo = false;
     }
 
-    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate, Boolean isPermanent) {
+    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate) {
         this.userId = userId;
         this.videoId = videoId;
         this.treesConsumed = treesConsumed;
@@ -56,7 +55,6 @@ public class VideoPurchase {
         this.isReplacementOfDeletedVideo = false;
         this.duration = duration;
         this.expiryDate = expiryDate;
-        this.isPermanent = isPermanent;
     }
 
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, Boolean isReplacementOfDeletedVideo) {

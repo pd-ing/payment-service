@@ -76,9 +76,9 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
     }
 
-    @GetMapping(value = "/videoPurchase")
-    public ResponseEntity<?> getVideoPurchasedStatus(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId) {
-        return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
+    @GetMapping(value = "/v2/isVideoPurchased")
+    public ResponseEntity<?> getVideoPurchasedStatus(@RequestParam(value = "videoId") String videoId) {
+        return videoPurchaseService.isVideoPurchasedV2(authHelper.getUserId(), videoId);
     }
 
 //    @GetMapping(value = "/paidUnpaidFollowerList")
