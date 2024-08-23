@@ -1,5 +1,6 @@
 package com.pding.paymentservice.controllers;
 
+import com.apple.itunes.storekit.client.APIException;
 import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
@@ -339,7 +340,10 @@ public class PaymentServiceController {
                 return ResponseEntity.ok().body(new GenericStringResponse(null, message));
             }
 
-        } catch (Exception e) {
+        } catch (APIException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
     }
