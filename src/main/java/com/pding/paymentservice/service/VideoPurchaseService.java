@@ -727,9 +727,14 @@ public class VideoPurchaseService {
                 videoPurchases = videoPurchaseRepository.findByUserIdAndVideoIdIn(userId, videoIds);
             }
 
-            List<VideoPurchaseTimeRemainingResponse> videoPurchaseTimeRemainingList = videoPurchases.stream().map(vp -> {
+            Map<String, List<VideoPurchase>> videoPurchasesMap = videoPurchases.stream().collect(Collectors.groupingBy(VideoPurchase::getVideoId));
+
+            List<VideoPurchaseTimeRemainingResponse> videoPurchaseTimeRemainingList =
+                    videoPurchasesMap.entrySet().stream().map(entry -> {
+                        VideoPurchase vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
+
                 VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
-                vpTimeRemaining.setVideoId(vp.getVideoId());
+                vpTimeRemaining.setVideoId(entry.getKey());
                 vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
                 vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
                 vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
@@ -738,7 +743,7 @@ public class VideoPurchaseService {
             }).collect(Collectors.toList());
 
 
-            return ResponseEntity.ok().body(new GenericListDataResponse(null, videoPurchaseTimeRemainingList));
+            return ResponseEntity.ok().body(videoPurchaseTimeRemainingList);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
