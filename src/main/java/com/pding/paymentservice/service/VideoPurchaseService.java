@@ -15,6 +15,7 @@ import com.pding.paymentservice.payload.response.*;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
+import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
@@ -36,6 +37,7 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -713,6 +715,33 @@ public class VideoPurchaseService {
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> getVideoPurchaseTimeRemaining(String userId, List<String> videoIds) {
+        try {
+            List<VideoPurchase> videoPurchases;
+            if(videoIds == null || videoIds.isEmpty()) {
+                videoPurchases = videoPurchaseRepository.findByUserId(userId);
+            } else {
+                videoPurchases = videoPurchaseRepository.findByUserIdAndVideoIdIn(userId, videoIds);
+            }
+
+            List<VideoPurchaseTimeRemainingResponse> videoPurchaseTimeRemainingList = videoPurchases.stream().map(vp -> {
+                VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
+                vpTimeRemaining.setVideoId(vp.getVideoId());
+                vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
+                vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
+                vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
+                vpTimeRemaining.setNumberOfDaysRemaining(vp.getExpiryDate() != null ? ChronoUnit.DAYS.between(LocalDateTime.now(), vp.getExpiryDate()) : null);
+                return vpTimeRemaining;
+            }).collect(Collectors.toList());
+
+
+            return ResponseEntity.ok().body(new GenericListDataResponse(null, videoPurchaseTimeRemainingList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
 }
