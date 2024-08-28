@@ -50,7 +50,7 @@ public class LeafsChargeServiceController {
                                      @RequestParam(value = "callType") String callType,
                                      @RequestParam(value = "callOrMessageId") String callOrMessageId,
                                      @RequestParam(value = "giftId", required = false) String giftId,
-                                     @RequestParam(value = "notifyPd", required = false, defaultValue = "false") Boolean notifyPd
+                                     @RequestParam(value = "notifyPd", required = false, defaultValue = "true") Boolean notifyPd
     ) {
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId parameter is required."), null));
@@ -79,9 +79,9 @@ public class LeafsChargeServiceController {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid callType passed,Valid callTyle is audio or video"), null));
         }
 
-        if (giftId != null && !giftId.isEmpty()) {
-            notifyPd = true;
-        }
+//        if (giftId != null && !giftId.isEmpty()) {
+//            notifyPd = true;
+//        }
 
         try {
             pdLogger.logInfo("GIFT_TEST", "buyCallOrMessage API HIT, giftId : " + giftId + " , leafsToCharge : " + leafsToCharge);
