@@ -743,7 +743,7 @@ public class VideoPurchaseService {
             }).collect(Collectors.toList());
 
 
-            return ResponseEntity.ok().body(videoPurchaseTimeRemainingList);
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, videoPurchaseTimeRemainingList));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
