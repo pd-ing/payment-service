@@ -20,4 +20,7 @@ public interface WalletRepository extends JpaRepository<Wallet, String> {
     @Query(value = "SELECT email FROM users WHERE id = :userId", nativeQuery = true)
     Optional<String> findEmailById(@Param("userId") String userId);
 
+    @Query("SELECT COALESCE(SUM(w.leafs), 0) FROM Wallet w")
+    BigDecimal sumOfAllLeafsForUser();
+
 }

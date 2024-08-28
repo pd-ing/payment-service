@@ -16,4 +16,6 @@ public class TreeBalanceResponse {
     ErrorResponse errorResponse;
     BigDecimal treeLeftInWalletAllUsers;
     BigDecimal treeLeftInEarningAllUsers;
+    BigDecimal leafLeftInWalletAllUsers;
+    BigDecimal leafLeftInEarningAllUsers;
 }
