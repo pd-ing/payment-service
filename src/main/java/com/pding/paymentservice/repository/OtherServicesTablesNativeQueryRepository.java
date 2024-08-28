@@ -272,4 +272,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     @Query(value = "select video_id, duration, trees, enabled from video_duration_price where video_id = :videoId", nativeQuery = true)
     List<Object[]> findPricesByVideoId(@Param("videoId") String videoId);
 
+    @Query(value = "select target_user_id " +
+            "from block_user where blocker_user_id = :userid", nativeQuery = true)
+    List<String> findBlockedUsersByUserId(@Param("userid") String userId);
 }
