@@ -46,10 +46,11 @@ public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
             "    ) AS subquery2 \n" +
             "    GROUP BY user_id \n" +
             ") AS combined \n" +
-            "GROUP BY user_id \n" +
-            "ORDER BY totalTreesLeafsSpent DESC " +
-            "LIMIT :limit", nativeQuery = true)
-    List<Object[]> getUserTotalTreesSpentWithLimit(@Param("limit") Long limit);
+            " where user_id not in (:blockedUsers) \n" +
+            " GROUP BY user_id \n" +
+            " ORDER BY totalTreesLeafsSpent DESC " +
+            " LIMIT :limit", nativeQuery = true)
+    List<Object[]> getUserTotalTreesSpentWithLimit(@Param("limit") Long limit, @Param("blockedUsers") List<String> blockedUsers);
 
     @Query(value = "(SELECT " +
             "  vp.last_update_date as last_update_date, " +

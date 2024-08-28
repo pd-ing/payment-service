@@ -5,6 +5,7 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryRecord;
 import com.pding.paymentservice.repository.DonationRepository;
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.TreesRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
@@ -40,8 +41,16 @@ public class TreesService {
     @Autowired
     CommonMethods commonMethods;
 
+    @Autowired
+    OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
     public List<PublicUserNet> getTopFans(Long limit) throws Exception {
-        List<Object[]> topFans = treesRepository.getUserTotalTreesSpentWithLimit(limit);
+        String userId = authHelper.getUserId();
+        List<String> lstBlockedUsers = otherServicesTablesNativeQueryRepository.findBlockedUsersByUserId(userId);
+        if(lstBlockedUsers.isEmpty()) {
+            lstBlockedUsers.add("_");
+        }
+        List<Object[]> topFans = treesRepository.getUserTotalTreesSpentWithLimit(limit, lstBlockedUsers);
         return commonMethods.getPublicUserInfo(topFans);
     }
 
