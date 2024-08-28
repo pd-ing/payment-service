@@ -84,6 +84,11 @@ public class MediaTradingService {
         inChatMediaTrading.setUserId(userId);
         mediaTradingRepository.save(inChatMediaTrading);
 
+        raiseEventToUpdateOrDelete(inChatMediaTrading);
+        return inChatMediaTrading;
+    }
+
+    private void raiseEventToUpdateOrDelete(InChatMediaTrading inChatMediaTrading) throws JsonProcessingException {
         //raise event to update message
         final ObjectMapper mapper = new ObjectMapper();
         ArrayNode attachments = (ArrayNode) mapper.readTree(inChatMediaTrading.getAttachments());
@@ -96,7 +101,20 @@ public class MediaTradingService {
         jsonNode.put("cid", inChatMediaTrading.getCid());
 
         sqsTemplate.send("InChatMediaTrading", jsonNode.toString());
+    }
 
-        return inChatMediaTrading;
+    public void cancelMediaTrade(String messageId) throws JsonProcessingException {
+        InChatMediaTrading inChatMediaTrading = mediaTradingRepository.findByMessageId(messageId).orElseThrow(
+                () -> new RuntimeException("Media Trading not found")
+        );
+
+        if ("PAID".equalsIgnoreCase(inChatMediaTrading.getTransactionStatus())) {
+            throw new RuntimeException("Media already paid");
+        }
+
+        inChatMediaTrading.setIsCancel(true);
+        inChatMediaTrading.setTransactionStatus("CANCELLED");
+        mediaTradingRepository.save(inChatMediaTrading);
+        raiseEventToUpdateOrDelete(inChatMediaTrading);
     }
 }

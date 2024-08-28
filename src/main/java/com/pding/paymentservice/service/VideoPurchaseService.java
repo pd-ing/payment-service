@@ -6,19 +6,21 @@ import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
+import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.*;
-import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
-import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
+import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.EmailValidator;
@@ -35,6 +37,7 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,11 +74,31 @@ public class VideoPurchaseService {
     @Autowired
     SendNotificationService sendNotificationService;
 
+    @Autowired
+    OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
         walletService.deductTreesFromWallet(userId, treesToConsumed);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
+        VideoPurchase video = videoPurchaseRepository.save(transaction);
+        pdLogger.logInfo("BUY_VIDEO", "Video purchase record created with details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + treesToConsumed + ", VideoOwnerUserId : " + videoOwnerUserId);
+
+        earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
+        ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
+        pdLogger.logInfo("BUY_VIDEO", "Video purchase details recorded in LEGDER VideoId : " + videoId + ", trees : " + treesToConsumed + ", TransactionType : " + TransactionType.VIDEO_PURCHASE);
+
+        return video;
+    }
+
+    @Transactional
+    public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, BigDecimal treesToConsumed, String duration) {
+        walletService.deductTreesFromWallet(userId, treesToConsumed);
+
+        VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, duration,
+                VideoPurchaseDuration.valueOf(duration).getExpiryDate());
+
         VideoPurchase video = videoPurchaseRepository.save(transaction);
         pdLogger.logInfo("BUY_VIDEO", "Video purchase record created with details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + treesToConsumed + ", VideoOwnerUserId : " + videoOwnerUserId);
 
@@ -278,6 +301,71 @@ public class VideoPurchaseService {
         }
     }
 
+    public ResponseEntity<?> buyVideoV3(String videoId, String duration) {
+        if (videoId == null || videoId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
+        }
+        if (duration == null || duration.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "duration parameter is required."));
+        }
+
+        try {
+            String userId = authHelper.getUserId();
+            String videoOwnerUserId = otherServicesTablesNativeQueryRepository.findUserIdByVideoId(videoId).orElse(null);
+
+            if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), " VideoOwnerUserID is null or empty for the videoId provided"), null));
+            }
+
+            //get trees
+            List<VideoDurationPriceDTO> prices = new ArrayList<>();
+            List<Object[]> pricesRawResults = otherServicesTablesNativeQueryRepository.findPricesByVideoId(videoId);
+            for (Object[] row : pricesRawResults) {
+                VideoDurationPriceDTO price = new VideoDurationPriceDTO();
+                price.setVideoId((String) row[0]);
+                price.setDuration((String) row[1]);
+                price.setTrees((BigDecimal) row[2]);
+                price.setEnabled((Boolean) row[3]);
+                prices.add(price);
+            }
+
+            Map<String, VideoDurationPriceDTO> mapDurationPrice = prices.stream().collect(Collectors.toMap(VideoDurationPriceDTO::getDuration, v -> v));
+            VideoDurationPriceDTO price = mapDurationPrice.get(duration);
+
+            if (price == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Can not find trees for this duration"), null));
+            } else if (!price.getEnabled()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "This duration is not enabled"), null));
+            }
+
+
+            List<VideoPurchase> videoPurchases = videoPurchaseRepository.findByUserIdAndVideoId(userId, videoId);
+
+            //check if video with duration not expired and already purchased
+            if (videoPurchases.stream().anyMatch(vp -> vp.getExpiryDate() == null || vp.getExpiryDate().isAfter(LocalDateTime.now()))) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Video already purchased"), null));
+            }
+
+            VideoPurchase video = createVideoTransaction(userId, videoId, videoOwnerUserId, price.getTrees(), price.getDuration());
+
+            sendNotificationService.sendBuyVideoNotification(video);
+
+            return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
+        } catch (WalletNotFoundException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (InsufficientTreesException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (InvalidAmountException e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
     public ResponseEntity<?> getVideoTransactions(String userId) {
         if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
@@ -341,6 +429,41 @@ public class VideoPurchaseService {
         }
     }
 
+    public ResponseEntity<?> isVideoPurchasedV2(String userId, String videoId) {
+        try {
+            List<VideoPurchase> videoPurchases = videoPurchaseRepository.findByUserIdAndVideoId(userId, videoId);
+
+            if (videoPurchases == null || videoPurchases.isEmpty()) {
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2( videoId, false, null, null));
+            }
+
+            //video purchase before timing duration release is permanent as default
+            if (videoPurchases.stream().anyMatch(vp -> vp.getDuration() == null || vp.getExpiryDate() == null)) {
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2( videoId, true, LocalDateTime.now().plusYears(100), true));
+            }
+
+            Optional<VideoPurchase> videoPurchase = videoPurchases.stream()
+                    .filter(vp -> vp.getExpiryDate() != null && vp.getExpiryDate().isAfter(LocalDateTime.now()))
+                    .findFirst();
+
+            if (videoPurchase.isPresent()) {
+                Boolean isPermanent = VideoPurchaseDuration.PERMANENT.name().equalsIgnoreCase(videoPurchase.get().getDuration());
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2( videoId, true, videoPurchase.get().getExpiryDate(), isPermanent));
+            } else {
+                //get latest expiry date
+                LocalDateTime latestExpiryDate = videoPurchases.stream()
+                        .map(VideoPurchase::getExpiryDate)
+                        .max(LocalDateTime::compareTo)
+                        .orElse(null);
+
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2(videoId, false, latestExpiryDate, false));
+            }
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.IS_VIDEO_PURCHASED, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
+        }
+    }
+
 //    public ResponseEntity<?> getPaidUnpaidFollowerList(String userId) {
 //        if (userId == null || userId.isEmpty()) {
 //            return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
@@ -381,7 +504,7 @@ public class VideoPurchaseService {
 
             List<Object[]> followerList = videoPurchaseRepository.getFollowersList(userId);
             for (Object[] followerRecord : followerList) {
-                if(followerRecord[1] == null)
+                if (followerRecord[1] == null)
                     unpaidUsers.add(followerRecord[0].toString());
                 else
                     paidUsers.add(followerRecord[0].toString());
@@ -592,6 +715,38 @@ public class VideoPurchaseService {
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> getVideoPurchaseTimeRemaining(String userId, List<String> videoIds) {
+        try {
+            List<VideoPurchase> videoPurchases;
+            if(videoIds == null || videoIds.isEmpty()) {
+                videoPurchases = videoPurchaseRepository.findByUserId(userId);
+            } else {
+                videoPurchases = videoPurchaseRepository.findByUserIdAndVideoIdIn(userId, videoIds);
+            }
+
+            Map<String, List<VideoPurchase>> videoPurchasesMap = videoPurchases.stream().collect(Collectors.groupingBy(VideoPurchase::getVideoId));
+
+            List<VideoPurchaseTimeRemainingResponse> videoPurchaseTimeRemainingList =
+                    videoPurchasesMap.entrySet().stream().map(entry -> {
+                        VideoPurchase vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
+
+                VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
+                vpTimeRemaining.setVideoId(entry.getKey());
+                vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
+                vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
+                vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
+                vpTimeRemaining.setNumberOfDaysRemaining(vp.getExpiryDate() != null ? ChronoUnit.DAYS.between(LocalDateTime.now(), vp.getExpiryDate()) : null);
+                return vpTimeRemaining;
+            }).collect(Collectors.toList());
+
+
+            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, videoPurchaseTimeRemainingList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
 }

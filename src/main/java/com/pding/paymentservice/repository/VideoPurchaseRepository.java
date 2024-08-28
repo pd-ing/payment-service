@@ -128,4 +128,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1")
     Page<String> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, Pageable pageable);
 
+    List<VideoPurchase> findByUserIdAndVideoIdIn(String userId, List<String> videoIds);
+    List<VideoPurchase> findByUserId(String userId);
 }

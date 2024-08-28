@@ -44,6 +44,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/videoPurchaseHistoryOfUser").authenticated()
                                 //.requestMatchers("/api/payment/treesEarned").authenticated()
                                 .requestMatchers("/api/payment/isVideoPurchased").authenticated()
+                                .requestMatchers("/api/payment/v2/isVideoPurchased").authenticated()
                                 //.requestMatchers("/api/payment/paidUnpaidFollowerList").authenticated()
                                 .requestMatchers("/api/payment/paidUnpaidFollowerCount").authenticated()
                                 .requestMatchers("/api/payment/donationHistoryForUser").authenticated()
@@ -101,6 +102,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/topFans").authenticated()
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
+                                .requestMatchers("/api/payment/v3/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
                                 .requestMatchers("/api/payment/donateLeafs").authenticated()
                                 //.requestMatchers("/api/payment/v2/charge").authenticated()
@@ -119,11 +121,13 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/searchVideoSalesHistoryOfPd").authenticated()
                                 .requestMatchers("/api/payment/admin/treeSummariesAllPd").permitAll()
                                 .requestMatchers("/api/payment/admin/treeSummariesTotals").permitAll()
+                                .requestMatchers("/api/payment/admin/treeSummariesPd").permitAll()
                                 .requestMatchers("/api/payment/admin/realTimeTreeUsageHistory").permitAll()
                                 .requestMatchers("/api/payment/admin/realTimeTreeUsageTotals").permitAll()
                                 .requestMatchers("/api/payment/internal/mediaTrading").permitAll()
                                 .requestMatchers("/api/payment/mediaTrading/buy").authenticated()
                                 .requestMatchers("/api/payment/mediaTrading/cancel").authenticated()
+                                .requestMatchers("/api/payment/videoPurchaseTimeRemaining").permitAll()
                 );
 
 

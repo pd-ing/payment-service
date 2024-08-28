@@ -74,12 +74,27 @@ public interface TreeSummaryTabRepository extends JpaRepository<VideoPurchase, S
             " AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)", nativeQuery = true)
     BigDecimal getTotalTreesConsumedForVideos(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
+    @Query(value = "SELECT COALESCE(SUM(vp.trees_consumed), 0) FROM video_purchase vp INNER JOIN users u " +
+            " ON vp.video_owner_user_id = u.id " +
+            " WHERE u.id = :pdId" +
+            " AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
+            " AND (:endDate IS NULL OR  vp.last_update_date <= :endDate)"
+            , nativeQuery = true)
+    BigDecimal getTotalTreesConsumedForVideosByPd(@Param("pdId") String pdId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
     @Query(value = "SELECT COALESCE(SUM(d.donated_trees), 0) FROM donation d INNER JOIN users u \n" +
             " ON d.pd_user_id = u.id \n" +
             " WHERE (:startDate IS NULL OR d.last_update_date >= :startDate) \n" +
             " AND (:endDate IS NULL OR  d.last_update_date <= :endDate) \n" +
             " AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)", nativeQuery = true)
     BigDecimal getTotalDonatedTrees(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
+
+    @Query(value = "SELECT COALESCE(SUM(d.donated_trees), 0) FROM donation d INNER JOIN users u " +
+            " ON d.pd_user_id = u.id " +
+            " AND (:startDate IS NULL OR d.last_update_date >= :startDate) " +
+            " AND (:endDate IS NULL OR  d.last_update_date <= :endDate)" +
+            " WHERE u.id = :pdId)", nativeQuery = true)
+    BigDecimal getTotalDonatedTreesByPd(@Param("pdId") String pdId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     @Query(value = "SELECT COALESCE(SUM(w.trees), 0) AS totalExchangedTrees FROM withdrawals w INNER JOIN users u \n" +
             " ON w.pd_user_id = u.id \n" +

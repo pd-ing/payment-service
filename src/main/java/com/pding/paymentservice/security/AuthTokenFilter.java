@@ -71,7 +71,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/admin/listReferrerPds",
             "/api/payment/admin/listReferredPds",
             "/api/payment/tokens/sendGenericNotification",
-            "/api/payment/internal/mediaTrading"
+            "/api/payment/internal/mediaTrading",
+            "/api/payment/videoPurchaseTimeRemaining"
     );
 
     @Override

@@ -24,8 +24,13 @@ public class MediaTradingController {
     }
 
     @PostMapping(value = "/mediaTrading/cancel")
-    public String cancelMediaTrade(@RequestBody AddMediaTrandingRequest request) {
-        return "Cancel Media Trade";
+    public ResponseEntity cancelMediaTrade(@RequestParam String messageId) {
+        try {
+            mediaTradingService.cancelMediaTrade(messageId);
+            return ResponseEntity.ok(new ErrorResponse(HttpStatus.OK.value(), "Media canceled successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        }
     }
 
     @PostMapping(value = "/mediaTrading/buy")

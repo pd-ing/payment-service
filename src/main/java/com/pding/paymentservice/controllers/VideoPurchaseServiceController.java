@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -44,6 +45,17 @@ public class VideoPurchaseServiceController {
     @PostMapping(value = "/v2/buyVideo")
     public ResponseEntity<?> buyVideoV2(@RequestParam(value = "videoId") String videoId) {
         return videoPurchaseService.buyVideoV2(videoId);
+    }
+
+    @PostMapping(value = "/v3/buyVideo")
+    public ResponseEntity<?> buyVideoV3(@RequestParam(value = "videoId") String videoId, @RequestParam("duration") String duration) {
+        return videoPurchaseService.buyVideoV3(videoId, duration);
+    }
+
+    @GetMapping(value = "/videoPurchaseTimeRemaining")
+    public ResponseEntity<?> getVideoPurchaseTimeRemaining(@RequestParam(value = "userId", required = true) String userId,
+                                                    @RequestParam(value = "videoIds", required = false) List<String> videoIds) {
+        return videoPurchaseService.getVideoPurchaseTimeRemaining(userId, videoIds);
     }
 
     @GetMapping(value = "/videoPurchaseHistory")
@@ -69,6 +81,11 @@ public class VideoPurchaseServiceController {
     @GetMapping(value = "/isVideoPurchased")
     public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId) {
         return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
+    }
+
+    @GetMapping(value = "/v2/isVideoPurchased")
+    public ResponseEntity<?> getVideoPurchasedStatus(@RequestParam(value = "videoId") String videoId) {
+        return videoPurchaseService.isVideoPurchasedV2(authHelper.getUserId(), videoId);
     }
 
 //    @GetMapping(value = "/paidUnpaidFollowerList")
