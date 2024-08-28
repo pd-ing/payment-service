@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.pding.paymentservice.models.InChatMediaTrading;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.network.NotificationServiceNetworkManager;
 import com.pding.paymentservice.payload.request.AddMediaTrandingRequest;
 import com.pding.paymentservice.repository.MediaTradingRepository;
 import com.pding.paymentservice.security.AuthHelper;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -27,6 +30,7 @@ public class MediaTradingService {
     private final LedgerService ledgerService;
     private final SqsTemplate sqsTemplate;
     private final AuthHelper authHelper;
+    private final NotificationServiceNetworkManager notificationServiceNetworkManager;
 
     public InChatMediaTrading saveMediaTrading(AddMediaTrandingRequest addMediaTrandingRequest) {
 
@@ -85,6 +89,16 @@ public class MediaTradingService {
         mediaTradingRepository.save(inChatMediaTrading);
 
         raiseEventToUpdateOrDelete(inChatMediaTrading);
+
+        //send fcm notification
+        Map<String, String> data = new HashMap<>();
+        data.put("NotificationType", "MEDIA_PURCHASED");
+        data.put("messageId", inChatMediaTrading.getMessageId());
+        data.put("cid", inChatMediaTrading.getCid());
+        data.put("pdId", inChatMediaTrading.getPdId());
+        data.put("userId", userId);
+        notificationServiceNetworkManager.sendGenericNotification(inChatMediaTrading.getPdId(), data);
+
         return inChatMediaTrading;
     }
 
