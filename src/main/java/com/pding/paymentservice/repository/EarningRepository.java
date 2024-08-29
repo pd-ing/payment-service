@@ -19,4 +19,7 @@ public interface EarningRepository extends JpaRepository<Earning, String> {
     // Query method to get the sum of all treesEarned
     @Query("SELECT COALESCE(SUM(e.treesEarned), 0) FROM Earning e")
     BigDecimal sumOfAllTreesEarned();
+
+    @Query("SELECT COALESCE(SUM(e.leafsEarned), 0) FROM Earning e")
+    BigDecimal sumOfAllLeafsEarned();
 }
