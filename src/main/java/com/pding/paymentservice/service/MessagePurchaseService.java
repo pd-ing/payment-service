@@ -7,6 +7,7 @@ import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.repository.CallPurchaseRepository;
 import com.pding.paymentservice.repository.MessagePurchaseRepository;
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,9 @@ public class MessagePurchaseService {
     @Autowired
     FirebaseRealtimeDbHelper firebaseRealtimeDbHelper;
 
+    @Autowired
+    OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
     @Transactional
     public String CreateMessageTransaction(String userId,
                                            String pdUserId,
@@ -62,20 +66,17 @@ public class MessagePurchaseService {
         ledgerService.saveToLedger(messagePurchase.getMessageId(), new BigDecimal(0), leafsTransacted, TransactionType.TEXT_MESSAGE, userId);
         pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase details recorded in LEDGER MessageId : " + messagedId + ", leafs : " + leafsTransacted + ", TransactionType : " + TransactionType.TEXT_MESSAGE);
 
-        if (notifyPd) {
-            //addCallTransactionEntryToRealTimeDatabase(messagedId, leafsTransacted);
-            try {
-                Map<String, String> data = new LinkedHashMap<>();
-                data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
-                data.put("GiftId", giftId);
-                data.put("UserId", pdUserId);
-                data.put("leafsTransacted", leafsTransacted.toString());
-                data.put("Title", "Gift received");
-                data.put("Content", "You got a gift of " + leafsTransacted + " leaf");
-                fcmService.sendNotification(pdUserId, data);
-            } catch (Exception e) {
-                pdLogger.logException(e);
-            }
+        try {
+            Map<String, String> data = new LinkedHashMap<>();
+            data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+            data.put("GiftId", giftId);
+            data.put("UserId", pdUserId);
+            data.put("leafsTransacted", leafsTransacted.toString());
+            data.put("notifyPd", notifyPd.toString());
+            data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
+            fcmService.sendNotification(pdUserId, data);
+        } catch (Exception e) {
+            pdLogger.logException(e);
         }
 
         return "Leafs charge was successful";

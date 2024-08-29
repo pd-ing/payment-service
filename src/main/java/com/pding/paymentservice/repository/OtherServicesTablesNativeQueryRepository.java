@@ -265,6 +265,9 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     @Query(value = "SELECT id from users where uuid = :uuid", nativeQuery = true)
     Optional<String> getUserIdByUUID(@Param("uuid") String uuid);
 
+    @Query(value = "SELECT nickname from users where id = :userId", nativeQuery = true)
+    Optional<String> getNicknameByUserId(@Param("userId") String userId);
+
 
     @Query(value = "SELECT user_id FROM videos WHERE video_id = :videoId", nativeQuery = true)
     Optional<String> findUserIdByVideoId(@Param("videoId") String videoId);
