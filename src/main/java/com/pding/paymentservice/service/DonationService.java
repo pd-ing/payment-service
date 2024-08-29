@@ -3,6 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
+import com.pding.paymentservice.exception.InvalidUserException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.enums.TransactionType;
@@ -17,6 +18,7 @@ import com.pding.paymentservice.payload.response.generic.GenericListDataResponse
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
@@ -67,10 +69,17 @@ public class DonationService {
 
     @Autowired
     AuthHelper authHelper;
+
+    @Autowired
+    OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
     
 
     @Transactional
     public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
+        if(otherServicesTablesNativeQueryRepository.findUserInfoByUserId(PdUserId).isEmpty()){
+            throw new InvalidUserException("PD User ID doesn't exist");
+        }
+
         walletService.deductTreesFromWallet(userId, treesToDonate);
 
         Donation transaction = new Donation(userId, PdUserId, treesToDonate, null);
@@ -84,6 +93,7 @@ public class DonationService {
 
     @Transactional
     public Donation createLeafsDonationTransaction(String userId, BigDecimal leafsToDonate, String PdUserId) {
+
         walletService.deductLeafsFromWallet(userId, leafsToDonate);
 
         Donation transaction = new Donation(userId, PdUserId, null, leafsToDonate);
