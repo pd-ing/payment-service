@@ -9,6 +9,7 @@ import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.repository.CallPurchaseRepository;
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
 import com.pding.paymentservice.util.TokenSigner;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,23 +59,39 @@ public class CallPurchaseService {
     @Autowired
     FcmService fcmService;
 
+    @Autowired
+    OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
     @Transactional
     public String CreateCallTransaction(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
         String returnVal = CreateCallTransactionHelper(userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
 
         addCallTransactionEntryToRealTimeDatabase(callId);
 
-        if (notifyPd) {
-            try {
-                Map<String, String> data = new HashMap<>();
-                data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
-                data.put("GiftId", giftId);
-                data.put("UserId", pdUserId);
-                data.put("leafsTransacted", leafsToCharge.toString());
-                fcmService.sendNotification(pdUserId, data);
-            } catch (Exception e) {
-                pdLogger.logException(e);
-            }
+//        if (notifyPd) {
+//            try {
+//                Map<String, String> data = new HashMap<>();
+//                data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+//                data.put("GiftId", giftId);
+//                data.put("UserId", pdUserId);
+//                data.put("leafsTransacted", leafsToCharge.toString());
+//                fcmService.sendNotification(pdUserId, data);
+//            } catch (Exception e) {
+//                pdLogger.logException(e);
+//            }
+//        }
+
+        try {
+            Map<String, String> data = new LinkedHashMap<>();
+            data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+            data.put("GiftId", giftId);
+            data.put("UserId", pdUserId);
+            data.put("leafsTransacted", leafsToCharge.toString());
+            data.put("notifyPd", notifyPd.toString());
+            data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
+            fcmService.sendNotification(pdUserId, data);
+        } catch (Exception e) {
+            pdLogger.logException(e);
         }
 
         return returnVal;
