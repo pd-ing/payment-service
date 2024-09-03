@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.pding.paymentservice.models.InChatMediaTrading;
+import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.AddMediaTrandingRequest;
 import com.pding.paymentservice.repository.MediaTradingRepository;
+import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -27,7 +31,8 @@ public class MediaTradingService {
     private final LedgerService ledgerService;
     private final SqsTemplate sqsTemplate;
     private final AuthHelper authHelper;
-
+    private final FcmService fcmService;
+    private final OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
     public InChatMediaTrading saveMediaTrading(AddMediaTrandingRequest addMediaTrandingRequest) {
 
 
@@ -85,6 +90,13 @@ public class MediaTradingService {
         mediaTradingRepository.save(inChatMediaTrading);
 
         raiseEventToUpdateOrDelete(inChatMediaTrading);
+
+        //push notification to PD
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("NotificationType", NotificaitonDataType.MEDIA_PURCHASED.getDisplayName());
+        data.put("userId", inChatMediaTrading.getUserId());
+        data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
+        fcmService.sendAsyncNotification(pdUserId, data);
         return inChatMediaTrading;
     }
 
