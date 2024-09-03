@@ -3,6 +3,7 @@ package com.pding.paymentservice.models.enums;
 public enum NotificaitonDataType {
 
     MEDIA_PURCHASED("MEDIA_PURCHASED"),
+    GIFT_WEB("GIFT_WEB"),
     GIFT_RECEIVE("GIFT_RECEIVE");
     private final String displayName;
 
