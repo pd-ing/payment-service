@@ -46,6 +46,15 @@ public class SendNotificationService {
             String videoTitle = notificationRepository.findTitleByVideoId(videoPurchase.getVideoId());
             String videoUrl = tokenSigner.signPlaybackUrl(libraryId, videoPurchase.getVideoId(), 2);
             sendNotificationSqsMessage.sendVideoBoughtNotification(videoPurchase.getVideoOwnerUserId(), videoPurchase.getUserId(), email, videoPurchase.getVideoOwnerUserId(), videoPurchase.getVideoId(), videoTitle, videoUrl, null);
+
+            //push FCM
+            Map<String, String> data = new HashMap<>();
+            data.put("NotificationType", NotificaitonDataType.PURCHASE_PAID_POST.getDisplayName());
+            data.put("buyerNickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(videoPurchase.getUserId()).orElse("User"));
+            data.put("numberOfTree", String.valueOf(videoPurchase.getTreesConsumed()));
+            data.put("videoId", String.valueOf(videoPurchase.getVideoId()));
+            data.put("videoUrl", videoUrl);
+            data.put("videoTitle", videoTitle);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.Priority.p0, e);
         }

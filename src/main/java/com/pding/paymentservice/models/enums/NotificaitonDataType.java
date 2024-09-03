@@ -4,7 +4,8 @@ public enum NotificaitonDataType {
 
     MEDIA_PURCHASED("MEDIA_PURCHASED"),
     GIFT_WEB("GIFT_WEB"),
-    GIFT_RECEIVE("GIFT_RECEIVE");
+    GIFT_RECEIVE("GIFT_RECEIVE"),
+    PURCHASE_PAID_POST("PURCHASE_PAID_POST");
     private final String displayName;
 
     NotificaitonDataType(String displayName) {
