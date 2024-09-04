@@ -48,7 +48,7 @@ public class MediaTradingService {
 
 
         InChatMediaTrading inChatMediaTrading = InChatMediaTrading.builder()
-                .userId(null) //no need
+                .userId(addMediaTrandingRequest.getUserId())
                 .pdId(addMediaTrandingRequest.getPdId())
                 .messageId(addMediaTrandingRequest.getMessageId())
                 .leafsToCharge(addMediaTrandingRequest.getLeafsToCharge().toString())
@@ -58,8 +58,17 @@ public class MediaTradingService {
                 .cid(addMediaTrandingRequest.getCid())
                 .build();
 
-        return mediaTradingRepository.save(inChatMediaTrading);
+        InChatMediaTrading savedMediaTrading = mediaTradingRepository.save(inChatMediaTrading);
 
+        // push notification to user
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("NotificationType", NotificaitonDataType.MEDIA_TRANSACTION_REQUEST_CHAT_ROOM.getDisplayName());
+        data.put("pdId", addMediaTrandingRequest.getPdId());
+        data.put("userId", addMediaTrandingRequest.getUserId());
+        data.put("PdNickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(addMediaTrandingRequest.getPdId()).orElse("Following PD"));
+        fcmService.sendAsyncNotification(addMediaTrandingRequest.getUserId(), data);
+
+        return savedMediaTrading;
     }
 
     @Transactional
