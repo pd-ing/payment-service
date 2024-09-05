@@ -81,6 +81,8 @@ public class LeafsChargeServiceController {
 
         if (giftId != null && !giftId.isEmpty()) {
             notifyPd = true;
+        } else {
+            notifyPd = false;
         }
 
         try {
