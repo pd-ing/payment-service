@@ -50,9 +50,10 @@ public class SendNotificationService {
             //push FCM
             Map<String, String> data = new HashMap<>();
             data.put("NotificationType", NotificaitonDataType.PURCHASE_PAID_POST.getDisplayName());
-            data.put("buyerNickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(videoPurchase.getUserId()).orElse("User"));
+            data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(videoPurchase.getUserId()).orElse("User"));
             data.put("numberOfTree", String.valueOf(videoPurchase.getTreesConsumed()));
             data.put("videoId", String.valueOf(videoPurchase.getVideoId()));
+            data.put("postId", String.valueOf(videoPurchase.getVideoId()));
             data.put("videoUrl", videoUrl);
             data.put("videoTitle", videoTitle);
         } catch (Exception e) {
@@ -69,7 +70,7 @@ public class SendNotificationService {
             Map<String, String> data = new HashMap<>();
             data.put("NotificationType", NotificaitonDataType.GIFT_WEB.getDisplayName());
             data.put("numberOfTree", String.valueOf(donation.getDonatedTrees()));
-            data.put("donorNickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(donation.getDonorUserId()).orElse("User"));
+            data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(donation.getDonorUserId()).orElse("User"));
             fcmService.sendAsyncNotification(donation.getPdUserId(), data );
         } catch (Exception e) {
             pdLogger.logException(PdLogger.Priority.p0, e);
