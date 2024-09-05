@@ -66,17 +66,19 @@ public class MessagePurchaseService {
         ledgerService.saveToLedger(messagePurchase.getMessageId(), new BigDecimal(0), leafsTransacted, TransactionType.TEXT_MESSAGE, userId);
         pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase details recorded in LEDGER MessageId : " + messagedId + ", leafs : " + leafsTransacted + ", TransactionType : " + TransactionType.TEXT_MESSAGE);
 
-        try {
-            Map<String, String> data = new LinkedHashMap<>();
-            data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
-            data.put("GiftId", giftId);
-            data.put("UserId", pdUserId);
-            data.put("leafsTransacted", leafsTransacted.toString());
-            data.put("notifyPd", notifyPd.toString());
-            data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
-            fcmService.sendNotification(pdUserId, data);
-        } catch (Exception e) {
-            pdLogger.logException(e);
+        if(notifyPd) {
+            try {
+                Map<String, String> data = new LinkedHashMap<>();
+                data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
+                data.put("GiftId", giftId);
+                data.put("UserId", pdUserId);
+                data.put("leafsTransacted", leafsTransacted.toString());
+                data.put("notifyPd", notifyPd.toString());
+                data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
+                fcmService.sendNotification(pdUserId, data);
+            } catch (Exception e) {
+                pdLogger.logException(e);
+            }
         }
 
         return "Leafs charge was successful";

@@ -105,6 +105,15 @@ public class SendNotificationSqsMessage extends BaseService {
         }
     }
 
+    public void sendAsyncFcmNotification(Map<String, String> map) {
+        try {
+            String json = objectMapper.writeValueAsString(map);
+            sqsTemplate.sendAsync("FCMNotificationQueue", json);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+        }
+    }
+
     // is Null or Empty
     private boolean isNotValid(String a) {
         return a == null || a.isEmpty();

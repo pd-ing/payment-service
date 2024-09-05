@@ -12,11 +12,17 @@ import java.util.Map;
 public class FcmService extends BaseService {
 
     @Autowired
-    SendNotificationSqsMessage sendNotificationSqsMessage;
+    private SendNotificationSqsMessage sendNotificationSqsMessage;
 
     public String sendNotification(String userId, Map<String, String> data) {
         data.put("toUserId", userId);
         sendNotificationSqsMessage.sendFcmNotification(data);
+        return "Successfully sent message";
+    }
+
+    public String sendAsyncNotification(String userId, Map<String, String> data) {
+        data.put("toUserId", userId);
+        sendNotificationSqsMessage.sendAsyncFcmNotification(data);
         return "Successfully sent message";
     }
 }
