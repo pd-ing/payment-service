@@ -718,7 +718,7 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> getVideoPurchaseTimeRemaining(String userId, List<String> videoIds) {
+    public ResponseEntity<?> getVideoPurchaseTimeRemaining(String userId, Set<String> videoIds) {
         try {
             List<VideoPurchase> videoPurchases;
             if(videoIds == null || videoIds.isEmpty()) {
@@ -726,12 +726,15 @@ public class VideoPurchaseService {
             } else {
                 videoPurchases = videoPurchaseRepository.findByUserIdAndVideoIdIn(userId, videoIds);
             }
-
-            Map<String, List<VideoPurchase>> videoPurchasesMap = videoPurchases.stream().collect(Collectors.groupingBy(VideoPurchase::getVideoId));
-
+            Map<String, List<VideoPurchase>> videoPurchasesMap = videoPurchases.stream().collect(Collectors.groupingBy(VideoPurchase::getVideoId, Collectors.toList()));
             List<VideoPurchaseTimeRemainingResponse> videoPurchaseTimeRemainingList =
                     videoPurchasesMap.entrySet().stream().map(entry -> {
-                        VideoPurchase vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
+                        VideoPurchase vp;
+                        Optional<VideoPurchase> vpOptional = entry.getValue().stream().filter(v -> v.getExpiryDate() == null).findAny();
+                        if(vpOptional.isPresent()) vp = vpOptional.get();
+                        else {
+                            vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
+                        }
 
                 VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
                 vpTimeRemaining.setVideoId(entry.getKey());
