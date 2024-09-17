@@ -56,6 +56,7 @@ public class SendNotificationService {
             data.put("postId", String.valueOf(videoPurchase.getVideoId()));
             data.put("videoUrl", videoUrl);
             data.put("videoTitle", videoTitle);
+            fcmService.sendAsyncNotification(videoPurchase.getVideoOwnerUserId(), data);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.Priority.p0, e);
         }
