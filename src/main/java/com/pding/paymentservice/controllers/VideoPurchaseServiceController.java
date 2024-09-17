@@ -1,5 +1,6 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,10 +54,9 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.buyVideoV3(videoId, duration);
     }
 
-    @GetMapping(value = "/videoPurchaseTimeRemaining")
-    public ResponseEntity<?> getVideoPurchaseTimeRemaining(@RequestParam(value = "userId", required = true) String userId,
-                                                    @RequestParam(value = "videoIds", required = false) List<String> videoIds) {
-        return videoPurchaseService.getVideoPurchaseTimeRemaining(userId, videoIds);
+    @PostMapping(value = "/videoPurchaseTimeRemaining")
+    public ResponseEntity<?> getVideoPurchaseTimeRemaining(@RequestBody VideoPurchaseTimeRemainingRequest request) {
+        return videoPurchaseService.getVideoPurchaseTimeRemaining(request.getUserId(), request.getVideoIds());
     }
 
     @GetMapping(value = "/videoPurchaseHistory")
