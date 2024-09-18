@@ -105,7 +105,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT DISTINCT uf.follower, vp.user_id \n" +
             "FROM user_followings uf LEFT join video_purchase vp \n" +
             "ON uf.follower = vp.user_id\n" +
-            "WHERE uf.following = :userId",
+            "WHERE uf.is_deleted = FALSE and uf.following = :userId",
             nativeQuery = true)
     List<Object[]> getFollowersList(String userId);
 
