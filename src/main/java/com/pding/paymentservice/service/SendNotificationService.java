@@ -69,6 +69,7 @@ public class SendNotificationService {
 
             //push FCM
             Map<String, String> data = new HashMap<>();
+            data.put("userId", donation.getDonorUserId());
             data.put("NotificationType", NotificaitonDataType.GIFT_WEB.getDisplayName());
             data.put("numberOfTree", String.valueOf(donation.getDonatedTrees()));
             data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(donation.getDonorUserId()).orElse("User"));
