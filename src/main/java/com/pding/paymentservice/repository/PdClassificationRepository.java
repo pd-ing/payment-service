@@ -35,4 +35,30 @@ public interface PdClassificationRepository extends JpaRepository<VideoPurchase,
             nativeQuery = true
     )
     Page<Object[]> findTopActiveUsers(Pageable pageable);
+
+
+    @Query(value = "WITH TransactionRevenue AS (\n" +
+            "    SELECT pd_user_id, SUM(leafs_transacted) AS transaction_revenue\n" +
+            "    FROM call_purchase\n" +
+            "    WHERE last_update_date >= NOW() - INTERVAL 30 DAY\n" +
+            "    GROUP BY pd_user_id\n" +
+            "    UNION ALL\n" +
+            "    SELECT video_owner_user_id AS pd_user_id, SUM(trees_consumed) AS transaction_revenue\n" +
+            "    FROM video_purchase\n" +
+            "    WHERE last_update_date >= NOW() - INTERVAL 30 DAY\n" +
+            "    GROUP BY video_owner_user_id\n" +
+            "    UNION ALL\n" +
+            "    SELECT pd_userid AS pd_user_id, SUM(leafs_transacted) AS transaction_revenue\n" +
+            "    FROM message_purchase\n" +
+            "    -- WHERE last_update_date >= NOW() - INTERVAL 30 DAY\n" +
+            "    GROUP BY pd_userid\n" +
+            ")\n" +
+            "SELECT pd_user_id, SUM(transaction_revenue) AS total_revenue\n" +
+            "FROM TransactionRevenue\n" +
+            "GROUP BY pd_user_id\n" +
+            "ORDER BY total_revenue DESC",
+            countQuery = "SELECT COUNT(DISTINCT u.id) FROM users u " ,
+            nativeQuery = true
+    )
+    Page<Object[]> getTopEarningPds(Pageable pageable);
 }

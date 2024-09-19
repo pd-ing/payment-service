@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -42,8 +43,17 @@ public class PDClassificationService {
         }
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Object[]> topActivePds = pdClassificationRepository.findTopActiveUsers(pageable);
-            return commonMethods.getPublicUserInfo((List<Object[]>) topActivePds);
+            switch(pdSegment){
+                case ENGAGEMENT_HIGH :
+                    Page<Object[]> topActivePds = pdClassificationRepository.findTopActiveUsers(pageable);
+                    return commonMethods.getPublicUserInfo((List<Object[]>) topActivePds);
+                case REVENUE_HIGH:
+                    Page<Object[]> topEarningPds = pdClassificationRepository.getTopEarningPds(pageable);
+                    return commonMethods.getPublicUserInfo((List<Object[]>) topEarningPds);
+                default:
+                    return Collections.emptyList();
+
+            }
            // Page<UserLite> userLite = userPage.map(user -> UserLite.fromUser(user, tokenSigner, pdLogger));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.EVENTS, e);
