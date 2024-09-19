@@ -113,6 +113,7 @@ public class PdLogger {
         GET_REWARD_SETTING(Priority.p1);
 
 
+
         private final Priority priority;
 
         private EVENT(Priority priority) {

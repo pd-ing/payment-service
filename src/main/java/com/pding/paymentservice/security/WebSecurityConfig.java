@@ -100,6 +100,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/modalForReferenceTab").permitAll()
                                 .requestMatchers("/api/payment/topEarners").permitAll()
                                 .requestMatchers("/api/payment/topFans").authenticated()
+                                .requestMatchers("/api/payment/pdClassification").authenticated()
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v3/buyVideo").authenticated()
