@@ -56,6 +56,7 @@ public class SendNotificationService {
             data.put("postId", String.valueOf(videoPurchase.getVideoId()));
             data.put("videoUrl", videoUrl);
             data.put("videoTitle", videoTitle);
+            fcmService.sendAsyncNotification(videoPurchase.getVideoOwnerUserId(), data);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.Priority.p0, e);
         }
@@ -68,6 +69,7 @@ public class SendNotificationService {
 
             //push FCM
             Map<String, String> data = new HashMap<>();
+            data.put("userId", donation.getDonorUserId());
             data.put("NotificationType", NotificaitonDataType.GIFT_WEB.getDisplayName());
             data.put("numberOfTree", String.valueOf(donation.getDonatedTrees()));
             data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(donation.getDonorUserId()).orElse("User"));

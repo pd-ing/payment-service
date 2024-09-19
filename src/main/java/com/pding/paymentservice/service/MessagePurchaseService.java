@@ -71,7 +71,7 @@ public class MessagePurchaseService {
                 Map<String, String> data = new LinkedHashMap<>();
                 data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());
                 data.put("GiftId", giftId);
-                data.put("UserId", pdUserId);
+                data.put("userId", userId);
                 data.put("leafsTransacted", leafsTransacted.toString());
                 data.put("notifyPd", notifyPd.toString());
                 data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
