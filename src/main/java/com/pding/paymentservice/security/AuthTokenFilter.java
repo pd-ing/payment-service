@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-    @Autowired
-    PdLogger pdLogger;
+//    @Autowired
+//    PdLogger pdLogger;
 
     @Autowired
     private JwtUtils jwtUtils;
