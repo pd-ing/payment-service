@@ -186,7 +186,7 @@ public class PaymentServiceController {
             //Set userId from token
             String userId = authHelper.getUserId();
 
-            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,started payment to buy " + paymentDetailsRequest.getTrees() + " trees");
+//            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,started payment to buy " + paymentDetailsRequest.getTrees() + " trees");
 
             String charge = paymentService.chargeCustomer(
                     userId,
@@ -201,7 +201,7 @@ public class PaymentServiceController {
                     paymentDetailsRequest.getDescription(),
                     paymentDetailsRequest.getIpAddress()
             );
-            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,completed payment to buy " + paymentDetailsRequest.getTrees() + " trees");
+//            pdLogger.logInfo("BUY_TREES", "User : " + userId + " ,completed payment to buy " + paymentDetailsRequest.getTrees() + " trees");
             return ResponseEntity.ok().body(new GenericStringResponse(null, charge));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.CHARGE, e);
@@ -239,7 +239,7 @@ public class PaymentServiceController {
             if (paymentService.checkIfTxnIdExists(buyLeafsRequest.getPurchaseToken())) {
                 return ResponseEntity.status(HttpStatus.OK).body(new GenericStringResponse(new ErrorResponse(HttpStatus.OK.value(), "Transaction Id already present in DB"), null));
             } else {
-                pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
+//                pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
                 ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(buyLeafsRequest.getProductId(), buyLeafsRequest.getPurchaseToken());
                 InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(buyLeafsRequest.getProductId());
 
@@ -310,7 +310,7 @@ public class PaymentServiceController {
     ResponseEntity<?> buyLeafsIOS(@Valid @RequestBody BuyLeafsIOSRequest buyLeafsRequest) {
         try {
 
-            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
+//            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
             TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAdd(buyLeafsRequest.getTransactionIdBase64Decoded(), buyLeafsRequest.getProductIdBase64Decoded());
 
             if (paymentService.checkIfTxnIdExists(txnDetails.getTransactionId())) {

@@ -36,7 +36,7 @@ public class PlayStoreWebhookService {
         Gson gson = new Gson();
         if (payload.contains("oneTimeProductNotification")) {
             LOGGER.info("OneTimeProductNotification received! Payload: " + payload);
-            pdLogger.logInfo("BUY_LEAFS", "OneTimeProductNotification received! Payload: " + payload);
+//            pdLogger.logInfo("BUY_LEAFS", "OneTimeProductNotification received! Payload: " + payload);
 
             Map<String, Object> payloadMap = gson.fromJson(payload, Map.class);
             Map<String, String> oneTimeProductNotificationMap = (Map<String, String>) payloadMap.get("oneTimeProductNotification");
@@ -118,7 +118,7 @@ public class PlayStoreWebhookService {
 
         // Check if is voided purchase notification
         if (payload.contains("voidedPurchaseNotification")) {
-            pdLogger.logInfo("BUY_LEAFS", "VoidedPurchaseNotification received! Payload: " + payload);
+//            pdLogger.logInfo("BUY_LEAFS", "VoidedPurchaseNotification received! Payload: " + payload);
 
             Map<String, Object> payloadMap = gson.fromJson(payload, Map.class);
             Map<String, String> voidedPurchaseNotificationMap = (Map<String, String>) payloadMap.get("voidedPurchaseNotification");
