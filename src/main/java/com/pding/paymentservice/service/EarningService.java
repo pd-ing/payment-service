@@ -64,7 +64,7 @@ public class EarningService {
         earningRepository.save(earningObj);
 
         firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
-        pdLogger.logInfo("BUY_VIDEO", "Earning details recorded for UserUd: " + userId + ", trees : " + trees);
+//        pdLogger.logInfo("BUY_VIDEO", "Earning details recorded for UserUd: " + userId + ", trees : " + trees);
     }
 
 

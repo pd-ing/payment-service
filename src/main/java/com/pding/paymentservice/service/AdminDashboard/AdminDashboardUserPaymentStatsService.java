@@ -136,7 +136,7 @@ public class AdminDashboardUserPaymentStatsService {
                 throw new ValidationException("Transaction Id already present in DB");
             }
 
-            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
+//            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
             ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(product, purchaseToken);
             InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(product);
 

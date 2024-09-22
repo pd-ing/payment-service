@@ -55,7 +55,7 @@ public class WebhookController {
                     signatureHeader,
                     secretKey
             );
-            pdLogger.logInfo("Webhook", "Callback Successfull for  " + event.getType());
+//            pdLogger.logInfo("Webhook", "Callback Successfull for  " + event.getType());
 
 
             String message = "";

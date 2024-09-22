@@ -84,7 +84,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
             if (databaseError != null) {
                 System.out.println("Data could not be saved " + databaseError.getMessage());
                 pdLogger.logException(new Exception(databaseError.getMessage()));
-                pdLogger.logInfo("update_realtime_db_wallet", "userId:" + userId + " leafBalance: " + leafBalance + " treeBalance: " + treesBalance);
+//                pdLogger.logInfo("update_realtime_db_wallet", "userId:" + userId + " leafBalance: " + leafBalance + " treeBalance: " + treesBalance);
             }
             // all good. data saved
         });
@@ -102,7 +102,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
             if (databaseError != null) {
                 System.out.println("Data could not be saved " + databaseError.getMessage());
                 pdLogger.logException(new Exception(databaseError.getMessage()));
-                pdLogger.logInfo("update_realtime_db_wallet", "userId:" + userId + " leafDeducted: " + leafDeducted + " leafEarned: " + leafEarned);
+//                pdLogger.logInfo("update_realtime_db_wallet", "userId:" + userId + " leafDeducted: " + leafDeducted + " leafEarned: " + leafEarned);
             }
             // all good. data saved
         });

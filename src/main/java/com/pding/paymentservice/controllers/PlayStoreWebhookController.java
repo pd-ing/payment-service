@@ -41,7 +41,7 @@ public class PlayStoreWebhookController {
     @PostMapping("/ggPlayStoreWebhook")
     public ResponseEntity<String> handleGGPlayStoreWebhook(@RequestBody PlayStoreWebhookPayload body, @RequestHeader Map<String, String> headers ) throws IOException {
         Gson gson = new Gson();
-        pdLogger.logInfo("Google Play Store Webhook", "Callback Successfull for  " + gson.toJson(body) + " with headers: " + gson.toJson(headers));
+//        pdLogger.logInfo("Google Play Store Webhook", "Callback Successfull for  " + gson.toJson(body) + " with headers: " + gson.toJson(headers));
         String payload = new String(Base64.getDecoder().decode(body.getMessage().get("data")));
         playStoreWebhookService.handle(payload);
         return new ResponseEntity<>("Success", HttpStatus.OK);

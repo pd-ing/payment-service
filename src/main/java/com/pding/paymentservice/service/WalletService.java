@@ -108,7 +108,7 @@ public class WalletService {
                     walletObj.setTrees(newTreesBalance);
                     walletRepository.save(walletObj);
                     firebaseRealtimeDbHelper.updateSpendingWalletBalanceInFirebase(userId, walletObj.getLeafs(), walletObj.getTrees());
-                    pdLogger.logInfo("BUY_VIDEO", "Deducted " + treesToDeduct + " trees  for userId : " + userId);
+//                    pdLogger.logInfo("BUY_VIDEO", "Deducted " + treesToDeduct + " trees  for userId : " + userId);
                 } else {
                     log.error("Insufficient trees. Cannot perform transaction.");
                     throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");
@@ -126,7 +126,7 @@ public class WalletService {
     }
 
     public void deductLeafsFromWallet(String userId, BigDecimal leafsToDeduct) {
-        pdLogger.logInfo("GIFT_TEST", "DdeductLeafsFromWallet for  UserId: " + userId + " , leafsToDeduct : " + leafsToDeduct);
+//        pdLogger.logInfo("GIFT_TEST", "DdeductLeafsFromWallet for  UserId: " + userId + " , leafsToDeduct : " + leafsToDeduct);
 
         Optional<Wallet> wallet = fetchWalletByUserId(userId);
 
