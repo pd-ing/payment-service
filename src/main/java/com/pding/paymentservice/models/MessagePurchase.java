@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "MessagePurchase")
@@ -35,13 +36,15 @@ public class MessagePurchase {
     Boolean isGift = false;
 
     String giftId;
+    private LocalDateTime lastUpdateDate;
 
-    public MessagePurchase(String userId, String pdUserid, BigDecimal leafsTransacted, String messageId, Boolean isGift, String giftId) {
+    public MessagePurchase(String userId, String pdUserid, BigDecimal leafsTransacted, String messageId, Boolean isGift, String giftId, LocalDateTime lastUpdateDate) {
         this.userId = userId;
         this.pdUserid = pdUserid;
         this.leafsTransacted = leafsTransacted;
         this.messageId = messageId;
         this.isGift = isGift;
         this.giftId = giftId;
+        this.lastUpdateDate = lastUpdateDate;
     }
 }

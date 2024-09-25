@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +57,7 @@ public class MediaTradingService {
                 .isCancel(addMediaTrandingRequest.getIsCancel())
                 .transactionStatus(addMediaTrandingRequest.getTransactionStatus())
                 .cid(addMediaTrandingRequest.getCid())
+                .lastUpdateDate(LocalDateTime.now())
                 .build();
 
         InChatMediaTrading savedMediaTrading = mediaTradingRepository.save(inChatMediaTrading);
@@ -96,6 +98,7 @@ public class MediaTradingService {
 
         inChatMediaTrading.setTransactionStatus("PAID");
         inChatMediaTrading.setUserId(userId);
+        inChatMediaTrading.setLastUpdateDate(LocalDateTime.now());
         mediaTradingRepository.save(inChatMediaTrading);
 
         raiseEventToUpdateOrDelete(inChatMediaTrading);
@@ -135,6 +138,7 @@ public class MediaTradingService {
 
         inChatMediaTrading.setIsCancel(true);
         inChatMediaTrading.setTransactionStatus("CANCELLED");
+        inChatMediaTrading.setLastUpdateDate(LocalDateTime.now());
         mediaTradingRepository.save(inChatMediaTrading);
         raiseEventToUpdateOrDelete(inChatMediaTrading);
     }

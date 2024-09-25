@@ -26,7 +26,9 @@ public class AdminDashboardUserPaymentStats {
     TreeSummary treeSummary;
     TreeSummaryGridResult treeSummaryGridResult;
     RealTimeTreeTransactionHistory realTimeTreeTransactionHistory;
+    RealTimeLeafTransactionHistory realTimeLeafTransactionHistory;
     TotalTreeUsageSummary totalTreeUsageSummary;
+    TotalLeavesUsageSummary totalLeavesUsageSummary;
 
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, Status status) {
         this.errorResponse = errorResponse;
@@ -86,6 +88,16 @@ public class AdminDashboardUserPaymentStats {
     public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, TotalTreeUsageSummary totalTreeUsageSummary) {
         this.errorResponse = errorResponse;
         this.totalTreeUsageSummary = totalTreeUsageSummary;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, TotalLeavesUsageSummary totalLeavesUsageSummary) {
+        this.errorResponse = errorResponse;
+        this.totalLeavesUsageSummary = totalLeavesUsageSummary;
+    }
+
+    public AdminDashboardUserPaymentStats(ErrorResponse errorResponse, RealTimeLeafTransactionHistory realTimeLeafTransactionHistory) {
+        this.errorResponse = errorResponse;
+        this.realTimeLeafTransactionHistory = realTimeLeafTransactionHistory;
     }
 
 }
