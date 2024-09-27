@@ -348,6 +348,48 @@ public class PaymentServiceController {
         }
     }
 
+    @PostMapping("/buyLeafsIOSSandBox")
+    ResponseEntity<?> buyLeafsIOSSandBox(@Valid @RequestBody BuyLeafsIOSRequest buyLeafsRequest) {
+        try {
+
+//            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow for iOS");
+            TransactionDetails txnDetails = iosPaymentInitializer.getLeafsToAddTestSandbox(buyLeafsRequest.getTransactionIdBase64Decoded(), buyLeafsRequest.getProductIdBase64Decoded());
+
+            if (paymentService.checkIfTxnIdExists(txnDetails.getTransactionId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction Id already present in DB"), null));
+            } else {
+                BigDecimal purchaseLeaves = txnDetails.getLeafs();
+                String userId = authHelper.getUserId();
+                String txnId = txnDetails.getTransactionId();
+                String paymentMethod = "IOS_Store";
+                String currency = txnDetails.getCurrency();
+                BigDecimal amountInCents = txnDetails.getPrice();
+
+
+                String message = paymentService.completePaymentToBuyLeafs(
+                        userId,
+                        new BigDecimal(0),
+                        purchaseLeaves,
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(txnDetails.getOriginalPurchaseDate()), ZoneId.systemDefault()),
+                        txnId,
+                        TransactionType.PAYMENT_COMPLETED.getDisplayName(),
+                        amountInCents,
+                        paymentMethod,
+                        currency,
+                        "Added " + purchaseLeaves + " leafs successfully for user.",
+                        null
+                );
+                return ResponseEntity.ok().body(new GenericStringResponse(null, message));
+            }
+
+        } catch (APIException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
+    }
+
     // Handle MissingServletRequestParameterException --
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {

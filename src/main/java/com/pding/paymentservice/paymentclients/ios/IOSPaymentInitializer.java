@@ -76,6 +76,15 @@ public class IOSPaymentInitializer {
         return getTransactionBodyFromEncodedTransactionResponse(transactionInfoResponse.getSignedTransactionInfo());
     }
 
+    public String getTransactionDetailsSandbox(String transactionId) throws Exception {
+
+        AppStoreServerAPIClient client = new AppStoreServerAPIClient(inAppPurchasePrivateKey, inAppPurchaseKeyId, issuerId, bundleId, Environment.SANDBOX);
+
+        TransactionInfoResponse transactionInfoResponse = client.getTransactionInfo(transactionId);
+
+        return getTransactionBodyFromEncodedTransactionResponse(transactionInfoResponse.getSignedTransactionInfo());
+    }
+
     public String getProductDetails(String productId) throws Exception {
         String token = generateTokenForAppStoreConnect();
         OkHttpClient client = new OkHttpClient().newBuilder().build();
@@ -114,6 +123,21 @@ public class IOSPaymentInitializer {
     public TransactionDetails getLeafsToAdd(String transactionId, String productId) throws Exception {
         TransactionDetails txnDetails;
         String transaction = getTransactionDetails(transactionId);
+        JSONObject jsonObject = new JSONObject(transaction);
+        txnDetails = parseTransaction(jsonObject);
+
+        // This is extra validation which we have added for security purpose, We take productId from App and validate it with the productId,
+        // which we got in the transactionDetails
+        if (!productId.equalsIgnoreCase(txnDetails.getProductId()))
+            throw new RuntimeException("ProductId Provided in the payload dosent match with the productId found in Transaction Details");
+
+        txnDetails.setLeafs(new BigDecimal(getProductDetails(txnDetails.getProductId())));
+        return txnDetails;
+    }
+
+    public TransactionDetails getLeafsToAddTestSandbox(String transactionId, String productId) throws Exception {
+        TransactionDetails txnDetails;
+        String transaction = getTransactionDetailsSandbox(transactionId);
         JSONObject jsonObject = new JSONObject(transaction);
         txnDetails = parseTransaction(jsonObject);
 
