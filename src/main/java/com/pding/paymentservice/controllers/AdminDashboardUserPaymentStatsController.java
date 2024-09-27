@@ -369,6 +369,47 @@ public class AdminDashboardUserPaymentStatsController {
         }
     }
 
+    @GetMapping(value = "/realTimeLeavesUsageTotals")
+    public ResponseEntity<?> getRealTimeLeavesUsageTotals(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        TotalLeavesUsageSummary totalLeavesUsageSummary = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            totalLeavesUsageSummary = adminDashboardUserPaymentStatsService.getTotalLeavesUsageSummary(startDate, endDate);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, totalLeavesUsageSummary));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), totalLeavesUsageSummary));
+        }
+    }
+
+    @GetMapping(value = "/realTimeLeavesUsageHistory")
+    public ResponseEntity<?> getRealTimeLeavesUsageHistory(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                                           @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                           @RequestParam(required = false) String searchString,
+                                                           @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                           @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
+        RealTimeLeafTransactionHistory realTimeLeafTransactionHistory = null;
+        try {
+            if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
+            }
+            // Doing 1 more day in endDate as it takes 12am that is start if the endDate
+            if (endDate != null) {
+                endDate = endDate.plusDays(1L);
+            }
+            realTimeLeafTransactionHistory = adminDashboardUserPaymentStatsService.getRealTimeLeafUsage(startDate, endDate, searchString, page, size);
+            return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, realTimeLeafTransactionHistory));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), realTimeLeafTransactionHistory));
+        }
+    }
+
     @GetMapping(value = "/referenceTabDetails")
     public ResponseEntity<?> getReferenceTabDetails(@RequestParam(defaultValue = "0") @Min(0) int page,
                                                     @RequestParam(defaultValue = "10") @Min(1) int size,

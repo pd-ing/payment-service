@@ -10,6 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "InChatMediaTrading")
 @Data
@@ -29,4 +31,5 @@ public class InChatMediaTrading {
     private Boolean isCancel;
     private String transactionStatus;
     private String cid;
+    private LocalDateTime lastUpdateDate;
 }

@@ -3,32 +3,23 @@ package com.pding.paymentservice.service.AdminDashboard;
 import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
-import com.pding.paymentservice.models.ReferralCommission;
 import com.pding.paymentservice.models.Wallet;
-import com.pding.paymentservice.models.enums.CommissionTransferStatus;
 import com.pding.paymentservice.models.enums.TransactionType;
-import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
 import com.pding.paymentservice.payload.response.admin.userTabs.*;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
-import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
-import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
-import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.service.*;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -67,6 +58,9 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Autowired
     RealTimeTreeUsageTabService realTimeTreeUsageTabService;
+
+    @Autowired
+    RealTimeLeavesUsageTabService realTimeLeavesUsageTabService;
 
     @Autowired
     WithdrawalService withdrawalService;
@@ -240,6 +234,15 @@ public class AdminDashboardUserPaymentStatsService {
 
     public TotalTreeUsageSummary getTotalTreeUsageSummary(LocalDate startDate, LocalDate endDate) {
         return realTimeTreeUsageTabService.getTreesSummaryTotals(startDate, endDate);
+    }
+
+    public RealTimeLeafTransactionHistory getRealTimeLeafUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+        return realTimeLeavesUsageTabService.getRealTimeLeafsUsage(startDate, endDate, searchString, page, size);
+    }
+
+
+    public TotalLeavesUsageSummary getTotalLeavesUsageSummary(LocalDate startDate, LocalDate endDate) {
+        return realTimeLeavesUsageTabService.getLeavesSummaryTotals(startDate, endDate);
     }
 
     public Page<ReferralCommissionHistory> getReferenceTabDetails(int page, int size, String searchString) throws Exception {

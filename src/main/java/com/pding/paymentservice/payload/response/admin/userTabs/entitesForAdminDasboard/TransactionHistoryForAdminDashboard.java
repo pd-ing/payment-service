@@ -18,6 +18,7 @@ public class TransactionHistoryForAdminDashboard {
     String userId;
     String transactionDateTime;
     String totalTrees;
+    String totalLeaves;
     String transactionType;
     String pdNickname;
     String pdUserId;
