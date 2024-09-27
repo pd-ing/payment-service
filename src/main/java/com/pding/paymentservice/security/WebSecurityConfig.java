@@ -111,6 +111,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/paymentsFailedInitiallyButSucceededLater").permitAll()
                                 .requestMatchers("/api/payment/buyLeafs").authenticated()
                                 .requestMatchers("/api/payment/buyLeafsIOS").authenticated()
+                                .requestMatchers("/api/payment/buyLeafsIOSSandBox").authenticated()
                                 .requestMatchers("/api/payment/getIosTransactionDetails").authenticated()
                                 .requestMatchers("/api/payment/getIosAppStoreConnectToken").authenticated()
                                 .requestMatchers("/api/payment/treeSpentHistory").authenticated()
