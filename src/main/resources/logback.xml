@@ -12,7 +12,7 @@
 
     <!--    FileAppender-->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-<!--        <file>C:/Users/ndthinh4/pding/be/payment-management.log</file>-->
+<!--        <file>C:/Users/ndthinh4/pding/be/payment-management .log</file>-->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>/var/logs/pding/payment-service-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy
