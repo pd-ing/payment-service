@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class SendNotificationSqsMessage extends BaseService {
@@ -99,7 +100,11 @@ public class SendNotificationSqsMessage extends BaseService {
     public void sendFcmNotification(Map<String, String> map) {
         try {
             String json = objectMapper.writeValueAsString(map);
-            sqsTemplate.send("FCMNotificationQueue", json);
+            sqsTemplate.send(to -> to.queue("FCMNotificationQueue.fifo")
+                            .payload(json)
+                            .messageDeduplicationId(UUID.randomUUID().toString())
+                            .messageGroupId(map.get("NotificationType"))
+            );
         } catch (Exception ex) {
             pdLogger.logException(ex);
         }
@@ -108,7 +113,11 @@ public class SendNotificationSqsMessage extends BaseService {
     public void sendAsyncFcmNotification(Map<String, String> map) {
         try {
             String json = objectMapper.writeValueAsString(map);
-            sqsTemplate.sendAsync("FCMNotificationQueue", json);
+            sqsTemplate.send(to -> to.queue("FCMNotificationQueue.fifo")
+                    .payload(json)
+                    .messageDeduplicationId(UUID.randomUUID().toString())
+                    .messageGroupId(map.get("NotificationType"))
+            );
         } catch (Exception ex) {
             pdLogger.logException(ex);
         }
