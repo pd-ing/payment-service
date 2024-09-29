@@ -16,6 +16,7 @@ import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.service.*;
 import jakarta.validation.ValidationException;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -83,9 +84,11 @@ public class AdminDashboardUserPaymentStatsService {
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AdminDashboardUserPaymentStatsService.class);
 
     @Transactional
     public String addTreesFromBackend(String userId, BigDecimal purchasedTrees) throws Exception {
+        log.info("Start adding trees by admin for userId {}, trees {}", userId, purchasedTrees);
         try {
             Optional<Wallet> walletOptional = walletService.fetchWalletByUserId(userId);
             if (walletOptional.isPresent()) {
@@ -109,6 +112,7 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Transactional
     public String removeTreesFromBackend(String userId, BigDecimal trees) {
+        log.info("Start removing trees by admin for userId {}, trees {}", userId, trees);
         Optional<Wallet> walletOptional = walletService.fetchWalletByUserId(userId);
         if (walletOptional.isPresent()) {
             Wallet wallet = walletOptional.get();
@@ -119,22 +123,25 @@ public class AdminDashboardUserPaymentStatsService {
             ledgerService.saveToLedger(wallet.getId(), trees, new BigDecimal(0), TransactionType.REMOVE_TREES_FROM_BACKEND, userId);
             return "Successfully removed trees for the user";
         } else {
+            log.info("No wallet found for userId {}, can not remove trees", userId);
             return "No wallet found for userId " + userId;
         }
     }
 
     @Transactional
     public String addLeafsFromBackend(String product, String purchaseToken, String email) {
+        log.info("Start adding leafs by admin for email {}, product {}, purchaseToken {}", email, product, purchaseToken);
         try {
             if (paymentService.checkIfTxnIdExists(purchaseToken)) {
+                log.error("Transaction Id {} already present in DB", purchaseToken);
                 throw new ValidationException("Transaction Id already present in DB");
             }
 
-//            pdLogger.logInfo("BUY_LEAFS", "Starting the buy leafs workflow");
             ProductPurchase productPurchase = appPaymentInitializer.getProductPurchase(product, purchaseToken);
             InAppProduct inAppProduct = appPaymentInitializer.getInAppProduct(product);
 
             if (productPurchase.getPurchaseState() != 0) {
+                log.error("Cannot add leafs to the user's wallet as the purchase state in play sore is not completed");
                 throw new ValidationException("Cannot add leafs to the user's wallet as the purchase state is not completed");
             }
 
@@ -144,6 +151,7 @@ public class AdminDashboardUserPaymentStatsService {
             if (productId != null && productId.contains("_")) {
                 purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
             } else {
+                log.error("Product Id {} is not valid, cannot fetch leafs to add from productId", productId);
                 throw new ValidationException("Product Id is not valid, cannot fetch leafs to add from productId");
             }
 
@@ -167,6 +175,7 @@ public class AdminDashboardUserPaymentStatsService {
                     null
             );
         } catch (Exception e) {
+            log.error("Failed to add leafs to the user's wallet with following error: {}", e.getMessage());
             throw new RuntimeException("Internal server error: " + e.getMessage(), e);
         }
     }
@@ -270,6 +279,7 @@ public class AdminDashboardUserPaymentStatsService {
     }
 
     public String refundLeafsFromBackend(String purchaseToken) {
+        log.info("Start refunding leafs by admin for purchaseToken {}", purchaseToken);
         return paymentService.completeRefundLeafs(purchaseToken);
 
     }

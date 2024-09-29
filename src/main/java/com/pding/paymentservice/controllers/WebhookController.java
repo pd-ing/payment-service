@@ -7,6 +7,7 @@ import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.stripe.model.Charge;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/payment")
 
+@Log4j2
 public class WebhookController {
 
     @Value("${stripe.webhook.secret}")
@@ -68,12 +70,14 @@ public class WebhookController {
                     paymentIntent = getPaymentIntentId(event);
                     paymentIntentId = paymentIntent.getId();
                     sessionId = stripeClient.getSessionId(paymentIntentId);
+                    log.info("handling Stripe payment_intent.succeeded event for paymentIntentId: {}", paymentIntentId, "sessionId: " + sessionId);
                     message = paymentService.completePaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 case "payment_intent.payment_failed":
                     paymentIntent = getPaymentIntentId(event);
                     paymentIntentId = paymentIntent.getId();
                     sessionId = stripeClient.getSessionId(paymentIntentId);
+                    log.info("handling Stripe payment_intent.payment_failed event for paymentIntentId: {}", paymentIntentId, "sessionId: " + sessionId);
                     message = paymentService.failPaymentToBuyTrees(paymentIntentId, sessionId);
                     break;
                 case "charge.refunded":
@@ -81,6 +85,7 @@ public class WebhookController {
                     paymentIntentId = charge.getPaymentIntent();
                     Long amountToRefundInCents = charge.getAmountRefunded();
                     double treesToRefund = amountToRefundInCents / valueOfOneTreeInCents;
+                    log.info("handling Stripe charge.refunded event for paymentIntentId: {}, amountToRefundInCents: {}, treesToRefund: {}", paymentIntentId, amountToRefundInCents, treesToRefund);
                     message = paymentService.completeRefundTrees(new BigDecimal(amountToRefundInCents), new BigDecimal(treesToRefund), paymentIntentId);
                     break;
                 case "charge.refund.updated":
@@ -88,6 +93,7 @@ public class WebhookController {
                     double treesToAdd = (refund.getAmount() / valueOfOneTreeInCents);
                     String transactionId = treesToAdd + "_trees_refunded_for_" + refund.getPaymentIntent();
                     if (refund.getStatus().equals("canceled")) {
+                        log.info("handling Stripe charge.refund.updated, status CANCEL for transactionId: {}, treesToAdd: {}", transactionId, treesToAdd);
                         message = paymentService.cancelRefundTrees(new BigDecimal(treesToAdd), transactionId);
                     }
                     break;

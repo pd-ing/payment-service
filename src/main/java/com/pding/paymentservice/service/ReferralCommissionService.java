@@ -15,6 +15,7 @@ import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryReposit
 import com.pding.paymentservice.repository.ReferralCommissionRepository;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.stripe.model.Transfer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -35,6 +36,7 @@ import java.util.Optional;
 import static com.pding.paymentservice.PdLogger.EVENT.GIVE_REFERRAL_COMMISSION;
 
 @Service
+@Slf4j
 public class ReferralCommissionService {
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
@@ -76,6 +78,7 @@ public class ReferralCommissionService {
     public String updateReferralCommissionEntryToCompletedState(String referralCommissionId) throws Exception {
         Optional<ReferralCommission> referralCommissionOptional = referralCommissionRepository.findById(referralCommissionId);
         if (referralCommissionOptional.isEmpty()) {
+            log.error("Commission entry not found for the given commission id: {}", referralCommissionId);
             return "Commission entry not found for the given commission id";
         }
 
@@ -85,6 +88,7 @@ public class ReferralCommissionService {
         referralCommission.setUpdatedDate(LocalDateTime.now());
 
         referralCommissionRepository.save(referralCommission);
+        log.info("Successfully updated the state to {} for referralCommissionId {}", CommissionTransferStatus.TRANSFER_COMPLETED.getDisplayName(), referralCommissionId);
         return "Successfully updated the state to " + CommissionTransferStatus.TRANSFER_COMPLETED;
     }
 

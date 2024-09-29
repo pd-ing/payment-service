@@ -25,6 +25,7 @@ import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.EmailValidator;
 import com.pding.paymentservice.util.TokenSigner;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class VideoPurchaseService {
 
     @Autowired
@@ -79,33 +81,32 @@ public class VideoPurchaseService {
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
+        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
         walletService.deductTreesFromWallet(userId, treesToConsumed);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
         VideoPurchase video = videoPurchaseRepository.save(transaction);
-//        pdLogger.logInfo("BUY_VIDEO", "Video purchase record created with details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + treesToConsumed + ", VideoOwnerUserId : " + videoOwnerUserId);
+        log.info("Video purchase record created with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
 
         earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
-//        pdLogger.logInfo("BUY_VIDEO", "Video purchase details recorded in LEGDER VideoId : " + videoId + ", trees : " + treesToConsumed + ", TransactionType : " + TransactionType.VIDEO_PURCHASE);
-
+        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
         return video;
     }
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, BigDecimal treesToConsumed, String duration) {
+        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", userId, videoId, treesToConsumed, videoOwnerUserId, duration);
         walletService.deductTreesFromWallet(userId, treesToConsumed);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, duration,
                 VideoPurchaseDuration.valueOf(duration).getExpiryDate());
 
         VideoPurchase video = videoPurchaseRepository.save(transaction);
-//        pdLogger.logInfo("BUY_VIDEO", "Video purchase record created with details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + treesToConsumed + ", VideoOwnerUserId : " + videoOwnerUserId);
 
         earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
-//        pdLogger.logInfo("BUY_VIDEO", "Video purchase details recorded in LEGDER VideoId : " + videoId + ", trees : " + treesToConsumed + ", TransactionType : " + TransactionType.VIDEO_PURCHASE);
-
+        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", userId, videoId, treesToConsumed, videoOwnerUserId, duration);
         return video;
     }
 
@@ -236,7 +237,6 @@ public class VideoPurchaseService {
         }
 
         try {
-//            pdLogger.logInfo("BUY_VIDEO", "Buy video request made with following details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
             VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {

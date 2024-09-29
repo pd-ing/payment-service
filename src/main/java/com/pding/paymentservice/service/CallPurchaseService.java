@@ -13,6 +13,7 @@ import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryReposit
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
 import com.pding.paymentservice.util.TokenSigner;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class CallPurchaseService {
     @Autowired
     CallPurchaseRepository callPurchaseRepository;
@@ -64,6 +66,8 @@ public class CallPurchaseService {
 
     @Transactional
     public String CreateCallTransaction(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
+        log.info("Creating call transaction for userId {}, pdUserId {}, leafsToCharge {}, callType {}, callId {}, giftId {}, notifyPd {}",
+                userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
         String returnVal = CreateCallTransactionHelper(userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
 
         addCallTransactionEntryToRealTimeDatabase(callId);
@@ -83,6 +87,8 @@ public class CallPurchaseService {
                 pdLogger.logException(e);
             }
         }
+        log.info("Call transaction created for userId {}, pdUserId {}, leafsToCharge {}, callType {}, callId {}, giftId {}, notifyPd {}",
+                userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
 
         return returnVal;
     }
@@ -101,6 +107,7 @@ public class CallPurchaseService {
     }
 
     public void addCallTransactionEntryToRealTimeDatabase(String callId) {
+        log.info("Update call transaction entry to real time database for callId {}", callId);
         try {
             List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
             Map<String, BigDecimal> userLeafsSpentMapping = new HashMap<>();

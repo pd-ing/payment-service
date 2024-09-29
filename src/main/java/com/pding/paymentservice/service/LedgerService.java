@@ -19,6 +19,8 @@ public class LedgerService {
     public void saveToLedger(String referenceId, BigDecimal treesTransacted, BigDecimal leafsTransacted, TransactionType transactionType, String userId) {
         Ledger ledger = new Ledger(referenceId, treesTransacted, leafsTransacted, transactionType, userId);
         ledgerRespository.save(ledger);
+        log.info("Ledger saved for referenceId: {}, treesTransacted: {}, leafsTransacted: {}, transactionType: {}, userId: {}",
+                referenceId, treesTransacted, leafsTransacted, transactionType, userId);
     }
 }
 

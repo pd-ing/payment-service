@@ -43,6 +43,8 @@ public class WalletHistoryService {
         WalletHistory walletHistory = new WalletHistory(walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
         walletHistoryRepository.save(walletHistory);
+        log.info("Wallet history saved for walletID: {}, userId: {}, purchasedTrees: {}, purchasedLeafs: {}, purchasedDate: {}, transactionID: {}, transactionStatus: {}, amount: {}, paymentMethod: {}, currency: {}, description: {}, ipAddress: {}",
+                walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus, amount, paymentMethod, currency, description, ipAddress);
     }
 
     public List<WalletHistory> fetchWalletHistoryByWalletID(String walletId) {
@@ -85,7 +87,6 @@ public class WalletHistoryService {
                                          String description, String ipAddress) {
         recordPurchaseHistory(walletID, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
-        log.info("Wallet history table updated");
     }
 
 

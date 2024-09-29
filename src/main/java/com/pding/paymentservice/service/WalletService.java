@@ -40,6 +40,7 @@ public class WalletService {
 
     @Transactional
     public Wallet addToWallet(String userId, BigDecimal trees, BigDecimal leafs, LocalDateTime lastPurchasedDate) {
+        log.info("Adding to wallet for userId {}, trees {}, leafs {}", userId, trees, leafs);
         Optional<Wallet> optionalWallet = fetchWalletByUserId(userId);
 
         Wallet wallet;
@@ -63,13 +64,16 @@ public class WalletService {
             walletRepository.save(wallet);
         }
         firebaseRealtimeDbHelper.updateSpendingWalletBalanceInFirebase(userId, wallet.getLeafs(), wallet.getTrees());
+        log.info("Wallet updated for userId {}", userId);
         return wallet;
     }
 
     public Optional<Wallet> fetchWalletByUserId(String userId) {
+        log.info("Fetching wallet for userId {}", userId);
         Optional<Wallet> wallet = walletRepository.findWalletByUserId(userId);
 
         if (!wallet.isPresent()) {
+            log.info("No wallet found for userId {}, creating new wallet", userId);
             Wallet newWallet = new Wallet();
             newWallet.setUserId(userId);
             newWallet.setTrees(new BigDecimal(0));
@@ -96,6 +100,7 @@ public class WalletService {
     }
 
     public void deductTreesFromWallet(String userId, BigDecimal treesToDeduct) {
+        log.info("start deduct trees from wallet for userId {}, treesToDeduct {}", userId, treesToDeduct);
         Optional<Wallet> wallet = fetchWalletByUserId(userId);
 
         if (wallet.isPresent()) {
@@ -119,15 +124,14 @@ public class WalletService {
             }
         } else {
             log.error("No wallet info present for userId " + userId);
-            log.error("Creating wallet for for userId " + userId);
             //throw new WalletNotFoundException("No wallet info present for userID " + userId);
             throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");
         }
+        log.info("deducted trees from wallet for userId {}, treesToDeduct {}", userId, treesToDeduct);
     }
 
     public void deductLeafsFromWallet(String userId, BigDecimal leafsToDeduct) {
-//        pdLogger.logInfo("GIFT_TEST", "DdeductLeafsFromWallet for  UserId: " + userId + " , leafsToDeduct : " + leafsToDeduct);
-
+        log.info("start deduct leafs from wallet for userId {}, leafsToDeduct {}", userId, leafsToDeduct);
         Optional<Wallet> wallet = fetchWalletByUserId(userId);
 
         if (wallet.isPresent()) {
@@ -150,15 +154,14 @@ public class WalletService {
             }
         } else {
             log.error("No wallet info present for userId " + userId);
-            log.error("Creating wallet for for userId " + userId);
             //throw new WalletNotFoundException("No wallet info present for userID " + userId);
             throw new InsufficientLeafsException("Insufficient leafs. Cannot perform transaction.");
         }
+        log.info("deducted leafs from wallet for userId {}, leafsToDeduct {}", userId, leafsToDeduct);
     }
 
     public Wallet updateWalletForUser(String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate) {
         Wallet wallet = addToWallet(userId, purchasedTrees, purchasedLeafs, purchasedDate);
-        log.info("Wallet table updated", wallet);
         return wallet;
     }
 

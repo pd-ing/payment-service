@@ -9,6 +9,7 @@ import com.pding.paymentservice.repository.CallPurchaseRepository;
 import com.pding.paymentservice.repository.MessagePurchaseRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class MessagePurchaseService {
 
     @Autowired
@@ -57,15 +59,18 @@ public class MessagePurchaseService {
                                            Boolean isGift,
                                            String giftId,
                                            Boolean notifyPd) {
+        log.info("Creating message transaction for userId {}, pdUserId {}, leafsTransacted {}, messageId {}, isGift {}, giftId {}, notifyPd {}",
+                userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, notifyPd);
         walletService.deductLeafsFromWallet(userId, leafsTransacted);
 
         MessagePurchase transaction = new MessagePurchase(userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, LocalDateTime.now());
         MessagePurchase messagePurchase = messagePurchaseRepository.save(transaction);
+        log.info("Message purchase record created with details UserId : {}, messageId : {}, leafs : {}, pdUserId : {}",
+                userId, messagePurchase, leafsTransacted, pdUserId);
 //        pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase record created with details UserId : " + userId + " ,messageId : " + messagePurchase + ", leafs : " + leafsTransacted + ", pdUserId : " + pdUserId);
 
         earningService.addLeafsToEarning(pdUserId, leafsTransacted);
         ledgerService.saveToLedger(messagePurchase.getMessageId(), new BigDecimal(0), leafsTransacted, TransactionType.TEXT_MESSAGE, userId);
-//        pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase details recorded in LEDGER MessageId : " + messagedId + ", leafs : " + leafsTransacted + ", TransactionType : " + TransactionType.TEXT_MESSAGE);
 
         if(notifyPd) {
             try {
@@ -81,6 +86,8 @@ public class MessagePurchaseService {
                 pdLogger.logException(e);
             }
         }
+        log.info("Message transaction created for userId {}, pdUserId {}, leafsTransacted {}, messageId {}, isGift {}, giftId {}, notifyPd {}",
+                userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, notifyPd);
 
         return "Leafs charge was successful";
     }

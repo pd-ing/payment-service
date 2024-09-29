@@ -14,6 +14,7 @@ import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryReposit
 import com.pding.paymentservice.security.AuthHelper;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MediaTradingService {
     private final MediaTradingRepository mediaTradingRepository;
     private final WalletService walletService;
@@ -35,8 +37,9 @@ public class MediaTradingService {
     private final FcmService fcmService;
     private final OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
     public InChatMediaTrading saveMediaTrading(AddMediaTrandingRequest addMediaTrandingRequest) {
-
-
+        log.info("New in chat media trading, userId: {}, pdId: {}, messageId: {}, leafsToCharge: {}",
+                addMediaTrandingRequest.getUserId(), addMediaTrandingRequest.getPdId(), addMediaTrandingRequest.getMessageId(),
+                addMediaTrandingRequest.getLeafsToCharge());
         Optional<InChatMediaTrading> inChatMediaTradingOpt = mediaTradingRepository.findByMessageId(addMediaTrandingRequest.getMessageId());
 
         if (inChatMediaTradingOpt.isPresent()) {
@@ -92,6 +95,8 @@ public class MediaTradingService {
         String pdUserId = inChatMediaTrading.getPdId();
         String userId = authHelper.getUserId();
 
+        log.info("Buying media trade, messageId: {}", messageId);
+
         walletService.deductLeafsFromWallet(userId, leafsToCharge);
         earningService.addLeafsToEarning(pdUserId, leafsToCharge);
         ledgerService.saveToLedger(messageId, new BigDecimal(0), leafsToCharge, TransactionType.MEDIA_TRADING, userId);
@@ -109,6 +114,8 @@ public class MediaTradingService {
         data.put("userId", inChatMediaTrading.getUserId());
         data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
         fcmService.sendAsyncNotification(pdUserId, data);
+
+        log.info("Media trade bought successfully, messageId: {}, userId: {}, pdId: {}", messageId, userId, pdUserId);
         return inChatMediaTrading;
     }
 
@@ -128,6 +135,7 @@ public class MediaTradingService {
     }
 
     public void cancelMediaTrade(String messageId) throws JsonProcessingException {
+        log.info("Cancelling media trade, messageId: {}", messageId);
         InChatMediaTrading inChatMediaTrading = mediaTradingRepository.findByMessageId(messageId).orElseThrow(
                 () -> new RuntimeException("Media Trading not found")
         );
@@ -141,5 +149,6 @@ public class MediaTradingService {
         inChatMediaTrading.setLastUpdateDate(LocalDateTime.now());
         mediaTradingRepository.save(inChatMediaTrading);
         raiseEventToUpdateOrDelete(inChatMediaTrading);
+        log.info("Media trade cancelled successfully by pdId {}, messageId: {}", inChatMediaTrading.getPdId(), messageId);
     }
 }

@@ -26,6 +26,7 @@ import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -50,6 +51,7 @@ import java.time.ZoneId;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/payment/admin")
+@Slf4j
 public class AdminDashboardUserPaymentStatsController {
     @Autowired
     AdminDashboardUserPaymentStatsService adminDashboardUserPaymentStatsService;
@@ -506,6 +508,7 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         try {
+            log.info("Completing referral commission entry with id: {}", referralCommissionRequest.getReferralCommissionId());
             String message = adminDashboardUserPaymentStatsService.updateReferralCommissionEntryToCompletedState(referralCommissionRequest.getReferralCommissionId());
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (Exception e) {

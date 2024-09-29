@@ -76,7 +76,9 @@ public class DonationService {
 
     @Transactional
     public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
+        log.info("start donation transaction for userId: {}, trees: {}, pdUserId: {}", userId, treesToDonate, PdUserId);
         if(otherServicesTablesNativeQueryRepository.findUserInfoByUserId(PdUserId).isEmpty()){
+            log.error("PD User ID doesn't exist, {}", PdUserId);
             throw new InvalidUserException("PD User ID doesn't exist");
         }
 
@@ -87,12 +89,14 @@ public class DonationService {
 
         earningService.addTreesToEarning(PdUserId, treesToDonate);
         ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION, userId);
+        log.info("Donation transaction completed for userId: {}, trees: {}, pdUserId: {}", userId, treesToDonate, PdUserId);
 
         return donation;
     }
 
     @Transactional
     public Donation createLeafsDonationTransaction(String userId, BigDecimal leafsToDonate, String PdUserId) {
+        log.info("start donation transaction for userId: {}, leafs: {}, pdUserId: {}", userId, leafsToDonate, PdUserId);
 
         walletService.deductLeafsFromWallet(userId, leafsToDonate);
 
@@ -101,6 +105,7 @@ public class DonationService {
 
         earningService.addLeafsToEarning(PdUserId, leafsToDonate);
         ledgerService.saveToLedger(donation.getId(), new BigDecimal(0), leafsToDonate, TransactionType.DONATION, userId);
+        log.info("Donation transaction completed for userId: {}, leafs: {}, pdUserId: {}", userId, leafsToDonate, PdUserId);
 
         return donation;
     }
@@ -209,6 +214,7 @@ public class DonationService {
     }
 
     public ResponseEntity<?> donateToPd(String userId, BigDecimal trees, String pdUserId) {
+        log.info("Donation request received for userId: {}, trees: {}, pdUserId: {}", userId, trees, pdUserId);
         if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }

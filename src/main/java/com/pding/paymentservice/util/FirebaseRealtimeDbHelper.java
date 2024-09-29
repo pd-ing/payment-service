@@ -3,6 +3,7 @@ package com.pding.paymentservice.util;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.pding.paymentservice.BaseService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -10,10 +11,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class FirebaseRealtimeDbHelper extends BaseService {
 
 
     public void updateSpendingWalletBalanceInFirebase(String userId, BigDecimal leafBalance, BigDecimal treesBalance) {
+        log.info("Updating spending wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
         try {
             Float leaf = null;
             Float trees = null;
@@ -27,6 +30,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
                     .getReference(generateSpendingWalletPath(userId));
 
             updateWalletBalanceInFirebase(userId, leaf, trees, spendingWalletRef);
+            log.info("Updated spending wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
         } catch (Exception ex) {
             pdLogger.logException(ex);
         }
@@ -34,6 +38,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
 
 
     public void updateEarningWalletBalanceInFirebase(String userId, BigDecimal leafBalance, BigDecimal treesBalance) {
+        log.info("Updating earning wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
         try {
             Float leaf = null;
             Float trees = null;
@@ -47,7 +52,9 @@ public class FirebaseRealtimeDbHelper extends BaseService {
                     .getReference(generateEarningWalletPath(userId));
 
             updateWalletBalanceInFirebase(userId, leaf, trees, earningWalletRef);
+            log.info("Updated earning wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
         } catch (Exception ex) {
+            log.error("Error updating earning wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
             pdLogger.logException(ex);
         }
     }

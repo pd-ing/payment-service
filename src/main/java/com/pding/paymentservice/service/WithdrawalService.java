@@ -95,6 +95,7 @@ public class WithdrawalService {
 
         ledgerService.saveToLedger(withdrawal.getId(), trees, leafs, TransactionType.WITHDRAWAL_STARTED, pdUserId);
 
+        log.info("Withdrawal request created for pdUserId {}, trees {}, leafs {}", pdUserId, trees, leafs);
         return withdrawal;
     }
 
@@ -110,7 +111,7 @@ public class WithdrawalService {
             withdrawalRepository.save(withdrawal);
 
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_COMPLETED, pdUserId);
-
+            log.info("Withdrawal request completed for pdUserId {}, trees {}, leafs {}", pdUserId, withdrawal.getTrees(), withdrawal.getLeafs());
             return withdrawal;
         } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
@@ -134,6 +135,8 @@ public class WithdrawalService {
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_FAILED, pdUserId);
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.TREES_REVERTED, pdUserId);
             ledgerService.saveToLedger(withdrawal.getId(), new BigDecimal(0), withdrawal.getLeafs(), TransactionType.LEAFS_REVERTED, pdUserId);
+
+            log.info("Withdrawal request cancelled for pdUserId {}, trees {}, leafs {}", pdUserId, withdrawal.getTrees(), withdrawal.getLeafs());
         } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
         } else {

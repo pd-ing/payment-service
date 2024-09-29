@@ -28,7 +28,7 @@ public class AppStoreWebhookController {
 
     @PostMapping("/appStoreWebhook")
     public ResponseEntity<String> handleAppStoreWebhook(@RequestBody AppStoreWebhookPayload body) throws Exception {
-//    public ResponseEntity<String> handleAppStoreWebhook(@RequestBody String payload) throws Exception {
+        log.info("App Store Callback Received, start decoding payload");
         Gson gson = new Gson();
         String signedPayload = body.getSignedPayload();
         String[] split_string = signedPayload.split("\\.");
@@ -44,7 +44,7 @@ public class AppStoreWebhookController {
         //TODO: verify signature
 
         ResponseBodyV2DecodedPayload decodedPayload = gson.fromJson(payload, ResponseBodyV2DecodedPayload.class);
-        log.info("App Store Callback Successfull for  {}", gson.toJson(decodedPayload));
+        log.info("Decoded Payload: {}", payload);
 
         appStoreWebhookService.handle(decodedPayload);
         return new ResponseEntity<>("Success", HttpStatus.OK);
