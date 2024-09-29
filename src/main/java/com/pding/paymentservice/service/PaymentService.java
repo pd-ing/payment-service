@@ -157,12 +157,15 @@ public class PaymentService {
 
     @Transactional
     public String failPaymentToBuyTrees(String paymentIntentId, String sessionId) throws Exception {
+        log.info("fetching wallet history for sessionId: {}", sessionId);
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(sessionId);
 
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
+            log.info("wallet history found for sessionId: {}, walletHistoryId: {}", sessionId, walletHistory.getId());
 
             if (walletHistory.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED.getDisplayName())) {
+                log.info("Wallet History is already in PAYMENT_FAILED state for the sessionId: {}", paymentIntentId);
                 return "Payment is already failed for the paymentIntentId" + paymentIntentId;
             }
             ledgerService.saveToLedger(walletHistory.getWalletId(), walletHistory.getPurchasedTrees(), new BigDecimal(0), TransactionType.PAYMENT_FAILED, walletHistory.getUserId());
@@ -172,21 +175,26 @@ public class PaymentService {
             walletHistory.setTransactionId(paymentIntentId);
             walletHistory.setTransactionStatus(TransactionType.PAYMENT_FAILED.getDisplayName());
             walletHistoryService.save(walletHistory);
-
+            log.info("Wallet history updated as PAYMENT_FAILED for sessionId: {}", sessionId);
             return "Payment failed for paymentIntentId " + paymentIntentId;
         } else {
+            log.info("fetching wallet history for paymentIntentId: {}", paymentIntentId);
             Optional<WalletHistory> walletHistoryOptionalUsingPaymentIntentId = walletHistoryService.findByTransactionId(paymentIntentId);
 
             if (walletHistoryOptionalUsingPaymentIntentId.isPresent()) {
                 WalletHistory walletHistoryUsingPaymentIntentId = walletHistoryOptionalUsingPaymentIntentId.get();
+                log.info("wallet history found for paymentIntentId: {}, walletHistoryId: {}", paymentIntentId, walletHistoryUsingPaymentIntentId.getId());
                 String stripePaymentStatus = stripeClient.checkPaymentStatus(paymentIntentId);
 
                 if (!stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_FAILED.getDisplayName())) {
+                    log.info("Payment is already Failed and trees are not given to the user, for the paymentIntentId: {}", paymentIntentId);
                     return "Payment is already Failed and trees are not given to the user";
                 } else if (stripePaymentStatus.equals("succeeded") && walletHistoryUsingPaymentIntentId.getTransactionStatus().equals(TransactionType.PAYMENT_COMPLETED.getDisplayName())) {
+                    log.info("Payment is already completed and user had been given trees for the paymentIntentId: {}", paymentIntentId);
                     return "Payment is already completed and user had been given trees";
                 }
             }
+            log.error("Could not find wallet history information for the sessionId: {} or for the PaymentIntentId: {}", sessionId, paymentIntentId);
             throw new Exception("Could not find wallet history information for the sessionId " + sessionId);
         }
     }
@@ -194,6 +202,7 @@ public class PaymentService {
 
     @Transactional
     public String completeRefundTrees(BigDecimal amountInCents, BigDecimal treesToRefund, String paymentIntentId) {
+        log.info("Start refund for transactionId: {}", paymentIntentId);
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
@@ -201,6 +210,7 @@ public class PaymentService {
             Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
 
             if (userWallet.getTrees().compareTo(treesToRefund) < 0) {
+                log.error("Cannot complete the refund request, because of insufficient tree balance, For userId : {}, treesInWallet: {}, refundRequestAmtInTrees: {}, paymentIntentId: {}", walletHistory.getUserId(), userWallet.getTrees(), treesToRefund, paymentIntentId);
                 throw new RuntimeException("Cannot complete the refund request, because of insufficient tree balance, For userId :" + walletHistory.getUserId() +
                         ", treesInWallet:" + userWallet.getTrees() + " , refundRequestAmtInTrees:" + treesToRefund);
             }
@@ -232,7 +242,7 @@ public class PaymentService {
 
             walletService.deductTreesFromWallet(walletHistory.getUserId(), treesToRefund);
             ledgerService.saveToLedger(walletHistory.getWalletId(), treesToRefund, new BigDecimal(0), TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
-
+            log.info("Refund completed successfully for the paymentIntentId : {}, UserId :{}, treesRefunded:{}", paymentIntentId, walletHistory.getUserId(), treesToRefund);
             return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesRefunded:" + treesToRefund;
         } else {
             throw new RuntimeException("Refund failed because record not found in wallet history for transactionId:" + paymentIntentId);
@@ -242,6 +252,7 @@ public class PaymentService {
 
     @Transactional
     public String cancelRefundTrees(BigDecimal treeToAdd, String paymentIntentId) {
+        log.info("Start cancel the refund for transactionId: {}", paymentIntentId);
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
         if (walletHistoryOptional.isPresent()) {
             WalletHistory walletHistory = walletHistoryOptional.get();
@@ -254,8 +265,10 @@ public class PaymentService {
             walletService.addToWallet(walletHistory.getUserId(), treeToAdd, new BigDecimal(0), LocalDateTime.now());
             ledgerService.saveToLedger(walletHistory.getWalletId(), treeToAdd, new BigDecimal(0), TransactionType.REFUND_CANCELLED, walletHistory.getUserId());
 
+            log.info("Refund cancelled successfully for the paymentIntentId : {}, UserId :{}, treesAddedBack:{}", paymentIntentId, walletHistory.getUserId(), treeToAdd);
             return "Refund completed successFully for the paymentIntentId : " + paymentIntentId + " , UserId :" + walletHistory.getUserId() + ", treesAddedBack:" + treeToAdd;
         } else {
+            log.error("Refund failed because record not found in wallet history for transactionId: {}", paymentIntentId);
             throw new RuntimeException("Cancelling Refund failed because record not found in wallet history for transactionId:" + paymentIntentId);
         }
     }
@@ -370,6 +383,7 @@ public class PaymentService {
                                             String paymentMethod, String currency,
                                             String description, String ipAddress) throws Exception {
         try {
+            log.info("Start add leaf transaction for userId: {}", userId);
             Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, purchasedLeafs, purchasedDate);
 
             walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
@@ -377,7 +391,7 @@ public class PaymentService {
 
             ledgerService.saveToLedger(wallet.getId(), new BigDecimal(0), purchasedLeafs, TransactionType.LEAF_PURCHASE, userId);
 
-//            pdLogger.logInfo("BUY_LEAFS", "Leaves added successfully for userId " + userId);
+            log.info("leaf transaction completed successfully for userId: {}", userId);
             return "Leaves added successfully for user";
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -386,10 +400,12 @@ public class PaymentService {
     }
 
     public String completeRefundLeafs(String purchaseToken) {
+        log.info("Start refund for transactionId: {}", purchaseToken);
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(purchaseToken);
         //Check if refund is already done for this TxnId
         String txnIdPattern = "_leafs_refunded_for_" + purchaseToken;
         if (walletHistoryService.findByTransactionIdWithPattern(txnIdPattern).size() > 0) {
+            log.info("Refund is already done for the given purchaseToken: {}", purchaseToken);
             return "Refund is already done for the given purchaseToken";
         }
 
@@ -398,12 +414,14 @@ public class PaymentService {
 
             BigDecimal leafsToRefund = walletHistory.getPurchasedLeafs();
             if (leafsToRefund.compareTo(new BigDecimal("0")) <= 0) {
+                log.error("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId : {}, leafsToRefund: {}, purchaseToken: {}", walletHistory.getUserId(), leafsToRefund, purchaseToken);
                 throw new RuntimeException("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId :" + walletHistory.getUserId() +
                         ", leafsToRefund:" + leafsToRefund + " , purchaseToken:" + purchaseToken);
             }
             Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
 
             if (userWallet.getLeafs().compareTo(leafsToRefund) < 0) {
+                log.error("Cannot complete the refund request, because of insufficient leafs balance, For userId : {}, refundRequestAmtInTrees: {}, leafsInWallet: {}, purchaseToken: {}", walletHistory.getUserId(), leafsToRefund, userWallet.getLeafs(), purchaseToken);
                 throw new RuntimeException("Cannot complete the refund request, because of insufficient leafs balance, For userId :" + walletHistory.getUserId() +
                         " , refundRequestAmtInTrees:" + leafsToRefund + " , leafsInWallet:" + userWallet.getLeafs() + " , purchaseToken:" + purchaseToken);
             }

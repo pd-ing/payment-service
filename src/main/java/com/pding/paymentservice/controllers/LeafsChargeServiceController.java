@@ -12,6 +12,7 @@ import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.CallPurchaseService;
 import com.pding.paymentservice.service.FcmService;
 import com.pding.paymentservice.service.MessagePurchaseService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import java.math.BigDecimal;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/payment")
+@Slf4j
 public class LeafsChargeServiceController {
 
     @Autowired

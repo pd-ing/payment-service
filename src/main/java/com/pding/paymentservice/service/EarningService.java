@@ -45,6 +45,7 @@ public class EarningService {
 
     @Transactional
     public void addTreesToEarning(String userId, BigDecimal trees) {
+        log.info("Adding trees to earning for userId {}, trees {}", userId, trees);
         Optional<Earning> earning = earningRepository.findByUserId(userId);
 
         Earning earningObj = null;
@@ -65,11 +66,13 @@ public class EarningService {
 
         firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
 //        pdLogger.logInfo("BUY_VIDEO", "Earning details recorded for UserUd: " + userId + ", trees : " + trees);
+        log.info("Added trees to earning for userId {}, trees {}", userId, trees);
     }
 
 
     @Transactional
     public void addLeafsToEarning(String userId, BigDecimal leafs) {
+        log.info("Adding leafs to earning for userId {}, leafs {}", userId, leafs);
         Optional<Earning> earning = earningRepository.findByUserId(userId);
 
         Earning earningObj = null;
@@ -89,6 +92,7 @@ public class EarningService {
         earningRepository.save(earningObj);
 
         firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
+        log.info("Added leafs to earning for userId {}, leafs {}", userId, leafs);
     }
 
 

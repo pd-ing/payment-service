@@ -31,6 +31,7 @@ public class AppStoreWebhookService extends BaseService {
     private final OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
     public void handle(ResponseBodyV2DecodedPayload decodedPayload) throws Exception {
+        log.info("Start handling App Store Webhook");
         Gson gson = new Gson();
 
         String notificationType = decodedPayload.getNotificationType();
@@ -66,6 +67,8 @@ public class AppStoreWebhookService extends BaseService {
             String currency = txnDetails.getCurrency();
             BigDecimal amountInCents = txnDetails.getPrice();
 
+            log.info("notification type: ONE_TIME_CHARGE,  User completed payment in IOS Store. Adding {} leafs for user: {}", purchaseLeaves, userId);
+
             String message = paymentService.completePaymentToBuyLeafs(
                     userId,
                     new BigDecimal(0),
@@ -83,11 +86,13 @@ public class AppStoreWebhookService extends BaseService {
         }
 
         if ("REFUND".equalsIgnoreCase(notificationType)) {
+            log.info("notification type: REFUND,  User request refund in IOS Store. Refunding {} leafs for user: {}", txnDetails.getLeafs(), txnDetails.getAppAccountToken());
             paymentService.completeRefundLeafs(txnId);
             return;
         }
 
         if("REFUND_DECLINED".equalsIgnoreCase(notificationType) || "REFUND_REVERSED".equalsIgnoreCase(notificationType)) {
+            log.info("notification type: {},  IOS Store canncel the user's refund. cancel refund {} leafs for user: {}", notificationType, txnDetails.getLeafs(), txnDetails.getAppAccountToken());
             try {
                 paymentService.cancelRefundLeafs(txnId);
             } catch (Exception e) {

@@ -35,8 +35,7 @@ public class PlayStoreWebhookService {
 
         Gson gson = new Gson();
         if (payload.contains("oneTimeProductNotification")) {
-            LOGGER.info("OneTimeProductNotification received! Payload: " + payload);
-//            pdLogger.logInfo("BUY_LEAFS", "OneTimeProductNotification received! Payload: " + payload);
+            LOGGER.info("GG Play Store hook, OneTimeProductNotification event received! Payload: " + payload);
 
             Map<String, Object> payloadMap = gson.fromJson(payload, Map.class);
             Map<String, String> oneTimeProductNotificationMap = (Map<String, String>) payloadMap.get("oneTimeProductNotification");
@@ -58,6 +57,7 @@ public class PlayStoreWebhookService {
             switch (oneTimeProductNotification.getNotificationType()) {
                 case 1:
                     // one-time product was successfully purchased by a user.
+                    LOGGER.info("GG Play Store One-time product was successfully purchased by user, start to add leafs for user, transactionId: " + purchaseToken);
                     try {
                         int purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
                         String txnId = purchaseToken;
@@ -79,7 +79,7 @@ public class PlayStoreWebhookService {
                                 "Added " + purchaseLeaves + " leafs successfully for user.",
                                 null
                         );
-                        LOGGER.info("Successfully purchased by a user, transactionId: " + purchaseToken);
+//                        LOGGER.info("Successfully purchased by a user, transactionId: " + purchaseToken);
                     } catch (Exception e) {
                         pdLogger.logException(e);
                     } finally {
@@ -88,6 +88,7 @@ public class PlayStoreWebhookService {
                 case 2:
                     // this event received when a user requests a refund for a one-time product.
                     try {
+                        LOGGER.info("GG Play Store One-time product purchase was cancelled by user, start to refund leafs for user, transactionId: " + purchaseToken);
                         paymentService.completeRefundLeafs(purchaseToken);
                     } catch (Exception e) {
                         pdLogger.logException(e);
@@ -134,6 +135,7 @@ public class PlayStoreWebhookService {
                 case 1:
                     // this event received when Google completely refunds a user's purchase.
                     try {
+                        LOGGER.info("GG Play Store Voided Purchase Notification, start to refund leafs for user, transactionId: " + purchaseToken);
                         paymentService.completeRefundLeafs(purchaseToken);
                     } catch (Exception e) {
                         pdLogger.logException(e);

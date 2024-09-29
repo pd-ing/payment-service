@@ -4,6 +4,7 @@ import com.pding.paymentservice.models.PdRewardsUsers;
 import com.pding.paymentservice.payload.request.PdRewardUsersRequest;
 import com.pding.paymentservice.repository.PdRewardsUsersRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class PdRewardsUsersService {
 
     @Autowired
