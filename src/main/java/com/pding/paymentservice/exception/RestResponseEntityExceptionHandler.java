@@ -1,5 +1,6 @@
 package com.pding.paymentservice.exception;
 
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -36,13 +37,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
     @ResponseBody
     public ResponseEntity handleEx(Exception exception, HttpServletRequest request) {
 
-        final Map<String, Object> body = new HashMap<>();
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
-        body.put("error", "INTERNAL SERVER ERROR");
-        body.put("message", exception.getMessage());
-        body.put("path", request.getServletPath());
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception.getMessage()));
     }
 
 }
