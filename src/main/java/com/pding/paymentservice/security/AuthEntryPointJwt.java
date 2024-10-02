@@ -18,6 +18,9 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) {
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+        response.setHeader("Access-Control-Allow-Headers", "*");
         resolver.resolveException(request, response, null, authException);
     }
 }
