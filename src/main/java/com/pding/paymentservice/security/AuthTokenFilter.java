@@ -1,7 +1,10 @@
 package com.pding.paymentservice.security;
 
-import com.google.firebase.auth.*;
-import com.pding.paymentservice.PdLogger;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserInfo;
+import com.google.firebase.auth.UserRecord;
 import com.pding.paymentservice.security.jwt.JwtUtils;
 import io.sentry.Sentry;
 import io.sentry.protocol.User;
@@ -77,7 +80,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith);
+        String idToken = parseJwt(request);
+        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith) && idToken == null;
     }
 
     @Override
