@@ -748,7 +748,7 @@ public class VideoPurchaseService {
             String userId = authHelper.getUserId();
             Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
             Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, videoPurchases));
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoPurchases.toList()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
