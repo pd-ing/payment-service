@@ -80,7 +80,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith);
+        String idToken = parseJwt(request);
+        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith) && idToken == null;
     }
 
     @Override
@@ -88,12 +89,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String idToken = parseJwt(request);
-
-        if (idToken == null) {
-            SecurityContextHolder.getContext().setAuthentication(null);
-            filterChain.doFilter(request, response);
-            return;
-        }
         String serverToken = parseServerToken(request);
 
         setSentryScope(request, idToken, serverToken);
