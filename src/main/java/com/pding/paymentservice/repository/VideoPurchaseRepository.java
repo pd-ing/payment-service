@@ -131,4 +131,11 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     List<VideoPurchase> findByUserIdAndVideoIdIn(String userId, Set<String> videoIds);
     List<VideoPurchase> findByUserId(String userId);
+
+    @Query(value =
+            " select *" +
+            " from video_purchase" +
+            " where duration = 'PERMANENT'" +
+            "    or expiry_date > NOW() and user_id = :userId and (:ownerId is null or video_owner_user_id = :ownerId)", nativeQuery = true)
+    Page<VideoPurchase> findNotExpiredVideo(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);
 }
