@@ -55,24 +55,29 @@ public class MessagePurchaseService {
     public String CreateMessageTransaction(String userId,
                                            String pdUserId,
                                            BigDecimal leafsTransacted,
+                                           BigDecimal treesTransacted,
                                            String messagedId,
                                            Boolean isGift,
                                            String giftId,
                                            Boolean notifyPd) {
-        log.info("Creating message transaction for userId {}, pdUserId {}, leafsTransacted {}, messageId {}, isGift {}, giftId {}, notifyPd {}",
-                userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, notifyPd);
-        walletService.deductLeafsFromWallet(userId, leafsTransacted);
 
-        MessagePurchase transaction = new MessagePurchase(userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, LocalDateTime.now());
-        MessagePurchase messagePurchase = messagePurchaseRepository.save(transaction);
-        log.info("Message purchase record created with details UserId : {}, messageId : {}, leafs : {}, pdUserId : {}",
-                userId, messagePurchase, leafsTransacted, pdUserId);
-//        pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase record created with details UserId : " + userId + " ,messageId : " + messagePurchase + ", leafs : " + leafsTransacted + ", pdUserId : " + pdUserId);
+        if (leafsTransacted.compareTo(BigDecimal.ZERO) > 0) {
+            walletService.deductLeafsFromWallet(userId, leafsTransacted);
+            MessagePurchase transaction = new MessagePurchase(userId, pdUserId, leafsTransacted, BigDecimal.ZERO, messagedId, isGift, giftId, LocalDateTime.now());
+            MessagePurchase messagePurchase = messagePurchaseRepository.save(transaction);
+            earningService.addLeafsToEarning(pdUserId, leafsTransacted);
+            ledgerService.saveToLedger(messagePurchase.getMessageId(), new BigDecimal(0), leafsTransacted, TransactionType.TEXT_MESSAGE, userId);
+        }
 
-        earningService.addLeafsToEarning(pdUserId, leafsTransacted);
-        ledgerService.saveToLedger(messagePurchase.getMessageId(), new BigDecimal(0), leafsTransacted, TransactionType.TEXT_MESSAGE, userId);
+        if (leafsTransacted.compareTo(BigDecimal.ZERO) > 0) {
+            walletService.deductTreesFromWallet(userId, treesTransacted);
+            MessagePurchase transaction = new MessagePurchase(userId, pdUserId, BigDecimal.ZERO, treesTransacted, messagedId, isGift, giftId, LocalDateTime.now());
+            MessagePurchase messagePurchase = messagePurchaseRepository.save(transaction);
+            earningService.addTreesToEarning(pdUserId, treesTransacted);
+            ledgerService.saveToLedger(messagePurchase.getMessageId(), new BigDecimal(0), treesTransacted, TransactionType.TEXT_MESSAGE, userId);
+        }
 
-        if(notifyPd) {
+        if (notifyPd) {
             try {
                 Map<String, String> data = new LinkedHashMap<>();
                 data.put("NotificationType", NotificaitonDataType.GIFT_RECEIVE.getDisplayName());

@@ -31,6 +31,8 @@ public class MessagePurchase {
 
     BigDecimal leafsTransacted;
 
+    BigDecimal treesTransacted;
+
     String messageId;
 
     Boolean isGift = false;
@@ -38,10 +40,11 @@ public class MessagePurchase {
     String giftId;
     private LocalDateTime lastUpdateDate;
 
-    public MessagePurchase(String userId, String pdUserid, BigDecimal leafsTransacted, String messageId, Boolean isGift, String giftId, LocalDateTime lastUpdateDate) {
+    public MessagePurchase(String userId, String pdUserid, BigDecimal leafsTransacted, BigDecimal treesTransacted, String messageId, Boolean isGift, String giftId, LocalDateTime lastUpdateDate) {
         this.userId = userId;
         this.pdUserid = pdUserid;
         this.leafsTransacted = leafsTransacted;
+        this.treesTransacted = treesTransacted;
         this.messageId = messageId;
         this.isGift = isGift;
         this.giftId = giftId;

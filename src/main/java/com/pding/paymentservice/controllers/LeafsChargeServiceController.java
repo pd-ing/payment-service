@@ -49,6 +49,7 @@ public class LeafsChargeServiceController {
     @PostMapping(value = "/buyCallOrMessage")
     public ResponseEntity<?> buyCall(@RequestParam(value = "pdUserId") String pdUserId,
                                      @RequestParam(value = "leafsToCharge") BigDecimal leafsToCharge,
+                                     @RequestParam(value = "treesToCharge", required = false, defaultValue = "0") BigDecimal treesToCharge,
                                      @RequestParam(value = "callType") String callType,
                                      @RequestParam(value = "callOrMessageId") String callOrMessageId,
                                      @RequestParam(value = "giftId", required = false) String giftId,
@@ -66,7 +67,11 @@ public class LeafsChargeServiceController {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "callOrMessageId parameter is required."), null));
         }
 
-        if ((leafsToCharge.compareTo(BigDecimal.ZERO) == 0) || (leafsToCharge.compareTo(BigDecimal.ZERO) < 0)) {
+        if(leafsToCharge.compareTo(BigDecimal.ZERO) == 0 && treesToCharge.compareTo(BigDecimal.ZERO) == 0){
+            return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafsToCharge or treesToCharge should be greater than 0"), null));
+        }
+
+        if ((treesToCharge.compareTo(BigDecimal.ZERO) < 0) || (leafsToCharge.compareTo(BigDecimal.ZERO) < 0)) {
             return ResponseEntity.badRequest().body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "leafsToCharge should be greater than 0"), null));
         }
 
@@ -98,7 +103,7 @@ public class LeafsChargeServiceController {
 
             if (transactionType.equals(TransactionType.TEXT_MESSAGE)) {
                 boolean isGift = giftId != null && !giftId.isEmpty();
-                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId, isGift, giftId, notifyPd);
+                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, treesToCharge, callOrMessageId, isGift, giftId, notifyPd);
             }
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
