@@ -284,7 +284,7 @@ public class VideoPurchaseService {
             VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
 
             sendNotificationService.sendBuyVideoNotification(video);
-            
+
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
@@ -382,18 +382,8 @@ public class VideoPurchaseService {
     public ResponseEntity<?> getVideoTransactions(String pdId, int page, int size, int sort) {
         try {
             String userId = authHelper.getUserId();
-            Page<VideoPurchase> videoTransactions = Page.empty();
-            if (sort == 0 || sort == 1) {
-                Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
-                if (pdId == null) {
-                    videoTransactions = videoPurchaseRepository.findByUserId(userId, pageable);
-                } else {
-                    videoTransactions = videoPurchaseRepository.findByUserIdAndVideoOwnerUserId(userId, pdId, pageable);
-                }
-            } else if (sort == 2) {
-
-            }
-
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+            Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
@@ -434,12 +424,12 @@ public class VideoPurchaseService {
             List<VideoPurchase> videoPurchases = videoPurchaseRepository.findByUserIdAndVideoId(userId, videoId);
 
             if (videoPurchases == null || videoPurchases.isEmpty()) {
-                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2( videoId, false, null, null));
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2(videoId, false, null, null));
             }
 
             //video purchase before timing duration release is permanent as default
             if (videoPurchases.stream().anyMatch(vp -> vp.getDuration() == null || vp.getExpiryDate() == null)) {
-                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2( videoId, true, LocalDateTime.now().plusYears(100), true));
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2(videoId, true, LocalDateTime.now().plusYears(100), true));
             }
 
             Optional<VideoPurchase> videoPurchase = videoPurchases.stream()
@@ -448,7 +438,7 @@ public class VideoPurchaseService {
 
             if (videoPurchase.isPresent()) {
                 Boolean isPermanent = VideoPurchaseDuration.PERMANENT.name().equalsIgnoreCase(videoPurchase.get().getDuration());
-                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2( videoId, true, videoPurchase.get().getExpiryDate(), isPermanent));
+                return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2(videoId, true, videoPurchase.get().getExpiryDate(), isPermanent));
             } else {
                 //get latest expiry date
                 LocalDateTime latestExpiryDate = videoPurchases.stream()
@@ -721,7 +711,7 @@ public class VideoPurchaseService {
     public ResponseEntity<?> getVideoPurchaseTimeRemaining(String userId, Set<String> videoIds) {
         try {
             List<VideoPurchase> videoPurchases;
-            if(videoIds == null || videoIds.isEmpty()) {
+            if (videoIds == null || videoIds.isEmpty()) {
                 videoPurchases = videoPurchaseRepository.findByUserId(userId);
             } else {
                 videoPurchases = videoPurchaseRepository.findByUserIdAndVideoIdIn(userId, videoIds);
@@ -731,22 +721,34 @@ public class VideoPurchaseService {
                     videoPurchasesMap.entrySet().stream().map(entry -> {
                         VideoPurchase vp;
                         Optional<VideoPurchase> vpOptional = entry.getValue().stream().filter(v -> v.getExpiryDate() == null).findAny();
-                        if(vpOptional.isPresent()) vp = vpOptional.get();
+                        if (vpOptional.isPresent()) vp = vpOptional.get();
                         else {
                             vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
                         }
 
-                VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
-                vpTimeRemaining.setVideoId(entry.getKey());
-                vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
-                vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
-                vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
-                vpTimeRemaining.setNumberOfDaysRemaining(vp.getExpiryDate() != null ? ChronoUnit.DAYS.between(LocalDateTime.now(), vp.getExpiryDate()) : null);
-                return vpTimeRemaining;
-            }).collect(Collectors.toList());
+                        VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
+                        vpTimeRemaining.setVideoId(entry.getKey());
+                        vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
+                        vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
+                        vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
+                        vpTimeRemaining.setNumberOfDaysRemaining(vp.getExpiryDate() != null ? ChronoUnit.DAYS.between(LocalDateTime.now(), vp.getExpiryDate()) : null);
+                        return vpTimeRemaining;
+                    }).collect(Collectors.toList());
 
 
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, videoPurchaseTimeRemainingList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> expiredVideoPurchases(String creatorUserId, int page, int pageSize, int sort) {
+        try {
+            String userId = authHelper.getUserId();
+            Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
+            Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoPurchases.toList()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));

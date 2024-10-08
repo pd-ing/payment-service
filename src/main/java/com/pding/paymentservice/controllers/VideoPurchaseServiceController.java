@@ -2,8 +2,6 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
-import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -72,6 +69,16 @@ public class VideoPurchaseServiceController {
             @RequestParam(value = "size", defaultValue = "10") int pageSize
     ) {
         return videoPurchaseService.getVideoTransactions(creatorUserId, page, pageSize, sort);
+    }
+
+    @GetMapping(value = "/expiredVideoPurchases")
+    public ResponseEntity<?> getExpiredVideoPurchases(
+            @RequestParam(value = "creatorUserId", required = false) String creatorUserId,
+            @RequestParam(value = "sort", defaultValue = "1") int sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int pageSize
+    ) {
+        return videoPurchaseService.expiredVideoPurchases(creatorUserId, page, pageSize, sort);
     }
 
 //    @GetMapping(value = "/treesEarned")

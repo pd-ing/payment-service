@@ -41,6 +41,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/videoPurchaseHistory").authenticated()
                                 .requestMatchers("/api/payment/videoPurchaseHistory").authenticated()
+                                .requestMatchers("/api/payment/expiredVideoPurchases").authenticated()
                                 .requestMatchers("/api/payment/videoPurchaseHistoryOfUser").authenticated()
                                 //.requestMatchers("/api/payment/treesEarned").authenticated()
                                 .requestMatchers("/api/payment/isVideoPurchased").authenticated()

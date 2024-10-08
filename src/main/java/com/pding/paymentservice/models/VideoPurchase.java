@@ -44,6 +44,7 @@ public class VideoPurchase {
         this.lastUpdateDate = LocalDateTime.now();
         this.videoOwnerUserId = videoOwnerUserId;
         this.isReplacementOfDeletedVideo = false;
+        this.duration = "PERMANENT";
     }
 
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate) {
