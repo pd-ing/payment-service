@@ -26,7 +26,7 @@ public class AppPaymentController {
     @GetMapping("/listProducts")
     ResponseEntity<?> getProductList() {
         try {
-            List<InAppProduct> inAppProducts = appPaymentInitializer.listInAppProducts();
+            List<InAppProduct> inAppProducts = appPaymentInitializer.listInAppProducts().stream().filter(inAppProduct -> inAppProduct.getStatus().equals("active")).toList();
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, inAppProducts));
         } catch (Exception e) {
             return ResponseEntity.ok().body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
