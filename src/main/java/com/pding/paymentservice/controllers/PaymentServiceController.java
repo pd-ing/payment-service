@@ -5,27 +5,25 @@ import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.enums.TransactionType;
-import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.BuyLeafsIOSRequest;
+import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.PaymentDetailsRequest;
 import com.pding.paymentservice.payload.request.PaymentInitFromBackendRequest;
 import com.pding.paymentservice.payload.response.ClearPendingAndStalePaymentsResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
-import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.MessageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
 import com.pding.paymentservice.paymentclients.ios.IOSPaymentInitializer;
 import com.pding.paymentservice.paymentclients.ios.TransactionDetails;
-import com.pding.paymentservice.security.AuthHelper;
-import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.paymentclients.stripe.StripeClientResponse;
+import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.validation.Valid;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -249,10 +247,15 @@ public class PaymentServiceController {
                     int purchaseLeaves = 0;
                     String productId = buyLeafsRequest.getProductId();
 
+                    try {
+                        purchaseLeaves = Integer.parseInt(inAppProduct.getListings().get("en-US").getDescription());
+                    } catch (Exception e) {
+                        String[] productIdSplit = productId.split("_");
+                        purchaseLeaves = Integer.parseInt(productIdSplit[productIdSplit.length - 1]);
+                    }
+
                     // If any of trees or leaf is null then init it with 0.
-                    if (productId != null && productId.contains("_")) {
-                        purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
-                    } else {
+                    if (purchaseLeaves == 0) {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Product Id is not valid, cannot fetch leafs to add from productId"), null));
                     }
 
