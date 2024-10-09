@@ -8,7 +8,9 @@ import com.google.api.services.androidpublisher.AndroidPublisherScopes;
 import com.google.api.services.androidpublisher.model.InAppProduct;
 import com.google.api.services.androidpublisher.model.InappproductsListResponse;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
+import com.pding.paymentservice.paymentclients.ios.IOSPaymentInitializer;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,9 @@ public class AppPaymentInitializer {
     private String appPackageName;
 
     AndroidPublisher androidPublisher;
+
+    @Autowired
+    IOSPaymentInitializer iosPaymentInitializer;
 
 
     @PostConstruct
@@ -57,6 +62,12 @@ public class AppPaymentInitializer {
         AndroidPublisher.Inappproducts.List request = androidPublisher.inappproducts().list(appPackageName);
         InappproductsListResponse response = request.execute();
         return response.getInappproduct();
+    }
+
+    public List<InAppProduct> listInAppProductsPlayStore() throws IOException {
+        AndroidPublisher.Inappproducts.List request = androidPublisher.inappproducts().list(appPackageName);
+        InappproductsListResponse response = request.execute();
+        return response.getInappproduct().stream().filter(inAppProduct -> inAppProduct.getStatus().equals("active")).toList();
     }
 
     public InAppProduct getInAppProduct(String productId) throws IOException {
