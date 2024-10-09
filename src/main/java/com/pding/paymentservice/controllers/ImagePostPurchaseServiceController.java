@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/payment")
@@ -28,11 +26,9 @@ public class ImagePostPurchaseServiceController {
 
     @PostMapping(value = "/buyImagePost")
     public ResponseEntity<?> buyImagePost(
-            @RequestParam(value = "postId") String postId,
-            @RequestParam(value = "leafAmount") BigDecimal leafAmount,
-            @RequestParam(value = "postOwnerUserId") String postOwnerUserId) {
+            @RequestParam(value = "postId") String postId) {
         String userId = authHelper.getUserId();
-        return ResponseEntity.ok( new GenericClassResponse<>(null, imagePostPurchaseService.buyImagePost(userId, postId, leafAmount, postOwnerUserId)));
+        return ResponseEntity.ok( new GenericClassResponse<>(null, imagePostPurchaseService.buyImagePost(userId, postId)));
     }
 
     @PostMapping(value = "/isImagePostPurchased")

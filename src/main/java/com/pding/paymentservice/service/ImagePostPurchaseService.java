@@ -40,23 +40,26 @@ public class ImagePostPurchaseService {
     }
 
     @Transactional
-    public ImagePurchase buyImagePost(String userId, String postId, BigDecimal leafAmount, String postOwnerUserId) {
-        validate(userId, postId, leafAmount, postOwnerUserId);
+    public ImagePurchase buyImagePost(String userId, String postId) {
+        validate(userId, postId);
+        String postOwnerUserId = null;
+        BigDecimal leafAmount = null;
+        List<Object[]> ownerAndPriceByPostId = imagePurchaseRepository.fetchOwnerAndPriceByPostId(postId);
+        for (Object[] row : ownerAndPriceByPostId) {
+            postOwnerUserId = (String) row[0];
+            leafAmount = (BigDecimal) row[1];
+        }
+        if(leafAmount == null || postOwnerUserId == null) {
+            throw new RuntimeException("cannot find post owner or leaf amount");
+        }
+
         return createImagePostTransaction(userId, postId, leafAmount, postOwnerUserId);
     }
 
-    private void validate(String userId, String postId, BigDecimal leafAmount, String postOwnerUserId) {
+    private void validate(String userId, String postId) {
 
-        if (userId == null || postId == null || leafAmount == null || postOwnerUserId == null) {
+        if (userId == null || postId == null) {
             throw new IllegalArgumentException("Invalid request parameters");
-        }
-
-        if (userId.equals(postOwnerUserId)) {
-            throw new IllegalArgumentException("User cannot purchase his own post");
-        }
-
-        if (leafAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Invalid leaf amount");
         }
 
         if (imagePurchaseRepository.existsByPostIdAndUserId(postId, userId)) {
