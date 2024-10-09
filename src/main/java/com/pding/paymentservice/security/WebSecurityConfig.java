@@ -133,6 +133,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/mediaTrading/buy").authenticated()
                                 .requestMatchers("/api/payment/mediaTrading/cancel").authenticated()
                                 .requestMatchers("/api/payment/videoPurchaseTimeRemaining").permitAll()
+                                .requestMatchers("/api/payment/buyImagePost").authenticated()
+                                .requestMatchers("/api/payment/isImagePostPurchased").authenticated()
                 );
 
 
