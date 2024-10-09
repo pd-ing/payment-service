@@ -28,17 +28,17 @@ public class AppPaymentController {
     IOSPaymentInitializer iosPaymentInitializer;
 
 
-    @GetMapping("/listProducts")
-    ResponseEntity<?> getProductList() {
-        try {
-            List<InAppProduct> inAppProducts = appPaymentInitializer.listInAppProducts().stream().filter(inAppProduct -> inAppProduct.getStatus().equals("active")).toList();
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, inAppProducts));
-        } catch (Exception e) {
-            return ResponseEntity.ok().body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
+//    @GetMapping("/listProducts")
+//    ResponseEntity<?> getProductList() {
+//        try {
+//            List<InAppProduct> inAppProducts = appPaymentInitializer.listInAppProducts().stream().filter(inAppProduct -> inAppProduct.getStatus().equals("active")).toList();
+//            return ResponseEntity.ok().body(new GenericListDataResponse<>(null, inAppProducts));
+//        } catch (Exception e) {
+//            return ResponseEntity.ok().body(new GenericListDataResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+//        }
+//    }
 
-    @GetMapping("/listProducts/v2")
+    @GetMapping("/listProducts")
     ResponseEntity<?> getProductListV2(@RequestHeader(value = "PDing-Platform", required = false) String platform) {
         try {
             if ("android".equalsIgnoreCase(platform)) {

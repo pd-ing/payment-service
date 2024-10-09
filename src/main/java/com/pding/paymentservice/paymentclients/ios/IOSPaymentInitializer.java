@@ -143,7 +143,7 @@ public class IOSPaymentInitializer {
             String state = attributes.getString("state");
             if(state.equalsIgnoreCase("APPROVED")) {
                 InAppProduct inAppProduct = new InAppProduct();
-                inAppProduct.setSku(currentProductId);
+                inAppProduct.setSku(currentProductId.toLowerCase());
                 inAppProducts.add(inAppProduct);
             }
         }
