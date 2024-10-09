@@ -34,6 +34,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 //.requestMatchers("/api/payment/charge").authenticated()
                                 .requestMatchers("/api/payment/appConfig/leafDonationConfig").authenticated()
                                 .requestMatchers("/api/payment/app/listProducts").authenticated()
+                                .requestMatchers("/api/payment/app/listProducts/v2").authenticated()
                                 .requestMatchers("/api/payment/test").authenticated()
                                 .requestMatchers("/api/payment/wallet").authenticated()
                                 .requestMatchers("/api/payment/walletHistory").authenticated()

@@ -1,34 +1,28 @@
 package com.pding.paymentservice.paymentclients.ios;
 
 import com.apple.itunes.storekit.client.AppStoreServerAPIClient;
-import com.apple.itunes.storekit.client.BearerTokenAuthenticator;
-import com.apple.itunes.storekit.migration.ReceiptUtility;
 import com.apple.itunes.storekit.model.Environment;
 import com.apple.itunes.storekit.model.TransactionInfoResponse;
-
+import com.pding.paymentservice.paymentclients.dto.InAppProduct;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.codec.binary.Base64;
+import java.util.List;
 
 
 @Component
@@ -118,6 +112,43 @@ public class IOSPaymentInitializer {
 
         // If no matching productId is found
         return null;
+    }
+
+    public List<InAppProduct> listProduct() throws Exception {
+        String token = generateTokenForAppStoreConnect();
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+
+        // Call This API , And pass the above token as header
+        String getProductsUrl = "https://api.appstoreconnect.apple.com/v1/apps/" + appId + "/inAppPurchasesV2";
+
+        // Build the request
+        Request request = new Request.Builder()
+                .url(getProductsUrl)
+                .method("GET", null) // No need for a request body in a GET request
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+
+        // Execute the request
+        Response response = client.newCall(request).execute();
+        String responseBody = response.body().string();
+        JSONObject jsonObject = new JSONObject(responseBody);
+        JSONArray dataArray = jsonObject.getJSONArray("data");
+
+        List<InAppProduct> inAppProducts = new ArrayList<>();
+        // Parse the response to find the matching productId and return the name
+        for (int i = 0; i < dataArray.length(); i++) {
+            JSONObject dataObject = dataArray.getJSONObject(i);
+            JSONObject attributes = dataObject.getJSONObject("attributes");
+            String currentProductId = attributes.getString("productId");
+            String state = attributes.getString("state");
+            if(state.equalsIgnoreCase("APPROVED")) {
+                InAppProduct inAppProduct = new InAppProduct();
+                inAppProduct.setSku(currentProductId);
+                inAppProducts.add(inAppProduct);
+            }
+        }
+
+        return inAppProducts;
     }
 
     public TransactionDetails getLeafsToAdd(String transactionId, String productId) throws Exception {
