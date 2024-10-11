@@ -2,9 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.models.ImagePurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
-import com.pding.paymentservice.models.other.services.tables.dto.ImagePostResponse;
 import com.pding.paymentservice.repository.ImagePurchaseRepository;
-import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +23,6 @@ public class ImagePostPurchaseService {
     private final EarningService earningService;
     private final LedgerService ledgerService;
     private final ImagePurchaseRepository imagePurchaseRepository;
-    private final OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
     @Transactional
     public ImagePurchase createImagePostTransaction(String userId, String postId, BigDecimal leafAmount, String postOwnerUserId) {
@@ -43,7 +40,7 @@ public class ImagePostPurchaseService {
     }
 
     @Transactional
-    public ImagePostResponse buyImagePost(String userId, String postId) {
+    public ImagePurchase buyImagePost(String userId, String postId) {
         validate(userId, postId);
         String postOwnerUserId = null;
         BigDecimal leafAmount = null;
@@ -55,27 +52,8 @@ public class ImagePostPurchaseService {
         if(leafAmount == null || postOwnerUserId == null) {
             throw new RuntimeException("cannot find post owner or leaf amount");
         }
-        createImagePostTransaction(userId, postId, leafAmount, postOwnerUserId);
 
-
-        List<String> images =  otherServicesTablesNativeQueryRepository.findImagesByPostId(postId);
-        List<Object[]> imagePost =  otherServicesTablesNativeQueryRepository.getImagePost(postId);
-        ImagePostResponse imagePostResponse = ImagePostResponse.builder()
-                .postId(postId)
-                .title((String) imagePost.get(0)[1])
-                .description((String) imagePost.get(0)[2])
-                .isPaid((Boolean) imagePost.get(0)[3])
-                .isAdult((Boolean) imagePost.get(0)[4])
-                .isVisible((Boolean) imagePost.get(0)[5])
-                .userId(postOwnerUserId)
-                .leafAmount(leafAmount)
-                .isPurchased(true)
-                .imageCount(images.size())
-                .images(images)
-                .build();
-        imagePostResponse.setIsPurchased(true);
-
-        return imagePostResponse;
+        return createImagePostTransaction(userId, postId, leafAmount, postOwnerUserId);
     }
 
     private void validate(String userId, String postId) {

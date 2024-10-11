@@ -278,12 +278,4 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     @Query(value = "select target_user_id " +
             "from block_user where blocker_user_id = :userid", nativeQuery = true)
     List<String> findBlockedUsersByUserId(@Param("userid") String userId);
-
-    @Query(value = "select path " +
-            " from image where post_id = :postId", nativeQuery = true)
-    List<String> findImagesByPostId(@Param("postId") String postId);
-
-    @Query(value = "select post_id, title, description, is_paid, is_adult, is_visible, user_id, leaf_amount" +
-            " from image_post where post_id = :postId", nativeQuery = true)
-    List<Object[]> getImagePost(@Param("postId") String postId);
 }
