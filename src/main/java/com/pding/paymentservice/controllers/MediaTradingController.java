@@ -49,7 +49,9 @@ public class MediaTradingController {
     }
 
     @GetMapping(value = "/mediaTrading")
-    public ResponseEntity getMediaTrade(@RequestParam("userId") String userId, @RequestParam("pdId") String pdId, Pageable pageable) {
+    public ResponseEntity getMediaTrade(@RequestParam(value = "userId", required = false) String userId,
+                                        @RequestParam(value = "pdId", required = false) String pdId,
+                                        Pageable pageable) {
         Slice<MediaTradingResponse> mediaTradeSlice = mediaTradingService.getMediaTrade(userId, pdId, pageable);
 
         return ResponseEntity.ok(new GenericSliceResponse<>(null, mediaTradeSlice.getContent(), mediaTradeSlice.hasNext()));

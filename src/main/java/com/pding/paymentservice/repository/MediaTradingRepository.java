@@ -12,7 +12,7 @@ public interface MediaTradingRepository extends JpaRepository<InChatMediaTrading
     boolean existsByMessageId(String messageId);
     Optional<InChatMediaTrading> findByMessageId(String messageId);
 
-    @Query(value = "Select mt from InChatMediaTrading mt where mt.userId = :userId and mt.pdId = :pdId and mt.transactionStatus = 'PAID'")
+    @Query(value = "Select mt from InChatMediaTrading mt where (:userId is null or mt.userId = :userId) and (:pdId is null or mt.pdId = :pdId) group by mt.attachments")
     Slice<InChatMediaTrading> findByUserIdAndPdId(String userId, String pdId, Pageable pageable);
 
 }
