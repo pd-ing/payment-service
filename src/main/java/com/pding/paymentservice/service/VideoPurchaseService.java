@@ -564,7 +564,7 @@ public class VideoPurchaseService {
             PublicUserNet p = userMap.get(v.getUserId());
             if (p != null) {
                 String date = v.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
-                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date));
+                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date, v.getDuration(), v.getExpiryDate()));
             }
         });
 
@@ -653,6 +653,8 @@ public class VideoPurchaseService {
             shObj.setVideoTitle(salesHistory[1].toString());
             shObj.setAmount(salesHistory[2].toString());
             shObj.setPurchaseDate(salesHistory[0].toString());
+            shObj.setDuration(salesHistory[4].toString());
+            shObj.setExpiryDate(salesHistory[5].toString());
             shList.add(shObj);
         }
         return shList;

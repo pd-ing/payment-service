@@ -87,10 +87,13 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId")
     BigDecimal getTotalTreesConsumedByUserId(@Param("userId") String userId);
 
-    @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
+    @Query(value =
+            "SELECT COALESCE(vp.last_update_date, ''), " +
             "COALESCE(v.title, ''), " +
             "COALESCE(v.trees, ''), " +
-            "COALESCE(u.email, '') " +
+            "COALESCE(u.email, ''), " +
+            "COALESCE(vp.duration, ''), " +
+            "COALESCE(vp.expiry_date, '') " +
             "FROM video_purchase vp " +
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
@@ -112,7 +115,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
             "COALESCE(v.title, ''), " +
             "COALESCE(v.trees, ''), " +
-            "COALESCE(u.email, '') " +
+            "COALESCE(u.email, ''), " +
+            "COALESCE(vp.duration, ''), " +
+            "COALESCE(vp.expiry_date '') " +
             "FROM video_purchase vp " +
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
