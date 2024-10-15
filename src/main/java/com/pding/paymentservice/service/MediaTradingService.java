@@ -4,17 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.Gson;
 import com.pding.paymentservice.models.InChatMediaTrading;
 import com.pding.paymentservice.models.enums.NotificaitonDataType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.AddMediaTrandingRequest;
+import com.pding.paymentservice.payload.response.MediaTradingResponse;
 import com.pding.paymentservice.repository.MediaTradingRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -150,5 +152,33 @@ public class MediaTradingService {
         mediaTradingRepository.save(inChatMediaTrading);
         raiseEventToUpdateOrDelete(inChatMediaTrading);
         log.info("Media trade cancelled successfully by pdId {}, messageId: {}", inChatMediaTrading.getPdId(), messageId);
+    }
+
+    public Slice<MediaTradingResponse> getMediaTrade(String userId, String pdId, Pageable pageable) {
+        return mediaTradingRepository.findByUserIdAndPdId(userId, pdId, pageable)
+                .map(inChatMediaTrading -> {
+                    MediaTradingResponse mediaTradingResponse = new MediaTradingResponse();
+                    mediaTradingResponse.setUserId(inChatMediaTrading.getUserId());
+                    mediaTradingResponse.setPdId(inChatMediaTrading.getPdId());
+                    mediaTradingResponse.setMessageId(inChatMediaTrading.getMessageId());
+                    mediaTradingResponse.setLeafsToCharge(inChatMediaTrading.getLeafsToCharge());
+
+                    final ObjectMapper mapper = new ObjectMapper();
+                    try {
+                        ArrayNode attachments = (ArrayNode) mapper.readTree(inChatMediaTrading.getAttachments());
+                        ObjectNode attachment = (ObjectNode) attachments.get(0);
+                        String mediaType = attachment.has("type") ? attachment.get("type").asText() : "";
+                        String imageUrl =  attachment.has("image_url") ? attachment.get("image_url").asText() : "";
+                        String assetUrl = attachment.has("asset_url") ? attachment.get("asset_url").asText(): "";
+                        String thumbUrl = attachment.has("thumb_url")? attachment.get("thumb_url").asText(): "";
+                        mediaTradingResponse.setType(mediaType);
+                        mediaTradingResponse.setImageUrl(imageUrl);
+                        mediaTradingResponse.setAssetUrl(assetUrl);
+                        mediaTradingResponse.setThumbUrl(thumbUrl);
+                    } catch (JsonProcessingException ignored) {
+                    }
+                    mediaTradingResponse.setTransactionStatus(inChatMediaTrading.getTransactionStatus());
+                    return mediaTradingResponse;
+                });
     }
 }

@@ -131,6 +131,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/admin/realTimeLeavesUsageHistory").authenticated()
                                 .requestMatchers("/api/payment/internal/mediaTrading").permitAll()
                                 .requestMatchers("/api/payment/mediaTrading/buy").authenticated()
+                                .requestMatchers("/api/payment/mediaTrading").authenticated()
                                 .requestMatchers("/api/payment/mediaTrading/cancel").authenticated()
                                 .requestMatchers("/api/payment/videoPurchaseTimeRemaining").permitAll()
                                 .requestMatchers("/api/payment/buyImagePost").authenticated()
