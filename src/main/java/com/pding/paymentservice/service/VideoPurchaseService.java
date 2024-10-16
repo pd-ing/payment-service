@@ -382,7 +382,7 @@ public class VideoPurchaseService {
     public ResponseEntity<?> getVideoTransactions(String pdId, int page, int size, int sort) {
         try {
             String userId = authHelper.getUserId();
-            Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
             Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
             return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList(), videoTransactions.hasNext()));
         } catch (Exception e) {
