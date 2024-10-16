@@ -16,4 +16,5 @@ import java.util.List;
 public class GetVideoTransactionsResponse {
     ErrorResponse errorResponse;
     List<VideoPurchase> videoPurchaseList;
+    Boolean hasNext;
 }

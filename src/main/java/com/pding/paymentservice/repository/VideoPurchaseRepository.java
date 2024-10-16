@@ -148,7 +148,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value =
             " select *, max(vp.expiry_date) as maxExpiryDate" +
             " from video_purchase vp" +
-            " where duration != 'PERMANENT'" +
+            " where 1 = 1 " +
             "   and user_id = :userId" +
             "   and (:ownerId is null" +
             "     or video_owner_user_id = :ownerId)" +

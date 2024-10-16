@@ -372,10 +372,10 @@ public class VideoPurchaseService {
         }
         try {
             List<VideoPurchase> videoTransactions = getAllTransactionsForUser(userId);
-            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions, null));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 
@@ -384,10 +384,10 @@ public class VideoPurchaseService {
             String userId = authHelper.getUserId();
             Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
             Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
-            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList()));
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList(), videoTransactions.hasNext()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 
@@ -750,7 +750,7 @@ public class VideoPurchaseService {
             String userId = authHelper.getUserId();
             Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
             Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
-            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoPurchases.toList()));
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoPurchases.toList(), videoPurchases.hasNext()));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
