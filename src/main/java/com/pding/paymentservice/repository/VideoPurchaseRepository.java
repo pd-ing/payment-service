@@ -90,7 +90,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value =
             "SELECT COALESCE(vp.last_update_date, ''), " +
             "COALESCE(v.title, ''), " +
-            "COALESCE(v.trees, ''), " +
+            "COALESCE(vp.trees_consumed, ''), " +
             "COALESCE(u.email, ''), " +
             "COALESCE(vp.duration, ''), " +
             "COALESCE(vp.expiry_date, '') " +
@@ -114,7 +114,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
             "COALESCE(v.title, ''), " +
-            "COALESCE(v.trees, ''), " +
+            "COALESCE(vp.trees_consumed, ''), " +
             "COALESCE(u.email, ''), " +
             "COALESCE(vp.duration, ''), " +
             "COALESCE(vp.expiry_date '') " +
