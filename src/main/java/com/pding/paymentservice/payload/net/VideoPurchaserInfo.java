@@ -2,6 +2,7 @@ package com.pding.paymentservice.payload.net;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
@@ -23,5 +24,7 @@ public class VideoPurchaserInfo {
     private String duration;
 
     private LocalDateTime expiryDate;
+
+    private BigDecimal treesConsumed;
 
 }

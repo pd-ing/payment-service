@@ -564,7 +564,7 @@ public class VideoPurchaseService {
             PublicUserNet p = userMap.get(v.getUserId());
             if (p != null) {
                 String date = v.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
-                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date, v.getDuration(), v.getExpiryDate()));
+                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date, v.getDuration(), v.getExpiryDate(), v.getTreesConsumed()));
             }
         });
 
