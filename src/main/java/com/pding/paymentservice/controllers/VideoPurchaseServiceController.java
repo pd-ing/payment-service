@@ -2,6 +2,7 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -68,7 +69,8 @@ public class VideoPurchaseServiceController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int pageSize
     ) {
-        return videoPurchaseService.getVideoTransactions(creatorUserId, page, pageSize, sort);
+        String userId = authHelper.getUserId();
+        return ResponseEntity.ok().body(videoPurchaseService.getVideoTransactions(userId, creatorUserId, page, pageSize, sort));
     }
 
     @GetMapping(value = "/expiredVideoPurchases")
@@ -78,7 +80,9 @@ public class VideoPurchaseServiceController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int pageSize
     ) {
-        return videoPurchaseService.expiredVideoPurchases(creatorUserId, page, pageSize, sort);
+        String userId = authHelper.getUserId();
+        GetVideoTransactionsResponse result = videoPurchaseService.expiredVideoPurchases(userId, creatorUserId, page, pageSize, sort);
+        return ResponseEntity.ok().body(result);
     }
 
 //    @GetMapping(value = "/treesEarned")

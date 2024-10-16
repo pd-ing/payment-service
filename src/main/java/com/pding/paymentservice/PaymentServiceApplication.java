@@ -2,10 +2,12 @@ package com.pding.paymentservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.util.logging.Logger;
 
 @SpringBootApplication
+@EnableAsync
 public class PaymentServiceApplication {
 
     private static final Logger logger = Logger.getLogger(PaymentServiceApplication.class.getName());
