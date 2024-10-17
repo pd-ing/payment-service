@@ -4,17 +4,27 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
 import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
+import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
-import com.pding.paymentservice.payload.response.*;
+import com.pding.paymentservice.payload.response.BuyVideoResponse;
+import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
+import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
+import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponseV2;
+import com.pding.paymentservice.payload.response.PaidUnpaidFollowerCountResponse;
+import com.pding.paymentservice.payload.response.PaidUnpaidFollowerResponse;
+import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
+import com.pding.paymentservice.payload.response.UserLite;
+import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
+import com.pding.paymentservice.payload.response.VideoPurchaseTimeRemainingResponse;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
-import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
@@ -27,8 +37,11 @@ import com.pding.paymentservice.util.EmailValidator;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -40,7 +53,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -354,7 +373,8 @@ public class VideoPurchaseService {
 
             sendNotificationService.sendBuyVideoNotification(video);
 
-            asyncOperationService.removeCachePattern("notExpiredVideo::" + userId + "," + videoOwnerUserId + "*");
+            asyncOperationService.removeCachePattern("purchasedVideos::" + videoOwnerUserId + "," + userId + "*");
+            asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + userId + "*");
 
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
@@ -385,7 +405,7 @@ public class VideoPurchaseService {
         }
     }
 
-    @Cacheable(value = "notExpiredVideo", key = "{#userId, #pdId, #page, #size}", cacheManager = "cacheManager")
+//    @Cacheable(value = "notExpiredVideo", key = "{#userId, #pdId, #page, #size}", cacheManager = "cacheManager")
     public GetVideoTransactionsResponse getVideoTransactions(String userId, String pdId, int page, int size, int sort) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
         Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
@@ -747,7 +767,7 @@ public class VideoPurchaseService {
         }
     }
 
-    @Cacheable(value = "expiredVideoPurchases", key = "#userId + #creatorUserId + #page + #pageSize", cacheManager = "cacheManager")
+//    @Cacheable(value = "expiredVideoPurchases", key = "#userId + #creatorUserId + #page + #pageSize", cacheManager = "cacheManager")
     public GetVideoTransactionsResponse expiredVideoPurchases(String userId, String creatorUserId, int page, int pageSize, int sort) {
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
         Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
