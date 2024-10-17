@@ -27,6 +27,7 @@ import com.pding.paymentservice.util.EmailValidator;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -78,6 +79,9 @@ public class VideoPurchaseService {
 
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
+    @Autowired
+    AsyncOperationService asyncOperationService;
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
@@ -350,6 +354,8 @@ public class VideoPurchaseService {
 
             sendNotificationService.sendBuyVideoNotification(video);
 
+            asyncOperationService.removeCachePattern("notExpiredVideo::" + userId + "," + videoOwnerUserId + "*");
+
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
@@ -372,23 +378,19 @@ public class VideoPurchaseService {
         }
         try {
             List<VideoPurchase> videoTransactions = getAllTransactionsForUser(userId);
-            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions));
+            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions, null));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
 
-    public ResponseEntity<?> getVideoTransactions(String pdId, int page, int size, int sort) {
-        try {
-            String userId = authHelper.getUserId();
-            Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
-            Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
-            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoTransactions.toList()));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GetVideoTransactionsResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
+    @Cacheable(value = "notExpiredVideo", key = "{#userId, #pdId, #page, #size}", cacheManager = "cacheManager")
+    public GetVideoTransactionsResponse getVideoTransactions(String userId, String pdId, int page, int size, int sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
+        Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
+        return new GetVideoTransactionsResponse(null, videoTransactions.toList(), videoTransactions.hasNext());
+
     }
 
     public ResponseEntity<?> getTreesEarned(String videoOwnerUserId) {
@@ -564,7 +566,7 @@ public class VideoPurchaseService {
             PublicUserNet p = userMap.get(v.getUserId());
             if (p != null) {
                 String date = v.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
-                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date));
+                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date, v.getDuration(), v.getExpiryDate(), v.getTreesConsumed()));
             }
         });
 
@@ -653,6 +655,8 @@ public class VideoPurchaseService {
             shObj.setVideoTitle(salesHistory[1].toString());
             shObj.setAmount(salesHistory[2].toString());
             shObj.setPurchaseDate(salesHistory[0].toString());
+            shObj.setDuration(salesHistory[4].toString());
+            shObj.setExpiryDate(salesHistory[5].toString());
             shList.add(shObj);
         }
         return shList;
@@ -743,15 +747,10 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> expiredVideoPurchases(String creatorUserId, int page, int pageSize, int sort) {
-        try {
-            String userId = authHelper.getUserId();
-            Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
-            Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
-            return ResponseEntity.ok().body(new GetVideoTransactionsResponse(null, videoPurchases.toList()));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
-        }
+    @Cacheable(value = "expiredVideoPurchases", key = "#userId + #creatorUserId + #page + #pageSize", cacheManager = "cacheManager")
+    public GetVideoTransactionsResponse expiredVideoPurchases(String userId, String creatorUserId, int page, int pageSize, int sort) {
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
+        Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
+        return new GetVideoTransactionsResponse(null, videoPurchases.toList(), videoPurchases.hasNext());
     }
 }

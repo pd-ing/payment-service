@@ -2,10 +2,15 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.AddMediaTrandingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.MediaTradingResponse;
+import com.pding.paymentservice.payload.response.generic.GenericSliceResponse;
 import com.pding.paymentservice.service.MediaTradingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,5 +46,14 @@ public class MediaTradingController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
+    }
+
+    @GetMapping(value = "/mediaTrading")
+    public ResponseEntity getMediaTrade(@RequestParam(value = "userId", required = false) String userId,
+                                        @RequestParam(value = "pdId", required = false) String pdId,
+                                        Pageable pageable) {
+        Slice<MediaTradingResponse> mediaTradeSlice = mediaTradingService.getMediaTrade(userId, pdId, pageable);
+
+        return ResponseEntity.ok(new GenericSliceResponse<>(null, mediaTradeSlice.getContent(), mediaTradeSlice.hasNext()));
     }
 }

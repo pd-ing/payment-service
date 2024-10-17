@@ -15,4 +15,6 @@ public class VideoSalesHistoryRecord {
     private String videoTitle;
     private String amount;
     private String purchaseDate;
+    private String duration;
+    private String expiryDate;
 }
