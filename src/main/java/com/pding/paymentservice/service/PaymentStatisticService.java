@@ -4,6 +4,8 @@ import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.payload.dto.LeafEarningInCallingHistoryDTO;
 import com.pding.paymentservice.payload.dto.LeafGiftHistoryDTO;
 import com.pding.paymentservice.payload.dto.PdSummaryDTO;
+import com.pding.paymentservice.payload.dto.PurchasedLeafHistoryDTO;
+import com.pding.paymentservice.payload.dto.PurchasedLeafHistorySummaryDTO;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.PaymentStatisticRepository;
 import lombok.RequiredArgsConstructor;
@@ -69,5 +71,30 @@ public class PaymentStatisticService {
                     pdSummaryDTO.setGetStreamUserId(pdId);
                     return pdSummaryDTO;
                 });
+    }
+
+    public Page<PurchasedLeafHistoryDTO> leafPaymentHistory(String searchString, String startDate, String endDate, Pageable pageable) {
+        return paymentStatisticRepository.getPurchasedLeafWalletHistory(searchString, startDate, endDate, pageable);
+    }
+
+    public PurchasedLeafHistorySummaryDTO leafPaymentHistorySummary() {
+
+        Mono<BigDecimal> callTypeDurationMono = Mono.fromCallable(() -> paymentStatisticRepository.getTotalPurchasedLeafs())
+                .subscribeOn(Schedulers.boundedElastic());
+
+        Mono<BigDecimal> totalTextMessagesMono = Mono.fromCallable(() -> paymentStatisticRepository.getTotalLeafsRemainingInWallet())
+                .subscribeOn(Schedulers.boundedElastic());
+
+        return Mono.zip(callTypeDurationMono, totalTextMessagesMono)
+                .map(tuple -> {
+                    BigDecimal totalPurchasedLeafs = tuple.getT1();
+                    BigDecimal totalLeafsRemainingInWallet = tuple.getT2();
+
+                    PurchasedLeafHistorySummaryDTO purchasedLeafHistorySummaryDTO = new PurchasedLeafHistorySummaryDTO();
+                    purchasedLeafHistorySummaryDTO.setTotalLeafsPurchased(totalPurchasedLeafs);
+                    purchasedLeafHistorySummaryDTO.setTotalLeafsRemaining(totalLeafsRemainingInWallet);
+
+                    return purchasedLeafHistorySummaryDTO;
+                }).block();
     }
 }

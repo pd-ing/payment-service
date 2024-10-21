@@ -36,4 +36,18 @@ public class PaymentStatisticController {
     public ResponseEntity<GenericClassResponse<PdSummaryDTO>> pdSummary(@RequestParam String pdId) {
         return ResponseEntity.ok(new GenericClassResponse<>(null, paymentStatisticService.pdSummary(pdId).block()));
     }
+
+    @GetMapping("/leafPaymentHistory")
+    public ResponseEntity leafPaymentHistory(
+                                            @RequestParam(required = false) String startDate,
+                                            @RequestParam(required = false) String endDate,
+                                            @RequestParam(required = false) String searchString,
+                                            Pageable pageable) {
+        return ResponseEntity.ok(new GenericPageResponse<>(null, paymentStatisticService.leafPaymentHistory(searchString, startDate, endDate, pageable)));
+    }
+
+    @GetMapping("/leafPaymentHistorySummary")
+    public ResponseEntity leafPaymentHistorySummary() {
+        return ResponseEntity.ok(new GenericClassResponse<>(null, paymentStatisticService.leafPaymentHistorySummary()));
+    }
 }
