@@ -156,4 +156,28 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             " group by video_id, user_id, video_owner_user_id" +
             " having maxExpiryDate < now()", nativeQuery = true)
     Page<VideoPurchase> findExpiredVideoPurchases(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);
+
+    Long countByVideoId(String videoId);
+
+    @Query(value = "select count(distinct user_id)" +
+            " from video_purchase" +
+            " where video_id = :videoId", nativeQuery = true)
+    Long countUserBuyVideo(@Param("videoId") String videoId);
+
+    @Query(value = " select vp.video_id," +
+                   "        vp.video_owner_user_id," +
+                   "        buyer.email," +
+                   "        buyer.id," +
+                   "        count(vp.id) as numberOfPurchases," +
+                   "        group_concat(vp.last_update_date)," +
+                   "        group_concat(vp.duration)," +
+                   "        group_concat(vp.expiry_date)," +
+                   "        group_concat(vp.trees_consumed)" +
+                   " from video_purchase vp" +
+                   "          join users buyer on vp.user_id = buyer.id" +
+                   " where vp.video_id = :videoId" +
+                   " group by vp.video_id, vp.user_id", nativeQuery = true)
+    Page<Object[]> getSaleHistoryByVideoId(@Param("videoId") String videoId, Pageable pageable);
+
+
 }

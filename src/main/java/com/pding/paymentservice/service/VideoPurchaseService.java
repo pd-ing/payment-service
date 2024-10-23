@@ -10,6 +10,9 @@ import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
 import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.dto.VideoPurchaseLiteDTO;
+import com.pding.paymentservice.payload.dto.VideoSaleHistory;
+import com.pding.paymentservice.payload.dto.VideoSaleHistorySummary;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
@@ -772,5 +775,37 @@ public class VideoPurchaseService {
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
         Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
         return new GetVideoTransactionsResponse(null, videoPurchases.toList(), videoPurchases.hasNext());
+    }
+
+    public VideoSaleHistorySummary getVideoSaleSummary(String videoId) {
+        Long totalSales = videoPurchaseRepository.countByVideoId(videoId);
+        Long totalUserBuyVideo = videoPurchaseRepository.countUserBuyVideo(videoId);
+        Long totalRePurchased = totalSales - totalUserBuyVideo;
+        return new VideoSaleHistorySummary(totalSales, totalRePurchased);
+    }
+
+    public Page<VideoSaleHistory> getVideoPurchaseHistory(String videoId, Pageable pageable) {
+        return videoPurchaseRepository.getSaleHistoryByVideoId(videoId, pageable)
+                .map(objects -> {
+                    String vId = (String) objects[0];
+                    String videoOwnerUserId = (String) objects[1];
+                    String userEmail = (String) objects[2];
+                    String userId = (String) objects[3];
+                    Long totalSales = (Long) objects[4];
+                    List<String> purchaseDateStrList = Arrays.asList(((String) objects[5]).split(","));
+                    List<String> durationList = Arrays.asList(((String) objects[6]).split(","));
+                    List<String> expiryDateList = Arrays.asList(((String) objects[7]).split(","));
+                    List<BigDecimal> treesConsumedList = Arrays.asList(((String) objects[8]).split(",")).stream().map(BigDecimal::new).collect(Collectors.toList());
+
+                    List<LocalDateTime> purchaseDateList = purchaseDateStrList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
+                    List<LocalDateTime> expiryDateListLocalDateTime = expiryDateList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
+
+                    List<VideoPurchaseLiteDTO> purchaseLiteDTOList = new ArrayList<>();
+                    for (int i = 0; i < totalSales; i++) {
+                        purchaseLiteDTOList.add(new VideoPurchaseLiteDTO(durationList.get(i), treesConsumedList.get(i), purchaseDateList.get(i), expiryDateListLocalDateTime.get(i)));
+                    }
+
+                    return new VideoSaleHistory(vId, videoOwnerUserId, userEmail, userId, totalSales, purchaseLiteDTOList);
+                });
     }
 }
