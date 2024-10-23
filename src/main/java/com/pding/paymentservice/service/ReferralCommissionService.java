@@ -272,18 +272,20 @@ public class ReferralCommissionService {
         UserInfoDTO userInfoDTO = new UserInfoDTO();
         userInfoDTO.setId(obj[0].toString());
         userInfoDTO.setEmail(obj[1].toString());
-        userInfoDTO.setPdType(pdType);
+        userInfoDTO.setReferralGrade(pdType);
         userInfoDTO.setNickname(obj[3].toString());
         userInfoDTO.setLinkedStripeId(linkedStripeId);
 
         //Set commission rate
-        if (userInfoDTO.getPdType() != null) {
-            if (userInfoDTO.getPdType().equals("GENERAL")) {
+        if (userInfoDTO.getReferralGrade() != null) {
+            if (userInfoDTO.getReferralGrade().equals("GENERAL")) {
                 userInfoDTO.setCommissionPercent("1");
-            } else if (userInfoDTO.getPdType().equals("BEST")) {
+            } else if (userInfoDTO.getReferralGrade().equals("BEST")) {
                 userInfoDTO.setCommissionPercent("3");
-            } else if (userInfoDTO.getPdType().equals("PARTNER")) {
+            } else if (userInfoDTO.getReferralGrade().equals("PARTNER")) {
                 userInfoDTO.setCommissionPercent("5");
+            } else if (userInfoDTO.getReferralGrade().equals("ENTERTAINMENT")) {
+                userInfoDTO.setCommissionPercent("10");
             }
         }
 
@@ -329,12 +331,12 @@ public class ReferralCommissionService {
         Map<String, String> metaData = new HashMap<>();
         metaData.put("Referrer_PdUserId", referrerPdUserInfoDTO.getId());
         metaData.put("Referrer_Email", referrerPdUserInfoDTO.getEmail());
-        metaData.put("Referrer_PdType", referrerPdUserInfoDTO.getPdType());
+        metaData.put("Referrer_PdType", referrerPdUserInfoDTO.getReferralGrade());
         metaData.put("Referrer_CommissionAmount", commissionAmount.toString());
 
         metaData.put("Referred_PdUserId", referredPdUserInfoDTO.getId());
         metaData.put("Referred_PdUser_Email", referredPdUserInfoDTO.getEmail());
-        metaData.put("Referred_PdUser_PdType", referredPdUserInfoDTO.getPdType());
+        metaData.put("Referred_PdUser_PdType", referredPdUserInfoDTO.getReferralGrade());
         metaData.put("Referred_PdUser_WithDrawalId", withdrawal.getId());
         return metaData;
     }
