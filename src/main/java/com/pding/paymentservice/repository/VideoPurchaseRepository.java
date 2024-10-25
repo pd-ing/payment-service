@@ -98,12 +98,20 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
             "WHERE vp.video_owner_user_id = :userId " +
+            "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
-            "AND (:endDate IS NULL OR vp.last_update_date <= :endDate) ",
-            countQuery = "SELECT COUNT(*) FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
-                    "AND (:endDate IS NULL OR vp.last_update_date <= :endDate)",
+            "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
-    Page<Object[]> getSalesHistoryByUserIdAndDates(String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<Object[]> getSalesHistoryByUserIdAndDates(String searchString, String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    @Query(value =
+            "SELECT sum(vp.trees_consumed) " +
+            "FROM video_purchase vp " +
+            "WHERE vp.video_owner_user_id = :userId " +
+            "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
+            "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
+            nativeQuery = true)
+   Long getTotalTreesEarned(String userId, LocalDate startDate, LocalDate endDate);
 
     @Query(value = "SELECT DISTINCT uf.follower, vp.user_id \n" +
             "FROM user_followings uf LEFT join video_purchase vp \n" +

@@ -626,10 +626,11 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> getSalesHistoryOfUser(LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
+    public ResponseEntity<?> getSalesHistoryOfUser(String searchString, LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
         try {
             String userId = authHelper.getUserId();
             List<VideoSalesHistoryRecord> shList = null;
+            Long totalTreesEarned = 0l;
             Pageable pageable = null;
             Page<Object[]> shPage = null;
             if (sort == 0 || sort == 1) {
@@ -640,34 +641,35 @@ public class VideoPurchaseService {
                 if (userId == null) {
                     return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId null; cannot get video sales history."));
                 } else {
-                    shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(userId, startDate, endDate, pageable);
+                    shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, pageable);
                     shList = createSalesHistoryList(shPage.getContent());
+                    totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate);
                 }
             }
-            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
+            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, totalTreesEarned, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null,  null));
         }
     }
 
-    public ResponseEntity<?> searchSalesHistoryOfUser(String searchString, int page, int size, int sort) {
-        try {
-            String userId = authHelper.getUserId();
-            List<VideoSalesHistoryRecord> shList = null;
-            Pageable pageable = null;
-            Page<Object[]> shPage = null;
-            if (sort == 0 || sort == 1) {
-                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
-                shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
-                shList = createSalesHistoryList(shPage.getContent());
-            }
-            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
+//    public ResponseEntity<?> searchSalesHistoryOfUser(String searchString, int page, int size, int sort) {
+//        try {
+//            String userId = authHelper.getUserId();
+//            List<VideoSalesHistoryRecord> shList = null;
+//            Pageable pageable = null;
+//            Page<Object[]> shPage = null;
+//            if (sort == 0 || sort == 1) {
+//                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+//                shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
+//                shList = createSalesHistoryList(shPage.getContent());
+//            }
+//            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
+//        } catch (Exception e) {
+//            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+//        }
+//    }
 
     private List<VideoSalesHistoryRecord> createSalesHistoryList(List<Object[]> shPage) {
         List<VideoSalesHistoryRecord> shList = new ArrayList<>();
