@@ -5,6 +5,10 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.repository.ImagePurchaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,5 +75,10 @@ public class ImagePostPurchaseService {
         List<ImagePurchase> imagePurchases = imagePurchaseRepository.findByUserIdAndPostIdIn(userId, postIds);
         List<String> purchasedPostIds = imagePurchases.stream().map(ImagePurchase::getPostId).collect(Collectors.toList());
         return postIds.stream().filter(Objects::nonNull).collect(Collectors.toMap(postId -> postId, postId -> purchasedPostIds.contains(postId)));
+    }
+
+    public Slice<ImagePurchase> getPurchasedImagePosts(String userId, String pdId, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("lastUpdateDate").descending());
+        return imagePurchaseRepository.findByUserIdAndPostOwnerUserId(userId, pdId, pageable);
     }
 }
