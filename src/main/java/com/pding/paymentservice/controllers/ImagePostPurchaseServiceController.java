@@ -3,12 +3,15 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.models.ImagePurchase;
 import com.pding.paymentservice.payload.request.CheckImagePurchasedRequest;
+import com.pding.paymentservice.payload.response.UserLite;
+import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericSliceResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.ImagePostPurchaseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -35,16 +38,16 @@ public class ImagePostPurchaseServiceController {
 
     @PostMapping(value = "/buyImagePost")
     public ResponseEntity<?> buyImagePost(
-            @RequestParam(value = "postId") String postId) {
+        @RequestParam(value = "postId") String postId) {
         String userId = authHelper.getUserId();
-        return ResponseEntity.ok( new GenericClassResponse<>(null, imagePostPurchaseService.buyImagePost(userId, postId)));
+        return ResponseEntity.ok(new GenericClassResponse<>(null, imagePostPurchaseService.buyImagePost(userId, postId)));
     }
 
     @PostMapping(value = "/isImagePostPurchased")
     public ResponseEntity<?> isImagePostPurchased(
-            @RequestBody CheckImagePurchasedRequest request) {
+        @RequestBody CheckImagePurchasedRequest request) {
         String userId = authHelper.getUserId();
-        return ResponseEntity.ok( new GenericClassResponse<>(null, imagePostPurchaseService.isImagePostPurchased(userId, request.getPostIds())));
+        return ResponseEntity.ok(new GenericClassResponse<>(null, imagePostPurchaseService.isImagePostPurchased(userId, request.getPostIds())));
     }
 
     @GetMapping(value = "/getPurchasedImagePosts")
@@ -55,6 +58,22 @@ public class ImagePostPurchaseServiceController {
         Slice<ImagePurchase> imagePurchases =
             imagePostPurchaseService.getPurchasedImagePosts(userId, pdId, page, size);
 
-        return ResponseEntity.ok( new GenericSliceResponse<>(null, imagePurchases.getContent(), imagePurchases.hasNext()));
+        return ResponseEntity.ok(new GenericSliceResponse<>(null, imagePurchases.getContent(), imagePurchases.hasNext()));
+    }
+
+    @GetMapping(value = "/allPdWhosePostsArePurchasedByUser")
+    public ResponseEntity<?> allPdWhosePostsArePurchasedByUser(
+        @RequestParam(value = "size", defaultValue = "20") int size,
+        @RequestParam(value = "page", defaultValue = "0") int page
+    ) throws Exception {
+
+        String userId = authHelper.getUserId();
+        Page<UserLite> userPage = imagePostPurchaseService.getAllPdUserIdWhoseVideosArePurchasedByUser(userId, size, page);
+
+        return ResponseEntity.ok(new PaginationInfoWithGenericList(userPage.getNumber(),
+            userPage.getSize(),
+            userPage.getTotalElements(),
+            userPage.getTotalPages(),
+            userPage.getContent()));
     }
 }
