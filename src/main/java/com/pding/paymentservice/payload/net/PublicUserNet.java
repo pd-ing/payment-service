@@ -40,4 +40,6 @@ public class PublicUserNet {
     private BigDecimal totalTreesSpent;
 
     private String profileId;
+
+    private String pdCategory;
 }
