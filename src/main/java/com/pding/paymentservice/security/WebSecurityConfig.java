@@ -136,9 +136,15 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/videoPurchaseTimeRemaining").permitAll()
                                 .requestMatchers("/api/payment/buyImagePost").authenticated()
                                 .requestMatchers("/api/payment/isImagePostPurchased").authenticated()
+                                .requestMatchers("/api/payment/getPurchasedImagePosts").authenticated()
+                                .requestMatchers("/api/payment/allPdWhosePostsArePurchasedByUser").authenticated()
                                 .requestMatchers("/api/payment/statistic/leafsEarningFromCallHistory").authenticated()
                                 .requestMatchers("/api/payment/statistic/leafsEarningFromGiftHistory").authenticated()
+                                .requestMatchers("/api/payment/statistic/leafPaymentHistory").authenticated()
                                 .requestMatchers("/api/payment/statistic/pdSummary").authenticated()
+                                .requestMatchers("/api/payment/statistic/leafPaymentHistorySummary").authenticated()
+                                .requestMatchers("/api/payment/statistic/videoSaleHistorySummary").authenticated()
+                                .requestMatchers("/api/payment/statistic/videoSaleHistory").authenticated()
                 );
 
 

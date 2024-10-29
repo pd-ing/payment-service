@@ -10,6 +10,9 @@ import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
 import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.dto.VideoPurchaseLiteDTO;
+import com.pding.paymentservice.payload.dto.VideoSaleHistory;
+import com.pding.paymentservice.payload.dto.VideoSaleHistorySummary;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
@@ -236,92 +239,6 @@ public class VideoPurchaseService {
 
     public Map<String, VideoEarningsAndSales> getVideoStats(List<String> videoId) {
         return videoPurchaseRepository.getTotalTreesEarnedAndSalesCountMapForVideoIds(videoId);
-    }
-
-    public ResponseEntity<?> buyVideo(String userId, String videoId, BigDecimal trees, String videoOwnerUserId) {
-        if (userId == null || userId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
-        }
-        if (videoId == null || videoId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
-        }
-        if (trees == null) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
-        }
-        if (trees.equals(new BigDecimal(0))) {
-//            pdLogger.logInfo("BUY_VIDEO", "Attempt made to purchase the video for 0 trees by, userId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Video cannnot be purchased for 0 trees"));
-        }
-        if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserId parameter is required."));
-        }
-        if (!validateActualCostOfVideo(videoId, videoOwnerUserId, trees)) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Actual cost of video does not match with the trees provided to buy it"));
-        }
-
-        try {
-            VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
-            return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
-        } catch (WalletNotFoundException e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        } catch (InsufficientTreesException e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (InvalidAmountException e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
-
-    public ResponseEntity<?> buyVideoV2(String videoId) {
-        if (videoId == null || videoId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
-        }
-
-        try {
-            String userId = authHelper.getUserId();
-            List<Object[]> rawResults = videoPurchaseRepository.findUserIdAndTreesByVideoId(videoId);
-            String videoOwnerUserId = "";
-            BigDecimal trees = null;
-
-            for (Object[] row : rawResults) {
-                videoOwnerUserId = (String) row[0];
-                trees = (BigDecimal) row[1];
-            }
-
-            if (trees == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "trees is null for the videoId provided"), null));
-            }
-
-            if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), " VideoOwnerUserID is null or empty for the videoId provided"), null));
-            }
-
-//            pdLogger.logInfo("BUY_VIDEO", "Buy video request made with following details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + trees + ", VideoOwnerUserId : " + videoOwnerUserId);
-
-            VideoPurchase video = createVideoTransaction(userId, videoId, trees, videoOwnerUserId);
-
-            sendNotificationService.sendBuyVideoNotification(video);
-
-            return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
-        } catch (WalletNotFoundException e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        } catch (InsufficientTreesException e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (InvalidAmountException e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
     }
 
     public ResponseEntity<?> buyVideoV3(String videoId, String duration) {
@@ -623,10 +540,11 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> getSalesHistoryOfUser(LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
+    public ResponseEntity<?> getSalesHistoryOfUser(String searchString, LocalDate startDate, LocalDate endDate, int page, int size, int sort) {
         try {
             String userId = authHelper.getUserId();
             List<VideoSalesHistoryRecord> shList = null;
+            Long totalTreesEarned = 0l;
             Pageable pageable = null;
             Page<Object[]> shPage = null;
             if (sort == 0 || sort == 1) {
@@ -637,34 +555,35 @@ public class VideoPurchaseService {
                 if (userId == null) {
                     return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "UserId null; cannot get video sales history."));
                 } else {
-                    shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(userId, startDate, endDate, pageable);
+                    shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, pageable);
                     shList = createSalesHistoryList(shPage.getContent());
+                    totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate);
                 }
             }
-            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
+            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, totalTreesEarned, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null,  null));
         }
     }
 
-    public ResponseEntity<?> searchSalesHistoryOfUser(String searchString, int page, int size, int sort) {
-        try {
-            String userId = authHelper.getUserId();
-            List<VideoSalesHistoryRecord> shList = null;
-            Pageable pageable = null;
-            Page<Object[]> shPage = null;
-            if (sort == 0 || sort == 1) {
-                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
-                shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
-                shList = createSalesHistoryList(shPage.getContent());
-            }
-            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
-        } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
+//    public ResponseEntity<?> searchSalesHistoryOfUser(String searchString, int page, int size, int sort) {
+//        try {
+//            String userId = authHelper.getUserId();
+//            List<VideoSalesHistoryRecord> shList = null;
+//            Pageable pageable = null;
+//            Page<Object[]> shPage = null;
+//            if (sort == 0 || sort == 1) {
+//                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
+//                shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
+//                shList = createSalesHistoryList(shPage.getContent());
+//            }
+//            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
+//        } catch (Exception e) {
+//            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+//        }
+//    }
 
     private List<VideoSalesHistoryRecord> createSalesHistoryList(List<Object[]> shPage) {
         List<VideoSalesHistoryRecord> shList = new ArrayList<>();
@@ -772,5 +691,37 @@ public class VideoPurchaseService {
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
         Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
         return new GetVideoTransactionsResponse(null, videoPurchases.toList(), videoPurchases.hasNext());
+    }
+
+    public VideoSaleHistorySummary getVideoSaleSummary(String videoId) {
+        Long totalSales = videoPurchaseRepository.countByVideoId(videoId);
+        Long totalUserBuyVideo = videoPurchaseRepository.countUserBuyVideo(videoId);
+        Long totalRePurchased = totalSales - totalUserBuyVideo;
+        return new VideoSaleHistorySummary(totalSales, totalRePurchased);
+    }
+
+    public Page<VideoSaleHistory> getVideoPurchaseHistory(String videoId, Pageable pageable) {
+        return videoPurchaseRepository.getSaleHistoryByVideoId(videoId, pageable)
+                .map(objects -> {
+                    String vId = (String) objects[0];
+                    String videoOwnerUserId = (String) objects[1];
+                    String userEmail = (String) objects[2];
+                    String userId = (String) objects[3];
+                    Long totalSales = (Long) objects[4];
+                    List<String> purchaseDateStrList = Arrays.asList(((String) objects[5]).split(","));
+                    List<String> durationList = Arrays.asList(((String) objects[6]).split(","));
+                    List<String> expiryDateList = Arrays.asList(((String) objects[7]).split(","));
+                    List<BigDecimal> treesConsumedList = Arrays.asList(((String) objects[8]).split(",")).stream().map(BigDecimal::new).collect(Collectors.toList());
+
+                    List<LocalDateTime> purchaseDateList = purchaseDateStrList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
+                    List<LocalDateTime> expiryDateListLocalDateTime = expiryDateList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
+
+                    List<VideoPurchaseLiteDTO> purchaseLiteDTOList = new ArrayList<>();
+                    for (int i = 0; i < totalSales; i++) {
+                        purchaseLiteDTOList.add(new VideoPurchaseLiteDTO(durationList.get(i), treesConsumedList.get(i), purchaseDateList.get(i), expiryDateListLocalDateTime.get(i)));
+                    }
+
+                    return new VideoSaleHistory(vId, videoOwnerUserId, userEmail, userId, totalSales, purchaseLiteDTOList);
+                });
     }
 }

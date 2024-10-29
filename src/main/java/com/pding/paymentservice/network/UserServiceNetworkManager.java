@@ -53,7 +53,7 @@ public class UserServiceNetworkManager {
                                 .map(userId -> {
                                     PublicUserNet user = userMap.get(userId);
                                     if (user == null) {
-                                        return new PublicUserNet(userId, null, null, null, null, null, null, null, null, null, null, null);
+                                        return new PublicUserNet(userId, null, null, null, null, null, null, null, null, null, null, null, null);
                                     }
                                     return user;
                                 });

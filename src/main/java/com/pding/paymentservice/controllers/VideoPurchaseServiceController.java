@@ -8,7 +8,7 @@ import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -37,15 +37,15 @@ public class VideoPurchaseServiceController {
     @Autowired
     VideoPurchaseService videoPurchaseService;
 
-    @PostMapping(value = "/buyVideo")
-    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
-        return videoPurchaseService.buyVideo(authHelper.getUserId(), videoId, trees, videoOwnerUserId);
-    }
+//    @PostMapping(value = "/buyVideo")
+//    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
+//        return videoPurchaseService.buyVideo(authHelper.getUserId(), videoId, trees, videoOwnerUserId);
+//    }
 
-    @PostMapping(value = "/v2/buyVideo")
-    public ResponseEntity<?> buyVideoV2(@RequestParam(value = "videoId") String videoId) {
-        return videoPurchaseService.buyVideoV2(videoId);
-    }
+//    @PostMapping(value = "/v2/buyVideo")
+//    public ResponseEntity<?> buyVideoV2(@RequestParam(value = "videoId") String videoId) {
+//        return videoPurchaseService.buyVideoV2(videoId);
+//    }
 
     @PostMapping(value = "/v3/buyVideo")
     public ResponseEntity<?> buyVideoV3(@RequestParam(value = "videoId") String videoId, @RequestParam("duration") String duration) {
@@ -141,7 +141,8 @@ public class VideoPurchaseServiceController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size
+            @RequestParam(defaultValue = "10") @Min(1) @Max(10) int size,
+            @RequestParam(value = "searchString", required = false) String searchString
     ) {
         if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Both start date and end date should either be null or have a value"));
@@ -149,16 +150,19 @@ public class VideoPurchaseServiceController {
         if (endDate != null) {
             endDate = endDate.plusDays(1L);
         }
-        return videoPurchaseService.getSalesHistoryOfUser(startDate, endDate, page, size, sortOrder);
+        if(StringUtils.isBlank(searchString)) {
+            searchString = null;
+        }
+        return videoPurchaseService.getSalesHistoryOfUser(searchString, startDate, endDate, page, size, sortOrder);
     }
 
-    @GetMapping(value = "/searchVideoSalesHistoryOfPd")
-    public ResponseEntity<?> searchVideoSalesHistoryOfUser(@RequestParam(value = "searchString") @NotBlank String searchString,
-                                                           @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
-                                                           @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                           @RequestParam(defaultValue = "10") @Min(1) int size) {
-        return videoPurchaseService.searchSalesHistoryOfUser(searchString, page, size, sortOrder);
-    }
+//    @GetMapping(value = "/searchVideoSalesHistoryOfPd")
+//    public ResponseEntity<?> searchVideoSalesHistoryOfUser(@RequestParam(value = "searchString") @NotBlank String searchString,
+//                                                           @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+//                                                           @RequestParam(defaultValue = "0") @Min(0) int page,
+//                                                           @RequestParam(defaultValue = "10") @Min(1) int size) {
+//        return videoPurchaseService.searchSalesHistoryOfUser(searchString, page, size, sortOrder);
+//    }
 
     @GetMapping(value = "/dailyTreeRevenueOfPd")
     public ResponseEntity<?> getDailyTreeRevenueOfUser(@RequestParam(value = "endDate") LocalDateTime endDate) {

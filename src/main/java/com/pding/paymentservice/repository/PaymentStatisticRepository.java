@@ -3,6 +3,7 @@ package com.pding.paymentservice.repository;
 import com.pding.paymentservice.models.CallPurchase;
 import com.pding.paymentservice.payload.dto.LeafEarningInCallingHistoryDTO;
 import com.pding.paymentservice.payload.dto.LeafGiftHistoryDTO;
+import com.pding.paymentservice.payload.dto.PurchasedLeafHistoryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -144,4 +145,46 @@ public interface PaymentStatisticRepository extends JpaRepository<CallPurchase, 
     Long getTotalGiftsInCall(String pdId);
 
 
+    @Query(value = " select wh.user_id as userId, u.email, wh.purchase_date, payment_method, purchased_leafs" +
+                    " from wallet_history wh" +
+                    "          left join users u on wh.user_id = u.id" +
+                    " where wh.purchased_leafs > 0" +
+                    "   and wh.transaction_status = 'paymentCompleted'" +
+                    "   and (:searchString is null or wh.user_id like CONCAT('%', :searchString, '%') or u.email like CONCAT('%', :searchString, '%'))" +
+                    "   and (:fromDate is null or wh.purchase_date >= :fromDate)" +
+                    "   and (:toDate is null or wh.purchase_date <= :toDate)" +
+                    "   order by wh.purchase_date desc"
+            , nativeQuery = true
+    )
+    Page<Object[]> _getPurchasedLeafWalletHistory(String searchString, String fromDate, String toDate, Pageable pageable);
+
+    default Page<PurchasedLeafHistoryDTO> getPurchasedLeafWalletHistory(String searchString, String fromDate, String toDate, Pageable pageable) {
+        return _getPurchasedLeafWalletHistory(searchString, fromDate, toDate, pageable)
+                .map(objects -> {
+                    PurchasedLeafHistoryDTO dto = new PurchasedLeafHistoryDTO();
+                    dto.setUserId((String) objects[0]);
+                    dto.setEmail((String) objects[1]);
+                    Timestamp startTime = (Timestamp) objects[2];
+                    if (startTime != null) {
+                        dto.setPurchaseDate(startTime.toLocalDateTime());
+                    }
+                    dto.setPaymentMethod((String) objects[3]);
+                    dto.setLeafAmount((java.math.BigDecimal) objects[4]);
+                    return dto;
+                });
+    }
+
+    @Query(value =
+            "select sum(purchased_leafs) " +
+                    " from wallet_history " +
+                    " where purchased_leafs > 0 " +
+                    "   and transaction_status = 'paymentCompleted'", nativeQuery = true
+    )
+    BigDecimal getTotalPurchasedLeafs();
+
+    @Query(
+            value = "select sum(leafs)" +
+                    " from wallet", nativeQuery = true
+    )
+    BigDecimal getTotalLeafsRemainingInWallet();
 }

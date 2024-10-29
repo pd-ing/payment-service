@@ -14,7 +14,7 @@ public class UserInfoDTO {
 
     String email;
 
-    String pdType;
+    String referralGrade;
 
     String nickname;
 

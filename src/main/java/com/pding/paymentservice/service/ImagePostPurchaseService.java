@@ -2,9 +2,19 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.models.ImagePurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.repository.ImagePurchaseRepository;
+import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +33,8 @@ public class ImagePostPurchaseService {
     private final EarningService earningService;
     private final LedgerService ledgerService;
     private final ImagePurchaseRepository imagePurchaseRepository;
+    private final UserServiceNetworkManager userServiceNetworkManager;
+    private final TokenSigner tokenSigner;
 
     @Transactional
     public ImagePurchase createImagePostTransaction(String userId, String postId, BigDecimal leafAmount, String postOwnerUserId) {
@@ -49,7 +61,7 @@ public class ImagePostPurchaseService {
             postOwnerUserId = (String) row[0];
             leafAmount = (BigDecimal) row[1];
         }
-        if(leafAmount == null || postOwnerUserId == null) {
+        if (leafAmount == null || postOwnerUserId == null) {
             throw new RuntimeException("cannot find post owner or leaf amount");
         }
 
@@ -71,5 +83,32 @@ public class ImagePostPurchaseService {
         List<ImagePurchase> imagePurchases = imagePurchaseRepository.findByUserIdAndPostIdIn(userId, postIds);
         List<String> purchasedPostIds = imagePurchases.stream().map(ImagePurchase::getPostId).collect(Collectors.toList());
         return postIds.stream().filter(Objects::nonNull).collect(Collectors.toMap(postId -> postId, postId -> purchasedPostIds.contains(postId)));
+    }
+
+    public Slice<ImagePurchase> getPurchasedImagePosts(String userId, String pdId, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("lastUpdateDate").descending());
+        return imagePurchaseRepository.findByUserIdAndPostOwnerUserId(userId, pdId, pageable);
+    }
+
+    public Page<UserLite> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, int size, int page) throws Exception {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<String> userIdsPage = imagePurchaseRepository.getAllPdUserIdWhosePostsArePurchasedByUser(userId, pageable);
+
+        if (userIdsPage.isEmpty()) {
+            return Page.empty();
+        }
+
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIdsPage.toSet()).blockFirst();
+
+        if (usersFlux == null) {
+            return Page.empty();
+        }
+
+        List<UserLite> users = usersFlux.stream().map(userObj -> UserLite.fromPublicUserNet(userObj, tokenSigner)).toList();
+        Page<UserLite> resData = new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
+
+        return resData;
+
     }
 }
