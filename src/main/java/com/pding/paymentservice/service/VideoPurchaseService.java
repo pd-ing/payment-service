@@ -292,6 +292,7 @@ public class VideoPurchaseService {
 
             asyncOperationService.removeCachePattern("purchasedVideos::" + videoOwnerUserId + "," + userId + "*");
             asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + userId + "*");
+            asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + videoOwnerUserId + "*");
 
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
