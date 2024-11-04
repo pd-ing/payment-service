@@ -27,6 +27,7 @@ public class ReferralCommissionDetailsDTO {
     private String withdrawalUpdatedDate;
     private String userNickname;
     private String pdType;
+    private String referralGrade;
 
     public static ReferralCommissionDetailsDTO fromObjectArray(Object[] objectArr) {
         ReferralCommissionDetailsDTO referralCommissionDetailsDTOObj = new ReferralCommissionDetailsDTO();
@@ -48,6 +49,7 @@ public class ReferralCommissionDetailsDTO {
         referralCommissionDetailsDTOObj.setWithdrawalUpdatedDate(objectArr[14] != null ? objectArr[14].toString() : null);
         referralCommissionDetailsDTOObj.setUserNickname(objectArr[15] != null ? objectArr[15].toString() : null);
         referralCommissionDetailsDTOObj.setPdType(objectArr[16] != null ? objectArr[16].toString() : null);
+        referralCommissionDetailsDTOObj.setReferralGrade(objectArr[17] != null ? objectArr[17].toString() : null);
 
         return referralCommissionDetailsDTOObj;
     }

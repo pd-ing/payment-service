@@ -118,10 +118,11 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "rc.updated_date as referralCommissionUpdatedDate, rc.commission_transfer_status as commissionTransferStatus, " +
             "w.pd_user_id as withdrawalUserId, w.trees as withdrawalTrees, w.leafs withdrawalLeafs, w.status as withdrawalStatus, " +
             "w.created_date as withdrawalCreatedDate, w.updated_date as withdrawalUpdatedDate, " +
-            "u.nickname as userNickname, u.pd_type as pdType " +
+            "u.nickname as userNickname, u.pd_type as pdType, ref.referral_grade as referralGrade " +
             "FROM referral_commission rc " +
             "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
             "INNER JOIN users u ON w.pd_user_id = u.id " +
+            "INNER JOIN users ref ON rc.referrer_pd_user_id = ref.id " +
             "WHERE rc.referrer_pd_user_id = :referrerPdUserId " +
             "AND (:startDate IS NULL OR rc.created_date >= :startDate) " +
             "AND (:endDate IS NULL OR rc.created_date <= :endDate) " +
@@ -156,7 +157,8 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "COALESCE(u.email, '') AS referrerUserEmail, " +
             "COALESCE(u.pd_type, '') AS referrerPdType, " +
             "COALESCE(u.linked_stripe_id, '') AS linkedStripeId, " +
-            "w.pd_user_id AS referredPdUserId " +
+            "w.pd_user_id AS referredPdUserId, " +
+            "COALESCE(u.referral_grade, '') AS referrerReferralGrade " +
             "FROM referral_commission rc " +
             "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
             "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
