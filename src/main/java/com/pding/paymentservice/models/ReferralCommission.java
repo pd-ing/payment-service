@@ -37,6 +37,9 @@ public class ReferralCommission {
     @Column(name = "commission_percent")
     private String commissionPercent;
 
+    @Column(name = "referrer_referral_grade")
+    private String referrerReferralGrade;
+
     @Column(name = "commission_amount_in_trees")
     private String commissionAmountInTrees = new BigDecimal(0).toString();
 
@@ -64,7 +67,8 @@ public class ReferralCommission {
                               LocalDateTime createdDate,
                               LocalDateTime updatedDate,
                               CommissionTransferStatus commissionTransferStatus,
-                              BigDecimal commissionAmountInCents
+                              BigDecimal commissionAmountInCents,
+                              String referrerReferralGrade
     ) {
         this.withdrawalId = withdrawalId;
         this.referrerPdUserId = referrerPdUserId;
@@ -75,6 +79,7 @@ public class ReferralCommission {
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
         this.commissionTransferStatus = commissionTransferStatus;
+        this.referrerReferralGrade = referrerReferralGrade;
 
     }
 }

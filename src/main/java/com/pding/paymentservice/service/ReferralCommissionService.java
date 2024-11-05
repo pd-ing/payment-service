@@ -322,8 +322,8 @@ public class ReferralCommissionService {
                 createUpdateDate,
                 createUpdateDate,
                 CommissionTransferStatus.TRANSFER_PENDING,
-                commissionAmountInCents
-
+                commissionAmountInCents,
+                referrerPdUserInfoDTO.getReferralGrade()
         );
     }
 
