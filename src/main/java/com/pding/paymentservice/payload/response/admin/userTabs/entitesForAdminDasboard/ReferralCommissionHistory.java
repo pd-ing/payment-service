@@ -5,9 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
 @Builder
 @AllArgsConstructor
@@ -28,6 +25,7 @@ public class ReferralCommissionHistory {
     private String linkedStripeId;
     private String referredPdUserId;
     private String pdAffiliated;
+    private String referrerReferralGrade;
 
     public static ReferralCommissionHistory fromObjectArray(Object[] objectArr) throws Exception {
 
@@ -47,6 +45,7 @@ public class ReferralCommissionHistory {
         referralCommissionHistory.setReferrerPdType(objectArr[11].toString());
         referralCommissionHistory.setLinkedStripeId(objectArr[12].toString());
         referralCommissionHistory.setReferredPdUserId(objectArr[13].toString());
+        referralCommissionHistory.setReferrerReferralGrade(objectArr[14].toString());
 
         return referralCommissionHistory;
     }
