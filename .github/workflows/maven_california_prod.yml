@@ -15,7 +15,7 @@ on:
 jobs:
   build:
 
-    runs-on: prodRunnerUsWest2
+    runs-on: paymenServiceProdRunner
 
     steps:
       - uses: actions/checkout@v3
