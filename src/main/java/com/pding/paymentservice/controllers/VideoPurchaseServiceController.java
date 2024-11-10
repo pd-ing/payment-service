@@ -118,14 +118,14 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.videoEarningAndSales(videoIds);
     }
 
-    @PostMapping(value = "/videoPurchaseReplacement")
-    public ResponseEntity<?> videoPurchaseReplacement(
-            @RequestParam(value = "videoId") String videoId,
-            @RequestParam(value = "ownerUserId", required = false) String ownerUserId,
-            @RequestParam(value = "userEmails") String userEmails
-    ) {
-        return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, ownerUserId, userEmails);
-    }
+//    @PostMapping(value = "/videoPurchaseReplacement")
+//    public ResponseEntity<?> videoPurchaseReplacement(
+//            @RequestParam(value = "videoId") String videoId,
+//            @RequestParam(value = "ownerUserId", required = false) String ownerUserId,
+//            @RequestParam(value = "userEmails") String userEmails
+//    ) {
+//        return videoPurchaseService.createVideoPurchaseReplacementFromEmail(videoId, ownerUserId, userEmails);
+//    }
 
     @GetMapping(value = "/getAllPdWhoseVideosArePurchasedByUser")
     public ResponseEntity<?> getAllPdUserIdWhoseVideosArePurchasedByUser(
