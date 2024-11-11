@@ -145,6 +145,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/statistic/leafPaymentHistorySummary").authenticated()
                                 .requestMatchers("/api/payment/statistic/videoSaleHistorySummary").authenticated()
                                 .requestMatchers("/api/payment/statistic/videoSaleHistory").authenticated()
+                                .requestMatchers("/api/payment/statistic/gross-revenue-graph").authenticated()
                 );
 
 

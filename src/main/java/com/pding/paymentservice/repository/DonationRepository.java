@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public interface DonationRepository extends JpaRepository<Donation, String> {
     List<Donation> findByDonorUserId(String donorUserId);
@@ -59,5 +59,8 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
 
     @Query(value = "SELECT COALESCE(SUM(d.donatedTrees), 0) FROM Donation d WHERE d.donorUserId = :userId")
     BigDecimal getTotalDonatedTreesByDonorUserId(@Param("userId") String userId);
+
+    @Query(value = "select d from Donation d where d.pdUserId = :pdId and d.lastUpdateDate >= :startDate and d.lastUpdateDate <= :endDate")
+    List<Donation> findDonationsByPdIdAndDateRange(@Param("pdId") String pdId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 }

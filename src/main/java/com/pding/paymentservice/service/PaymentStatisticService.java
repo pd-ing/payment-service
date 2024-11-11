@@ -1,13 +1,18 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.Earning;
+import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.payload.dto.GrossRevenueByDateGraph;
 import com.pding.paymentservice.payload.dto.LeafEarningInCallingHistoryDTO;
 import com.pding.paymentservice.payload.dto.LeafGiftHistoryDTO;
 import com.pding.paymentservice.payload.dto.PdSummaryDTO;
 import com.pding.paymentservice.payload.dto.PurchasedLeafHistoryDTO;
 import com.pding.paymentservice.payload.dto.PurchasedLeafHistorySummaryDTO;
+import com.pding.paymentservice.repository.DonationRepository;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.PaymentStatisticRepository;
+import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,8 +21,13 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +35,8 @@ public class PaymentStatisticService {
     private final PaymentStatisticRepository paymentStatisticRepository;
 
     private final EarningRepository earningRepository;
+    private final VideoPurchaseRepository videoPurchaseRepository;
+    private final DonationRepository donationRepository;
 
     public Page<LeafEarningInCallingHistoryDTO> leafsEarningHistory(String pdId, String startDate, String endDate, Pageable pageable) {
         return paymentStatisticRepository.getLeafEarningInCallingHistory(pdId, startDate, endDate, pageable);
@@ -96,5 +108,41 @@ public class PaymentStatisticService {
 
                     return purchasedLeafHistorySummaryDTO;
                 }).block();
+    }
+
+    public GrossRevenueByDateGraph getGrossRevenueGraph(String pdId, LocalDate selectedDate) {
+        LocalDateTime startOfSelectedDate = selectedDate.atStartOfDay();
+        LocalDateTime endOfSelectedDate = selectedDate.atTime(23, 59, 59);
+        List<VideoPurchase> videoPurchases = videoPurchaseRepository.getVideoPurchasesByVideoOwnerUserIdAndDates(pdId, startOfSelectedDate, endOfSelectedDate);
+        List<Donation> donations = donationRepository.findDonationsByPdIdAndDateRange(pdId, startOfSelectedDate, endOfSelectedDate);
+
+        //get gross revenue of pd
+        BigDecimal grossRevenue = videoPurchases.stream()
+                .map(VideoPurchase::getTreesConsumed)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(donations.stream()
+                        .map(Donation::getDonatedTrees)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+
+        //get map hour - revenue map of video purchases
+        Map<Integer, BigDecimal> revenuePerHour = videoPurchases.stream()
+                .collect(Collectors.groupingBy(vp -> vp.getLastUpdateDate().getHour(), Collectors.reducing(BigDecimal.ZERO, VideoPurchase::getTreesConsumed, BigDecimal::add)));
+
+        //get map hour - revenue map of donations
+        Map<Integer, BigDecimal> donationRevenuePerHour = donations.stream()
+                .collect(Collectors.groupingBy(d -> d.getLastUpdateDate().getHour(), Collectors.reducing(BigDecimal.ZERO, Donation::getDonatedTrees, BigDecimal::add)));
+
+
+        Map<Integer, BigDecimal> mergedMap = new HashMap<>();
+        revenuePerHour.forEach((k, v) -> mergedMap.merge(k, v, BigDecimal::add));
+        donationRevenuePerHour.forEach((k, v) -> mergedMap.merge(k, v, BigDecimal::add));
+
+        //field hour not present in mergedMap, add it with value 0
+        for (int i = 0; i < 24; i++) {
+            mergedMap.putIfAbsent(i, BigDecimal.ZERO);
+        }
+
+        return new GrossRevenueByDateGraph(selectedDate, grossRevenue, mergedMap);
     }
 }
