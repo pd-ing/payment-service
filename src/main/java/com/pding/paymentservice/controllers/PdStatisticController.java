@@ -26,4 +26,11 @@ public class PdStatisticController {
 
         return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraph(userId, date));
     }
+
+    @GetMapping("/gross-revenue-graph-by-date-range")
+    public ResponseEntity getGrossRevenueGraph(@RequestParam LocalDate fromDate,
+                                               @RequestParam LocalDate toDate) {
+        String userId = authHelper.getUserId();
+        return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraph(userId, fromDate, toDate));
+    }
 }
