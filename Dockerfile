@@ -1,5 +1,5 @@
 FROM openjdk:21-jdk
-COPY target/*.jar /app.jar
+#COPY target/*.jar /app.jar
 
 ARG SPRING_PROFILES_ACTIVE
 ARG AWS_REGION
