@@ -188,4 +188,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     Page<Object[]> getSaleHistoryByVideoId(@Param("videoId") String videoId, Pageable pageable);
 
 
+    @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
+    List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
 }

@@ -97,7 +97,7 @@ public interface ViewingHistoryTabRepository extends JpaRepository<VideoPurchase
     @Query(value = "SELECT video_id, title, views, GROUP_CONCAT(salePrice SEPARATOR ', ') AS salePrices, SUM(profit), MAX(last_update_date) \n" +
             "FROM ( SELECT COALESCE(v.video_id, '') AS video_id, \n" +
             "\tCOALESCE(v.title, '') AS title, \n" +
-            "\tCOALESCE(vw.count, '0.0') AS views, \n" +
+            "\tCOALESCE(SUM(vw.count), '0.0') AS views, \n" +
             "\tCOALESCE(CONCAT(COUNT(distinct vp.id), '/', trees_consumed), '0/0.0') AS salePrice, \n" +
             "\tCOALESCE(SUM(vp.trees_consumed), '0.0') AS profit, \n" +
             "\tCOALESCE(MAX(vp.last_update_date), '') AS last_update_date \n" +
