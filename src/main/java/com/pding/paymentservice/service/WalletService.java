@@ -128,7 +128,7 @@ public class WalletService {
             //throw new WalletNotFoundException("No wallet info present for userID " + userId);
             throw new InsufficientTreesException("Insufficient trees. Cannot perform transaction.");
         }
-        log.info("deducted trees from wallet for userId {}, treesToDeduct {}", userId, treesToDeduct);
+        log.info("deducted trees from wallet for userId {}, treesToDeduct {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(treesToDeduct));
     }
 
     public void deductLeafsFromWallet(String userId, BigDecimal leafsToDeduct) {

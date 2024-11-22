@@ -111,7 +111,7 @@ public class WithdrawalService {
             withdrawalRepository.save(withdrawal);
 
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), withdrawal.getLeafs(), TransactionType.WITHDRAWAL_COMPLETED, pdUserId);
-            log.info("Withdrawal request completed for pdUserId {}, trees {}, leafs {}", pdUserId, withdrawal.getTrees(), withdrawal.getLeafs());
+            log.info("Withdrawal request completed for pdUserId {}, trees {}, leafs {}", LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(withdrawal.getTrees()), LogSanitizer.sanitizeForLog(withdrawal.getLeafs()));
             return withdrawal;
         } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
