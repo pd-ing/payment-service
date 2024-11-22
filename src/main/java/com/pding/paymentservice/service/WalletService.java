@@ -70,7 +70,7 @@ public class WalletService {
     }
 
     public Optional<Wallet> fetchWalletByUserId(String userId) {
-        log.info("Fetching wallet for userId {}", userId);
+//        log.info("Fetching wallet for userId {}", userId);
         Optional<Wallet> wallet = walletRepository.findWalletByUserId(userId);
 
         if (!wallet.isPresent()) {
