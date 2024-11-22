@@ -23,14 +23,18 @@ spec:
             httpGet:
               path: /actuator/health/pding
               port: 80
-            initialDelaySeconds: 15
-#            periodSeconds: 5
+            initialDelaySeconds: 45
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health/pding
               port: 80
-            initialDelaySeconds: 15
-#            periodSeconds: 5
+            initialDelaySeconds: 45
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 5
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: dev
