@@ -20,6 +20,7 @@ import com.pding.paymentservice.repository.DonationRepository;
 
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,13 +73,13 @@ public class DonationService {
 
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
-    
+
 
     @Transactional
     public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
-        log.info("start donation transaction for userId: {}, trees: {}, pdUserId: {}", userId, treesToDonate, PdUserId);
+        log.info("start donation transaction for userId: {}, trees: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(treesToDonate), LogSanitizer.sanitizeForLog(PdUserId));
         if(otherServicesTablesNativeQueryRepository.findUserInfoByUserId(PdUserId).isEmpty()){
-            log.error("PD User ID doesn't exist, {}", PdUserId);
+            log.error("PD User ID doesn't exist, {}", LogSanitizer.sanitizeForLog(PdUserId));
             throw new InvalidUserException("PD User ID doesn't exist");
         }
 
@@ -89,14 +90,14 @@ public class DonationService {
 
         earningService.addTreesToEarning(PdUserId, treesToDonate);
         ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION, userId);
-        log.info("Donation transaction completed for userId: {}, trees: {}, pdUserId: {}", userId, treesToDonate, PdUserId);
+        log.info("Donation transaction completed for userId: {}, trees: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(treesToDonate), LogSanitizer.sanitizeForLog(PdUserId));
 
         return donation;
     }
 
     @Transactional
     public Donation createLeafsDonationTransaction(String userId, BigDecimal leafsToDonate, String PdUserId) {
-        log.info("start donation transaction for userId: {}, leafs: {}, pdUserId: {}", userId, leafsToDonate, PdUserId);
+        log.info("start donation transaction for userId: {}, leafs: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(leafsToDonate), LogSanitizer.sanitizeForLog(PdUserId));
 
         walletService.deductLeafsFromWallet(userId, leafsToDonate);
 
@@ -105,7 +106,7 @@ public class DonationService {
 
         earningService.addLeafsToEarning(PdUserId, leafsToDonate);
         ledgerService.saveToLedger(donation.getId(), new BigDecimal(0), leafsToDonate, TransactionType.DONATION, userId);
-        log.info("Donation transaction completed for userId: {}, leafs: {}, pdUserId: {}", userId, leafsToDonate, PdUserId);
+        log.info("Donation transaction completed for userId: {}, leafs: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(leafsToDonate), LogSanitizer.sanitizeForLog(PdUserId));
 
         return donation;
     }
@@ -214,7 +215,7 @@ public class DonationService {
     }
 
     public ResponseEntity<?> donateToPd(String userId, BigDecimal trees, String pdUserId) {
-        log.info("Donation request received for userId: {}, trees: {}, pdUserId: {}", userId, trees, pdUserId);
+        log.info("Donation request received for userId: {}, trees: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(trees), LogSanitizer.sanitizeForLog(pdUserId));
         if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."));
         }

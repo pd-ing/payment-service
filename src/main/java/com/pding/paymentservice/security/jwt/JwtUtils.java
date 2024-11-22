@@ -73,7 +73,7 @@ public class JwtUtils {
         try {
             return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            logger.error(jwtSecret, e.getMessage());
+            logger.error("Error creating JWT key: {}", e.getMessage());
             return null;
         }
     }

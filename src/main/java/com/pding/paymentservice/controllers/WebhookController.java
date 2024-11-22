@@ -103,7 +103,7 @@ public class WebhookController {
             return new ResponseEntity<>(message, HttpStatus.OK);
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.STRIPE_WEBHOOK, e);
-            return new ResponseEntity<>("Webhook processing failed with following exception " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("INTERNAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

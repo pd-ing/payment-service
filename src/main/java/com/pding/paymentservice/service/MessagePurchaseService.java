@@ -9,6 +9,7 @@ import com.pding.paymentservice.repository.CallPurchaseRepository;
 import com.pding.paymentservice.repository.MessagePurchaseRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
+import com.pding.paymentservice.util.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,13 +61,13 @@ public class MessagePurchaseService {
                                            String giftId,
                                            Boolean notifyPd) {
         log.info("Creating message transaction for userId {}, pdUserId {}, leafsTransacted {}, messageId {}, isGift {}, giftId {}, notifyPd {}",
-                userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, notifyPd);
+            LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(leafsTransacted), LogSanitizer.sanitizeForLog(messagedId), LogSanitizer.sanitizeForLog(isGift), LogSanitizer.sanitizeForLog(giftId), LogSanitizer.sanitizeForLog(notifyPd));
         walletService.deductLeafsFromWallet(userId, leafsTransacted);
 
         MessagePurchase transaction = new MessagePurchase(userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, LocalDateTime.now());
         MessagePurchase messagePurchase = messagePurchaseRepository.save(transaction);
         log.info("Message purchase record created with details UserId : {}, messageId : {}, leafs : {}, pdUserId : {}",
-                userId, messagePurchase, leafsTransacted, pdUserId);
+            LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(messagePurchase), LogSanitizer.sanitizeForLog(leafsTransacted), LogSanitizer.sanitizeForLog(pdUserId));
 //        pdLogger.logInfo("MESSAGE_PURCHASE", "Message purchase record created with details UserId : " + userId + " ,messageId : " + messagePurchase + ", leafs : " + leafsTransacted + ", pdUserId : " + pdUserId);
 
         earningService.addLeafsToEarning(pdUserId, leafsTransacted);
@@ -87,7 +88,7 @@ public class MessagePurchaseService {
             }
         }
         log.info("Message transaction created for userId {}, pdUserId {}, leafsTransacted {}, messageId {}, isGift {}, giftId {}, notifyPd {}",
-                userId, pdUserId, leafsTransacted, messagedId, isGift, giftId, notifyPd);
+            LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(leafsTransacted), LogSanitizer.sanitizeForLog(messagedId), LogSanitizer.sanitizeForLog(isGift), LogSanitizer.sanitizeForLog(giftId), LogSanitizer.sanitizeForLog(notifyPd));
 
         return "Leafs charge was successful";
     }

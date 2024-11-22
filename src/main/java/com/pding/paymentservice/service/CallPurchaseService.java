@@ -12,6 +12,7 @@ import com.pding.paymentservice.repository.CallPurchaseRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +68,7 @@ public class CallPurchaseService {
     @Transactional
     public String CreateCallTransaction(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
         log.info("Creating call transaction for userId {}, pdUserId {}, leafsToCharge {}, callType {}, callId {}, giftId {}, notifyPd {}",
-                userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
+            LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(leafsToCharge), LogSanitizer.sanitizeForLog(callType), LogSanitizer.sanitizeForLog(callId), LogSanitizer.sanitizeForLog(giftId), LogSanitizer.sanitizeForLog(notifyPd));
         String returnVal = CreateCallTransactionHelper(userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
 
         addCallTransactionEntryToRealTimeDatabase(callId);
@@ -88,7 +89,7 @@ public class CallPurchaseService {
             }
         }
         log.info("Call transaction created for userId {}, pdUserId {}, leafsToCharge {}, callType {}, callId {}, giftId {}, notifyPd {}",
-                userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
+                LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(leafsToCharge), LogSanitizer.sanitizeForLog(callType), LogSanitizer.sanitizeForLog(callId), LogSanitizer.sanitizeForLog(giftId), LogSanitizer.sanitizeForLog(notifyPd));
 
         return returnVal;
     }
@@ -107,7 +108,7 @@ public class CallPurchaseService {
     }
 
     public void addCallTransactionEntryToRealTimeDatabase(String callId) {
-        log.info("Update call transaction entry to real time database for callId {}", callId);
+        log.info("Update call transaction entry to real time database for callId {}", LogSanitizer.sanitizeForLog(callId));
         try {
             List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
             Map<String, BigDecimal> userLeafsSpentMapping = new HashMap<>();

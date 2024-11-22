@@ -14,6 +14,7 @@ import com.pding.paymentservice.payload.response.custompagination.PaginationResp
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.service.AdminDashboard.TreeSummaryTabService;
 import com.pding.paymentservice.util.FirebaseRealtimeDbHelper;
+import com.pding.paymentservice.util.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -45,7 +46,7 @@ public class EarningService {
 
     @Transactional
     public void addTreesToEarning(String userId, BigDecimal trees) {
-        log.info("Adding trees to earning for userId {}, trees {}", userId, trees);
+        log.info("Adding trees to earning for userId {}, trees {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(trees));
         Optional<Earning> earning = earningRepository.findByUserId(userId);
 
         Earning earningObj = null;
@@ -66,13 +67,13 @@ public class EarningService {
 
         firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
 //        pdLogger.logInfo("BUY_VIDEO", "Earning details recorded for UserUd: " + userId + ", trees : " + trees);
-        log.info("Added trees to earning for userId {}, trees {}", userId, trees);
+        log.info("Added trees to earning for userId {}, trees {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(trees));
     }
 
 
     @Transactional
     public void addLeafsToEarning(String userId, BigDecimal leafs) {
-        log.info("Adding leafs to earning for userId {}, leafs {}", userId, leafs);
+        log.info("Adding leafs to earning for userId {}, leafs {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(leafs));
         Optional<Earning> earning = earningRepository.findByUserId(userId);
 
         Earning earningObj = null;
@@ -92,7 +93,7 @@ public class EarningService {
         earningRepository.save(earningObj);
 
         firebaseRealtimeDbHelper.updateEarningWalletBalanceInFirebase(userId, earningObj.getLeafsEarned(), earningObj.getTreesEarned());
-        log.info("Added leafs to earning for userId {}, leafs {}", userId, leafs);
+        log.info("Added leafs to earning for userId {}, leafs {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(leafs));
     }
 
 

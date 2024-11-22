@@ -21,6 +21,7 @@ import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRe
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
+import com.pding.paymentservice.util.LogSanitizer;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.Min;
@@ -508,7 +509,7 @@ public class AdminDashboardUserPaymentStatsController {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter is required."));
         }
         try {
-            log.info("Completing referral commission entry with id: {}", referralCommissionRequest.getReferralCommissionId());
+            log.info("Completing referral commission entry with id: {}", LogSanitizer.sanitizeForLog(referralCommissionRequest.getReferralCommissionId()));
             String message = adminDashboardUserPaymentStatsService.updateReferralCommissionEntryToCompletedState(referralCommissionRequest.getReferralCommissionId());
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
         } catch (Exception e) {

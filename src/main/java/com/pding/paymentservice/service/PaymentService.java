@@ -11,6 +11,7 @@ import com.pding.paymentservice.repository.WalletHistoryRepository;
 import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.stripe.model.checkout.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -400,12 +401,11 @@ public class PaymentService {
     }
 
     public String completeRefundLeafs(String purchaseToken) {
-        log.info("Start refund for transactionId: {}", purchaseToken);
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(purchaseToken);
         //Check if refund is already done for this TxnId
         String txnIdPattern = "_leafs_refunded_for_" + purchaseToken;
         if (walletHistoryService.findByTransactionIdWithPattern(txnIdPattern).size() > 0) {
-            log.info("Refund is already done for the given purchaseToken: {}", purchaseToken);
+            log.info("Refund is already done for the given purchaseToken");
             return "Refund is already done for the given purchaseToken";
         }
 
@@ -414,14 +414,14 @@ public class PaymentService {
 
             BigDecimal leafsToRefund = walletHistory.getPurchasedLeafs();
             if (leafsToRefund.compareTo(new BigDecimal("0")) <= 0) {
-                log.error("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId : {}, leafsToRefund: {}, purchaseToken: {}", walletHistory.getUserId(), leafsToRefund, purchaseToken);
+                log.error("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId : {}", LogSanitizer.sanitizeForLog(walletHistory.getUserId()));
                 throw new RuntimeException("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId :" + walletHistory.getUserId() +
                         ", leafsToRefund:" + leafsToRefund + " , purchaseToken:" + purchaseToken);
             }
             Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
 
             if (userWallet.getLeafs().compareTo(leafsToRefund) < 0) {
-                log.error("Cannot complete the refund request, because of insufficient leafs balance, For userId : {}, refundRequestAmtInTrees: {}, leafsInWallet: {}, purchaseToken: {}", walletHistory.getUserId(), leafsToRefund, userWallet.getLeafs(), purchaseToken);
+                log.error("Cannot complete the refund request, because of insufficient leafs balance, For userId : {}", LogSanitizer.sanitizeForLog(walletHistory.getUserId()));
                 throw new RuntimeException("Cannot complete the refund request, because of insufficient leafs balance, For userId :" + walletHistory.getUserId() +
                         " , refundRequestAmtInTrees:" + leafsToRefund + " , leafsInWallet:" + userWallet.getLeafs() + " , purchaseToken:" + purchaseToken);
             }

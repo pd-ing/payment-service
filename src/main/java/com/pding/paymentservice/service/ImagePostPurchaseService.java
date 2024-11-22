@@ -6,6 +6,7 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.repository.ImagePurchaseRepository;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,16 +39,16 @@ public class ImagePostPurchaseService {
 
     @Transactional
     public ImagePurchase createImagePostTransaction(String userId, String postId, BigDecimal leafAmount, String postOwnerUserId) {
-        log.info("Buy image request made with following details UserId : {} ,postId : {}, leafAmount : {}, postOwnerUserId : {}", userId, postId, leafAmount, postOwnerUserId);
+        log.info("Buy image request made with following details UserId : {} ,postId : {}, leafAmount : {}, postOwnerUserId : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(postId), LogSanitizer.sanitizeForLog(leafAmount), LogSanitizer.sanitizeForLog(postOwnerUserId));
         walletService.deductLeafsFromWallet(userId, leafAmount);
 
         ImagePurchase transaction = new ImagePurchase(userId, postId, leafAmount, postOwnerUserId);
         ImagePurchase savedTransaction = imagePurchaseRepository.save(transaction);
-        log.info("Image purchase record created with details UserId : {} ,postId : {}, leafAmount : {}, postOwnerUserId : {}", userId, postId, leafAmount, postOwnerUserId);
+        log.info("Image purchase record created with details UserId : {} ,postId : {}, leafAmount : {}, postOwnerUserId : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(postId), LogSanitizer.sanitizeForLog(leafAmount), LogSanitizer.sanitizeForLog(postOwnerUserId));
 
         earningService.addLeafsToEarning(postOwnerUserId, leafAmount);
         ledgerService.saveToLedger(savedTransaction.getId(), new BigDecimal(0), savedTransaction.getLeafAmount(), TransactionType.IMAGE_PURCHASE, userId);
-        log.info("Buy video request transaction completed with details UserId : {} ,postId : {}, leafAmount : {}, postOwnerUserId : {}", userId, postId, leafAmount, postOwnerUserId);
+        log.info("Buy video request transaction completed with details UserId : {} ,postId : {}, leafAmount : {}, postOwnerUserId : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(postId), LogSanitizer.sanitizeForLog(leafAmount), LogSanitizer.sanitizeForLog(postOwnerUserId));
         return savedTransaction;
     }
 

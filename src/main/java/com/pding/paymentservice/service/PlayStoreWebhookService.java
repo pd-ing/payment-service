@@ -8,6 +8,7 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.notification.OneTimeProductNotification;
 import com.pding.paymentservice.payload.notification.VoidedPurchaseNotification;
 import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
+import com.pding.paymentservice.util.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ public class PlayStoreWebhookService {
 
         Gson gson = new Gson();
         if (payload.contains("oneTimeProductNotification")) {
-            LOGGER.info("GG Play Store hook, OneTimeProductNotification event received! Payload: " + payload);
+            LOGGER.info("GG Play Store hook, OneTimeProductNotification event received! Payload: " + LogSanitizer.sanitizeForLog(payload));
 
             Map<String, Object> payloadMap = gson.fromJson(payload, Map.class);
             Map<String, String> oneTimeProductNotificationMap = (Map<String, String>) payloadMap.get("oneTimeProductNotification");
@@ -50,14 +51,14 @@ public class PlayStoreWebhookService {
             if (userId == null) return;
 
             if (paymentService.checkIfTxnIdExists(purchaseToken)) {
-                LOGGER.info("TransactionId already exists in DB, transactionId: " + purchaseToken);
+                LOGGER.info("TransactionId already exists in DB");
                 return;
             }
 
             switch (oneTimeProductNotification.getNotificationType()) {
                 case 1:
                     // one-time product was successfully purchased by a user.
-                    LOGGER.info("GG Play Store One-time product was successfully purchased by user, start to add leafs for user, transactionId: " + purchaseToken);
+                    LOGGER.info("GG Play Store One-time product was successfully purchased by user, start to add leafs for user");
                     try {
                         int purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
                         String txnId = purchaseToken;
@@ -88,7 +89,7 @@ public class PlayStoreWebhookService {
                 case 2:
                     // this event received when a user requests a refund for a one-time product.
                     try {
-                        LOGGER.info("GG Play Store One-time product purchase was cancelled by user, start to refund leafs for user, transactionId: " + purchaseToken);
+                        LOGGER.info("GG Play Store One-time product purchase was cancelled by user, start to refund leafs for user");
                         paymentService.completeRefundLeafs(purchaseToken);
                     } catch (Exception e) {
                         pdLogger.logException(e);
@@ -135,7 +136,7 @@ public class PlayStoreWebhookService {
                 case 1:
                     // this event received when Google completely refunds a user's purchase.
                     try {
-                        LOGGER.info("GG Play Store Voided Purchase Notification, start to refund leafs for user, transactionId: " + purchaseToken);
+                        LOGGER.info("GG Play Store Voided Purchase Notification, start to refund leafs for user");
                         paymentService.completeRefundLeafs(purchaseToken);
                     } catch (Exception e) {
                         pdLogger.logException(e);
@@ -147,11 +148,6 @@ public class PlayStoreWebhookService {
                     // ignore because it is applicable only to multi-quantity purchases
                     break;
             }
-        }
-
-        // Check if is test notification
-        if (payload.contains("testNotification")) {
-            LOGGER.info("TestNotification received! Payload: " + payload);
         }
     }
 }
