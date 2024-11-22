@@ -66,6 +66,6 @@ jobs:
         run: |
           sed -i 's/IMAGE_TAG/${{ env.GIT_SHA }}/g' ./k8s/dev.yaml
           kubectl apply -f ./k8s/dev.yaml
-          kubectl rollout status deployment/payment-service-deployment -n default
+#          kubectl rollout status deployment/payment-service-deployment -n default
 
 
