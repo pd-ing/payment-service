@@ -12,6 +12,7 @@ import com.pding.paymentservice.payload.response.MediaTradingResponse;
 import com.pding.paymentservice.repository.MediaTradingRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.LogSanitizer;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +41,8 @@ public class MediaTradingService {
     private final OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
     public InChatMediaTrading saveMediaTrading(AddMediaTrandingRequest addMediaTrandingRequest) {
         log.info("New in chat media trading, userId: {}, pdId: {}, messageId: {}, leafsToCharge: {}",
-                addMediaTrandingRequest.getUserId(), addMediaTrandingRequest.getPdId(), addMediaTrandingRequest.getMessageId(),
-                addMediaTrandingRequest.getLeafsToCharge());
+            LogSanitizer.sanitizeForLog(addMediaTrandingRequest.getUserId()), LogSanitizer.sanitizeForLog(addMediaTrandingRequest.getPdId()), LogSanitizer.sanitizeForLog(addMediaTrandingRequest.getMessageId()),
+            LogSanitizer.sanitizeForLog(addMediaTrandingRequest.getLeafsToCharge()));
         Optional<InChatMediaTrading> inChatMediaTradingOpt = mediaTradingRepository.findByMessageId(addMediaTrandingRequest.getMessageId());
 
         if (inChatMediaTradingOpt.isPresent()) {
@@ -97,7 +98,7 @@ public class MediaTradingService {
         String pdUserId = inChatMediaTrading.getPdId();
         String userId = authHelper.getUserId();
 
-        log.info("Buying media trade, messageId: {}", messageId);
+        log.info("Buying media trade, messageId: {}", LogSanitizer.sanitizeForLog(messageId));
 
         walletService.deductLeafsFromWallet(userId, leafsToCharge);
         earningService.addLeafsToEarning(pdUserId, leafsToCharge);
@@ -117,7 +118,7 @@ public class MediaTradingService {
         data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(userId).orElse("User"));
         fcmService.sendAsyncNotification(pdUserId, data);
 
-        log.info("Media trade bought successfully, messageId: {}, userId: {}, pdId: {}", messageId, userId, pdUserId);
+        log.info("Media trade bought successfully, messageId: {}, userId: {}, pdId: {}", LogSanitizer.sanitizeForLog(messageId), LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(pdUserId));
         return inChatMediaTrading;
     }
 
@@ -137,7 +138,7 @@ public class MediaTradingService {
     }
 
     public void cancelMediaTrade(String messageId) throws JsonProcessingException {
-        log.info("Cancelling media trade, messageId: {}", messageId);
+        log.info("Cancelling media trade, messageId: {}", LogSanitizer.sanitizeForLog(messageId));
         InChatMediaTrading inChatMediaTrading = mediaTradingRepository.findByMessageId(messageId).orElseThrow(
                 () -> new RuntimeException("Media Trading not found")
         );
@@ -151,7 +152,7 @@ public class MediaTradingService {
         inChatMediaTrading.setLastUpdateDate(LocalDateTime.now());
         mediaTradingRepository.save(inChatMediaTrading);
         raiseEventToUpdateOrDelete(inChatMediaTrading);
-        log.info("Media trade cancelled successfully by pdId {}, messageId: {}", inChatMediaTrading.getPdId(), messageId);
+        log.info("Media trade cancelled successfully by pdId {}, messageId: {}", LogSanitizer.sanitizeForLog(inChatMediaTrading.getPdId()), LogSanitizer.sanitizeForLog(messageId));
     }
 
     public Slice<MediaTradingResponse> getMediaTrade(String userId, String pdId, Pageable pageable) {

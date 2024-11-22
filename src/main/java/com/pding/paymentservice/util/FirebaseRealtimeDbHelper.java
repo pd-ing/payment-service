@@ -54,7 +54,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
             updateWalletBalanceInFirebase(userId, leaf, trees, earningWalletRef);
 //            log.info("Updated earning wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
         } catch (Exception ex) {
-            log.error("Error updating earning wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", userId, leafBalance, treesBalance);
+            log.error("Error updating earning wallet balance in firebase for userId: {}, leafBalance: {}, treesBalance: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(leafBalance), LogSanitizer.sanitizeForLog(treesBalance));
             pdLogger.logException(ex);
         }
     }

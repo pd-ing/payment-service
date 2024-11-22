@@ -53,7 +53,7 @@ public class AppStoreWebhookService extends BaseService {
 
             Optional<String> optionalUserId = otherServicesTablesNativeQueryRepository.getUserIdByUUID(appAccountToken);
             if (optionalUserId.isEmpty()) {
-                log.error("User not found for appAccountToken: {}", appAccountToken);
+                log.error("User not found for appAccountToken");
                 return;
             }
             String userId = optionalUserId.get();
@@ -86,13 +86,13 @@ public class AppStoreWebhookService extends BaseService {
         }
 
         if ("REFUND".equalsIgnoreCase(notificationType)) {
-            log.info("notification type: REFUND,  User request refund in IOS Store. Refunding {} leafs for user: {}", txnDetails.getLeafs(), txnDetails.getAppAccountToken());
+            log.info("notification type: REFUND,  User request refund in IOS Store. Refunding {} leafs", txnDetails.getLeafs());
             paymentService.completeRefundLeafs(txnId);
             return;
         }
 
         if("REFUND_DECLINED".equalsIgnoreCase(notificationType) || "REFUND_REVERSED".equalsIgnoreCase(notificationType)) {
-            log.info("notification type: {},  IOS Store canncel the user's refund. cancel refund {} leafs for user: {}", notificationType, txnDetails.getLeafs(), txnDetails.getAppAccountToken());
+            log.info("notification type: {},  IOS Store canncel the user's refund. cancel refund {} leafs for user", notificationType, txnDetails.getLeafs());
             try {
                 paymentService.cancelRefundLeafs(txnId);
             } catch (Exception e) {

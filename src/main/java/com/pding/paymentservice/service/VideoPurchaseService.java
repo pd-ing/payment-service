@@ -37,6 +37,7 @@ import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryReposit
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.EmailValidator;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,7 +123,7 @@ public class VideoPurchaseService {
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, BigDecimal treesToConsumed, String duration) {
-        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", userId, videoId, treesToConsumed, videoOwnerUserId, duration);
+        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
         walletService.deductTreesFromWallet(userId, treesToConsumed);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, duration,
@@ -132,7 +133,7 @@ public class VideoPurchaseService {
 
         earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
-        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", userId, videoId, treesToConsumed, videoOwnerUserId, duration);
+        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
         return video;
     }
 
@@ -708,7 +709,7 @@ public class VideoPurchaseService {
                     String videoOwnerUserId = (String) objects[1];
                     String userEmail = (String) objects[2];
                     String userId = (String) objects[3];
-                    Long totalSales = (Long) objects[4];
+                    Integer totalSales = (Integer) objects[4];
                     List<String> purchaseDateStrList = Arrays.asList(((String) objects[5]).split(","));
                     List<String> durationList = Arrays.asList(((String) objects[6]).split(","));
                     List<String> expiryDateList = Arrays.asList(((String) objects[7]).split(","));

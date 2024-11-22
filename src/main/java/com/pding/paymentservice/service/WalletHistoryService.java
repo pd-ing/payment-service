@@ -5,6 +5,7 @@ import com.pding.paymentservice.models.WalletHistory;
 import com.pding.paymentservice.repository.WalletHistoryRepository;
 import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.util.LogSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -43,8 +44,7 @@ public class WalletHistoryService {
         WalletHistory walletHistory = new WalletHistory(walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
         walletHistoryRepository.save(walletHistory);
-        log.info("Wallet history saved for walletID: {}, userId: {}, purchasedTrees: {}, purchasedLeafs: {}, purchasedDate: {}, transactionID: {}, transactionStatus: {}, amount: {}, paymentMethod: {}, currency: {}, description: {}, ipAddress: {}",
-                walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus, amount, paymentMethod, currency, description, ipAddress);
+        log.info("Wallet history saved for walletID: {}", LogSanitizer.sanitizeForLog(walletId));
     }
 
     public List<WalletHistory> fetchWalletHistoryByWalletID(String walletId) {

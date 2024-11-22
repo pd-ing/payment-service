@@ -14,6 +14,6 @@ public class VideoSaleHistory {
     private String videoOwnerUserId;
     private String buyerEmail;
     private String buyerId;
-    private Long numberOfPurchases;
+    private Integer numberOfPurchases;
     private List<VideoPurchaseLiteDTO> purchases;
 }

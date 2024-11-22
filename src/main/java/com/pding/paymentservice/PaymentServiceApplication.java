@@ -31,7 +31,7 @@ public class PaymentServiceApplication {
             }
         }
 
-        logger.info("AWS Access Key and Secret Key added => " + awsAccessKey + " -- " + awsSecretKey + " -- " + awsRegion);
+//        logger.info("AWS Access Key and Secret Key added => " + awsAccessKey + " -- " + awsSecretKey + " -- " + awsRegion);
         if (awsRegion != null && awsSecretKey != null && awsAccessKey != null) {
             System.setProperty("spring.cloud.aws.region.static", awsRegion);
             System.setProperty("spring.cloud.aws.credentials.accessKey", awsAccessKey);

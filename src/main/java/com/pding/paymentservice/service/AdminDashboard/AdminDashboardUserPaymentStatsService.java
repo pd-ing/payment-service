@@ -15,6 +15,7 @@ import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRe
 import com.pding.paymentservice.paymentclients.google.AppPaymentInitializer;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.service.*;
+import com.pding.paymentservice.util.LogSanitizer;
 import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +89,7 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Transactional
     public String addTreesFromBackend(String userId, BigDecimal purchasedTrees) throws Exception {
-        log.info("Start adding trees by admin for userId {}, trees {}", userId, purchasedTrees);
+        log.info("Start adding trees by admin for userId {}, trees {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(purchasedTrees));
         try {
             Optional<Wallet> walletOptional = walletService.fetchWalletByUserId(userId);
             if (walletOptional.isPresent()) {
@@ -112,7 +113,7 @@ public class AdminDashboardUserPaymentStatsService {
 
     @Transactional
     public String removeTreesFromBackend(String userId, BigDecimal trees) {
-        log.info("Start removing trees by admin for userId {}, trees {}", userId, trees);
+        log.info("Start removing trees by admin for userId {}, trees {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(trees));
         Optional<Wallet> walletOptional = walletService.fetchWalletByUserId(userId);
         if (walletOptional.isPresent()) {
             Wallet wallet = walletOptional.get();
@@ -123,17 +124,17 @@ public class AdminDashboardUserPaymentStatsService {
             ledgerService.saveToLedger(wallet.getId(), trees, new BigDecimal(0), TransactionType.REMOVE_TREES_FROM_BACKEND, userId);
             return "Successfully removed trees for the user";
         } else {
-            log.info("No wallet found for userId {}, can not remove trees", userId);
+            log.info("No wallet found for userId {}, can not remove trees", LogSanitizer.sanitizeForLog(userId));
             return "No wallet found for userId " + userId;
         }
     }
 
     @Transactional
     public String addLeafsFromBackend(String product, String purchaseToken, String email) {
-        log.info("Start adding leafs by admin for email {}, product {}, purchaseToken {}", email, product, purchaseToken);
+        log.info("Start adding leafs by admin for email {}", LogSanitizer.sanitizeForLog(email));
         try {
             if (paymentService.checkIfTxnIdExists(purchaseToken)) {
-                log.error("Transaction Id {} already present in DB", purchaseToken);
+                log.error("Transaction Id already present in DB");
                 throw new ValidationException("Transaction Id already present in DB");
             }
 
@@ -151,7 +152,7 @@ public class AdminDashboardUserPaymentStatsService {
             if (productId != null && productId.contains("_")) {
                 purchaseLeaves = Integer.parseInt(productId.substring(productId.indexOf("_") + 1));
             } else {
-                log.error("Product Id {} is not valid, cannot fetch leafs to add from productId", productId);
+                log.error("Product Id {} is not valid, cannot fetch leafs to add from productId", LogSanitizer.sanitizeForLog(productId));
                 throw new ValidationException("Product Id is not valid, cannot fetch leafs to add from productId");
             }
 
@@ -279,7 +280,6 @@ public class AdminDashboardUserPaymentStatsService {
     }
 
     public String refundLeafsFromBackend(String purchaseToken) {
-        log.info("Start refunding leafs by admin for purchaseToken {}", purchaseToken);
         return paymentService.completeRefundLeafs(purchaseToken);
 
     }

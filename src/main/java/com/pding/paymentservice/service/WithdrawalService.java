@@ -17,6 +17,7 @@ import com.pding.paymentservice.payload.response.generic.GenericListDataResponse
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.repository.WithdrawalRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +136,7 @@ public class WithdrawalService {
             ledgerService.saveToLedger(withdrawal.getId(), withdrawal.getTrees(), new BigDecimal(0), TransactionType.TREES_REVERTED, pdUserId);
             ledgerService.saveToLedger(withdrawal.getId(), new BigDecimal(0), withdrawal.getLeafs(), TransactionType.LEAFS_REVERTED, pdUserId);
 
-            log.info("Withdrawal request cancelled for pdUserId {}, trees {}, leafs {}", pdUserId, withdrawal.getTrees(), withdrawal.getLeafs());
+            log.info("Withdrawal request cancelled for pdUserId {}, trees {}, leafs {}", LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(withdrawal.getTrees()), LogSanitizer.sanitizeForLog(withdrawal.getLeafs()));
         } else if (withdrawalList.size() > 1) {
             throw new Exception("More than 1 withdrawal request found in PENDING status for pdUserId " + pdUserId);
         } else {

@@ -14,6 +14,7 @@ import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRe
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.ReferralCommissionRepository;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.pding.paymentservice.util.LogSanitizer;
 import com.stripe.model.Transfer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +79,7 @@ public class ReferralCommissionService {
     public String updateReferralCommissionEntryToCompletedState(String referralCommissionId) throws Exception {
         Optional<ReferralCommission> referralCommissionOptional = referralCommissionRepository.findById(referralCommissionId);
         if (referralCommissionOptional.isEmpty()) {
-            log.error("Commission entry not found for the given commission id: {}", referralCommissionId);
+            log.error("Commission entry not found for the given commission id: {}", LogSanitizer.sanitizeForLog(referralCommissionId));
             return "Commission entry not found for the given commission id";
         }
 
@@ -88,7 +89,7 @@ public class ReferralCommissionService {
         referralCommission.setUpdatedDate(LocalDateTime.now());
 
         referralCommissionRepository.save(referralCommission);
-        log.info("Successfully updated the state to {} for referralCommissionId {}", CommissionTransferStatus.TRANSFER_COMPLETED.getDisplayName(), referralCommissionId);
+        log.info("Successfully updated the state to {} for referralCommissionId {}", LogSanitizer.sanitizeForLog(CommissionTransferStatus.TRANSFER_COMPLETED.getDisplayName()), LogSanitizer.sanitizeForLog(referralCommissionId));
         return "Successfully updated the state to " + CommissionTransferStatus.TRANSFER_COMPLETED;
     }
 
