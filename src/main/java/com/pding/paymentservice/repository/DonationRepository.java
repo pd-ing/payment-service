@@ -58,6 +58,26 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             "LIMIT :limit")
     List<Object[]> findTopDonorUserAndDonatedTreesByPdUserID(@Param("pdUserId") String pdUserId, @Param("limit") Long limit);
 
+    @Query(value = "" +
+        " select d.donor_user_id, " +
+        "       sum(d.donated_trees)                 as totalTreeDonation, " +
+        "       (select sum(trees_consumed) " +
+        "        from video_purchase vp " +
+        "        where vp.video_owner_user_id = :pdUserId " +
+        "          and vp.user_id = d.donor_user_id) as totalPpurchasedVideoTree, " +
+        "       (select max(last_update_date) " +
+        "        from video_purchase vp " +
+        "        where vp.video_owner_user_id = :pdUserId " +
+        "          and vp.user_id = d.donor_user_id) as lastPurchasedVideoDate, " +
+        "       max(d.last_update_date)              as lastDonationDate " +
+        " from donation d " +
+        " where d.pd_user_id = :pdUserId " +
+        " group by d.donor_user_id " +
+        " ORDER BY totalTreeDonation + totalPpurchasedVideoTree desc",
+        countQuery = "select count(*) from donation d where d.pd_user_id = :pdId group by d.donor_user_id",
+        nativeQuery = true)
+    Page<Object[]> findTopDonorUser(@Param("pdUserId") String pdUserId, Pageable pageable);
+
     @Query(value = "SELECT COALESCE(SUM(d.donatedTrees), 0) FROM Donation d WHERE d.donorUserId = :userId")
     BigDecimal getTotalDonatedTreesByDonorUserId(@Param("userId") String userId);
 

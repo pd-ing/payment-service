@@ -7,6 +7,7 @@ import com.pding.paymentservice.exception.InvalidUserException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -223,6 +225,66 @@ public class DonationService {
         }
 
         return publicUsers;
+    }
+
+    public Page<DonorData> getTopDonorsInfoV2(String pdUserId, Pageable pageable) throws Exception {
+        Page<Object[]> donorUserObjects = donationRepository.findTopDonorUser(pdUserId, pageable);
+
+        if (donorUserObjects.isEmpty()) {
+            return Page.empty();
+        }
+
+        List<String> donorUserIds = donorUserObjects.stream()
+            .map(row -> (String) row[0])
+            .collect(Collectors.toList());
+
+        List<PublicUserNet> publicUsers = userServiceNetworkManager
+            .getUsersListFlux(donorUserIds)
+            .collect(Collectors.toList())
+            .block();
+
+        for (PublicUserNet user : publicUsers) {
+            String profilePicture = null;
+            try {
+                if (user.getProfilePicture() != null) {
+                    profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8);
+                }
+            } catch (Exception e) {
+                pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
+                e.printStackTrace();
+
+            }
+        }
+
+
+        Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
+            .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+
+
+        Page<DonorData> donorDataPage = donorUserObjects.map(objects -> {
+            DonorData donorData = new DonorData();
+            donorData.setDonorUserId((String) objects[0]);
+            donorData.setTotalTreeDonation((BigDecimal) objects[1]);
+            donorData.setTotalPurchasedVideoTree((BigDecimal) objects[2]);
+            Timestamp lastPurchasedVideoDate = (Timestamp) objects[3];
+            Timestamp lastDonationDate = (Timestamp) objects[4];
+
+            if (lastPurchasedVideoDate != null && lastDonationDate != null) {
+                donorData.setLastUsedDate(lastPurchasedVideoDate.after(lastDonationDate) ? lastPurchasedVideoDate.toLocalDateTime() : lastDonationDate.toLocalDateTime());
+            } else if (lastPurchasedVideoDate != null) {
+                donorData.setLastUsedDate(lastPurchasedVideoDate.toLocalDateTime());
+            } else if (lastDonationDate != null) {
+                donorData.setLastUsedDate(lastDonationDate.toLocalDateTime());
+            }
+
+            donorData.setEmail(publicUserMap.get(donorData.getDonorUserId()).getEmail());
+            donorData.setProfilePicture(publicUserMap.get(donorData.getDonorUserId()).getProfilePicture());
+            donorData.setNickname(publicUserMap.get(donorData.getDonorUserId()).getNickname());
+
+            return donorData;
+        });
+
+        return donorDataPage;
     }
 
     public ResponseEntity<?> donateToPd(String userId, BigDecimal trees, String pdUserId) {
