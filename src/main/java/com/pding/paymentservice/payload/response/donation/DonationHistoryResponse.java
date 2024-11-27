@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 public class DonationHistoryResponse {
     String userEmailId;
 
+    String userId;
+
+    String profilePicture;
+
     String donatedTrees;
 
     String lastUpdateDate;

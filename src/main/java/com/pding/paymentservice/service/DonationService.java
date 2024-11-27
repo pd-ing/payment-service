@@ -135,12 +135,21 @@ public class DonationService {
         return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
     }
 
-    public Page<DonationHistoryWithVideoStatsResponse> pdDonationHistoryWithVideoStats(String pdUserId, int page, int size) {
+    public Page<DonationHistoryWithVideoStatsResponse> pdDonationHistoryWithVideoStats(String pdUserId, int page, int size) throws Exception {
         Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").ascending());
 
         List<DonationHistoryWithVideoStatsResponse> donationList = new ArrayList<>();
         Long totalVideosUploadedByUser = donationRepository.countTotalVideosUploadedByPdUserId(pdUserId);
         Page<Object[]> donationPage = donationRepository.findDonationHistoryWithVideoStatsByPdUserId(pdUserId, pageable);
+
+        List<String> donorUserIds = donationPage.getContent().stream()
+                .map(row -> (String) row[5])
+                .collect(Collectors.toList());
+
+        List<PublicUserNet> publicUsers = userServiceNetworkManager
+            .getUsersListFlux(donorUserIds)
+            .collect(Collectors.toList())
+            .block();
 
         for (Object innerObject : donationPage.getContent()) {
 
@@ -153,7 +162,9 @@ public class DonationService {
             donation.setTotalVideosWatchedByUser(giftDonationHistory[3].toString());
             donation.setTotalVideosUploadedByPD(totalVideosUploadedByUser.toString());
             donation.setRecentDonation(giftDonationHistory[4].toString());
-
+            donation.setUserId(giftDonationHistory[5].toString());
+            PublicUserNet user = publicUsers.stream().filter(u -> u.getId().equals(donation.getUserId())).findFirst().orElse(null);
+            donation.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8));
             donationList.add(donation);
         }
         return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());

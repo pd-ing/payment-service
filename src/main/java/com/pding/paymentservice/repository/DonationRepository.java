@@ -22,7 +22,8 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
 
     @Query(value = "SELECT u.email AS donor_email, d.donated_trees, d.last_update_date, " +
             "(SELECT COUNT(vp.id) FROM video_purchase vp WHERE vp.user_id = d.donor_user_id AND vp.video_owner_user_id = d.pd_user_id) AS total_videos_purchased, " +
-            "(SELECT d2.donated_trees FROM donation d2 WHERE d2.donor_user_id = d.donor_user_id AND d2.pd_user_id = d.pd_user_id ORDER BY d2.last_update_date DESC LIMIT 1) AS recent_donation " +
+            "(SELECT d2.donated_trees FROM donation d2 WHERE d2.donor_user_id = d.donor_user_id AND d2.pd_user_id = d.pd_user_id ORDER BY d2.last_update_date DESC LIMIT 1) AS recent_donation, " +
+            "u.id as userId " +
             "FROM donation d " +
             "JOIN users u ON d.donor_user_id = u.id " +
             "WHERE d.pd_user_id = ?1 " +
