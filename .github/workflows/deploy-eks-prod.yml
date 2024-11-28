@@ -1,0 +1,71 @@
+name: Deploy to prod EKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Clean Project
+        run: mvn clean --file pom.xml
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ECR }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ECR }}
+          aws-region: us-west-1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Get Git commit SHA
+        id: vars
+        run: echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+
+      - name: Build Docker image
+        run: |
+          docker build -t 464732960253.dkr.ecr.us-west-1.amazonaws.com/pdingprod/payment-service:${{ env.GIT_SHA }} .
+      - name: Log in to AWS ECR
+        run: |
+          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 464732960253.dkr.ecr.us-west-1.amazonaws.com
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push 464732960253.dkr.ecr.us-west-1.amazonaws.com/pdingprod/payment-service:${{ env.GIT_SHA }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region us-west-1 --name pding-prod-cluster
+      - name: Deploy to EKS
+        run: |
+          sed -i 's/IMAGE_TAG/${{ env.GIT_SHA }}/g' ./k8s/prod.yaml
+          kubectl apply -f ./k8s/prod.yaml
+#          kubectl rollout status deployment/payment-service-deployment -n default
+
+
