@@ -7,6 +7,7 @@ import com.pding.paymentservice.exception.InvalidUserException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.Earning;
+import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
@@ -22,6 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -168,6 +170,22 @@ public class DonationServiceController {
             //String pdUserId = authHelper.getUserId();
             List<PublicUserNet> publicUserNetList = donationService.getTopDonorsInfo(pdUserId, limit);
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, publicUserNetList));
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.EVENT.TOP_DONOR_LIST, e);
+            ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericListDataResponse<>(errorResponse, null));
+        }
+    }
+
+    @GetMapping(value = "/topDonorsList/v2")
+    public ResponseEntity<?> getDonationHistoryForPdV2(@RequestParam(value = "pdUserId") String pdUserId,
+                                                       Pageable pageable) {
+        if (pdUserId == null || pdUserId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId cannot be null or empty"));
+        }
+        try {
+            Page<DonorData> donorData = donationService.getTopDonorsInfoV2(pdUserId, pageable);
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, donorData));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.TOP_DONOR_LIST, e);
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());

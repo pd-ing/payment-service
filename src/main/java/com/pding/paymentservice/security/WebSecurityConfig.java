@@ -54,6 +54,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/donationHistoryWithVideoStatsForPd").authenticated()
                                 .requestMatchers("/api/payment/donate").authenticated()
                                 .requestMatchers("/api/payment/topDonorsList").permitAll()
+                                .requestMatchers("/api/payment/topDonorsList/v2").permitAll()
                                 .requestMatchers("/api/payment/webhook").permitAll()
                                 .requestMatchers("/api/payment/ggPlayStoreWebhook").permitAll()
                                 .requestMatchers("/api/payment/appStoreWebhook").permitAll()
