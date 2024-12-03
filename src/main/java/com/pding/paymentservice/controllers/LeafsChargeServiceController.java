@@ -4,13 +4,11 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientLeafsException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
-import com.pding.paymentservice.models.MessagePurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.CallPurchaseService;
-import com.pding.paymentservice.service.FcmService;
 import com.pding.paymentservice.service.MessagePurchaseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +50,7 @@ public class LeafsChargeServiceController {
                                      @RequestParam(value = "callType") String callType,
                                      @RequestParam(value = "callOrMessageId") String callOrMessageId,
                                      @RequestParam(value = "giftId", required = false) String giftId,
+                                     @RequestParam(value = "origin", required = false) String origin,
                                      @RequestParam(value = "notifyPd", required = false, defaultValue = "false") Boolean notifyPd
     ) {
         if (pdUserId == null || pdUserId.isEmpty()) {
@@ -93,12 +92,12 @@ public class LeafsChargeServiceController {
             String message = "";
 
             if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL)) {
-                message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId, giftId, notifyPd);
+                message = callPurchaseService.CreateCallTransaction(userId, pdUserId, leafsToCharge, transactionType, callOrMessageId, origin, giftId, notifyPd);
             }
 
             if (transactionType.equals(TransactionType.TEXT_MESSAGE)) {
                 boolean isGift = giftId != null && !giftId.isEmpty();
-                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId, isGift, giftId, notifyPd);
+                message = messagePurchaseService.CreateMessageTransaction(userId, pdUserId, leafsToCharge, callOrMessageId, origin, isGift, giftId, notifyPd);
             }
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, message));
@@ -119,6 +118,7 @@ public class LeafsChargeServiceController {
     @GetMapping(value = "/addBuyCallOrMessageEntryInRealTimeDb")
     public ResponseEntity<?> addBuyCallOrMessageEntryInRealTimeDb(@RequestParam(value = "callId") String callId) {
         callPurchaseService.addCallTransactionEntryToRealTimeDatabase(callId);
+        callPurchaseService.addCallTransactionEntryByTreeToRealTimeDatabase(callId);
         return ResponseEntity.ok().body(new GenericStringResponse(null, "DONE"));
     }
 

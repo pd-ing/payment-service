@@ -59,7 +59,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
         }
     }
 
-    public void updateCallChargesDetailsInFirebase(String userId, String callId, BigDecimal leafDeducted, BigDecimal leafEarned) {
+    public void updateCallChargesDetailsInFirebase(String userId, String callId, BigDecimal leafDeducted, BigDecimal leafEarned, BigDecimal treeDeducted, BigDecimal treeEarned) {
         try {
             Float leafD = null;
             Float leafE = null;
@@ -69,10 +69,20 @@ public class FirebaseRealtimeDbHelper extends BaseService {
             if (leafEarned != null) {
                 leafE = leafEarned.floatValue();
             }
+
+            Float treeD = null;
+            Float treeE = null;
+
+            if (treeDeducted != null) {
+                treeD = treeDeducted.floatValue();
+            }
+            if (treeEarned != null) {
+                treeE = treeEarned.floatValue();
+            }
             DatabaseReference callChargeDetailsRef = FirebaseDatabase.getInstance()
                     .getReference(generateCallDetailsPath(userId, callId));
 
-            updateCallChargeDetailsInFirebase(userId, leafD, leafE, callChargeDetailsRef);
+            updateCallChargeDetailsInFirebase(userId, leafD, leafE, treeD, treeE, callChargeDetailsRef);
         } catch (Exception ex) {
             pdLogger.logException(ex);
         }
@@ -97,7 +107,7 @@ public class FirebaseRealtimeDbHelper extends BaseService {
         });
     }
 
-    private void updateCallChargeDetailsInFirebase(String userId, Float leafDeducted, Float leafEarned, DatabaseReference callRef) {
+    private void updateCallChargeDetailsInFirebase(String userId, Float leafDeducted, Float leafEarned, Float treeDeducted, Float treeEarned, DatabaseReference callRef) {
         Map<String, Object> map = new HashMap<>();
         if (leafDeducted != null) {
             map.put("leafDeducted", leafDeducted);
@@ -105,10 +115,18 @@ public class FirebaseRealtimeDbHelper extends BaseService {
         if (leafEarned != null) {
             map.put("leafEarned", leafEarned);
         }
+        if (treeDeducted != null) {
+            map.put("treeDeducted", treeDeducted);
+        }
+
+        if (treeEarned != null) {
+            map.put("treeEarned", treeEarned);
+        }
+
         callRef.updateChildren(map, (databaseError, databaseReference) -> {
             if (databaseError != null) {
-                System.out.println("Data could not be saved " + databaseError.getMessage());
-                pdLogger.logException(new Exception(databaseError.getMessage()));
+                log.error("Data could not be saved " + databaseError.getMessage());
+//                pdLogger.logException(new Exception(databaseError.getMessage()));
 //                pdLogger.logInfo("update_realtime_db_wallet", "userId:" + userId + " leafDeducted: " + leafDeducted + " leafEarned: " + leafEarned);
             }
             // all good. data saved

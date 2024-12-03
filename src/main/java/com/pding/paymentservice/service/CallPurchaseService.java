@@ -66,12 +66,13 @@ public class CallPurchaseService {
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
     @Transactional
-    public String CreateCallTransaction(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
+    public String CreateCallTransaction(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String origin, String giftId, Boolean notifyPd) {
         log.info("Creating call transaction for userId {}, pdUserId {}, leafsToCharge {}, callType {}, callId {}, giftId {}, notifyPd {}",
             LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(pdUserId), LogSanitizer.sanitizeForLog(leafsToCharge), LogSanitizer.sanitizeForLog(callType), LogSanitizer.sanitizeForLog(callId), LogSanitizer.sanitizeForLog(giftId), LogSanitizer.sanitizeForLog(notifyPd));
-        String returnVal = CreateCallTransactionHelper(userId, pdUserId, leafsToCharge, callType, callId, giftId, notifyPd);
+        String returnVal = CreateCallTransactionHelper(userId, pdUserId, leafsToCharge, callType, callId, origin, giftId, notifyPd);
 
         addCallTransactionEntryToRealTimeDatabase(callId);
+        addCallTransactionEntryByTreeToRealTimeDatabase(callId);
 
         if (notifyPd) {
             try {
@@ -95,14 +96,22 @@ public class CallPurchaseService {
     }
 
     @Transactional
-    private String CreateCallTransactionHelper(String userId, String pdUserId, BigDecimal leafsToCharge, TransactionType callType, String callId, String giftId, Boolean notifyPd) {
-        walletService.deductLeafsFromWallet(userId, leafsToCharge);
+    public String CreateCallTransactionHelper(String userId, String pdUserId, BigDecimal amountToCharge, TransactionType callType, String callId, String origin, String giftId, Boolean notifyPd) {
 
-        CallPurchase callPurchase = new CallPurchase(userId, pdUserId, leafsToCharge, callType, callId, giftId);
-        callPurchaseRepository.save(callPurchase);
 
-        earningService.addLeafsToEarning(pdUserId, leafsToCharge);
-        ledgerService.saveToLedger(callPurchase.getId(), new BigDecimal(0), leafsToCharge, callType, userId);
+        if ("web".equalsIgnoreCase(origin)) {
+            walletService.deductTreesFromWallet(userId, amountToCharge);
+            CallPurchase callPurchase = new CallPurchase(userId, pdUserId, BigDecimal.ZERO, amountToCharge, callType, callId, giftId);
+            callPurchaseRepository.save(callPurchase);
+            earningService.addTreesToEarning(pdUserId, amountToCharge);
+            ledgerService.saveToLedger(callPurchase.getId(), amountToCharge, new BigDecimal(0), callType, userId);
+        } else {
+            walletService.deductLeafsFromWallet(userId, amountToCharge);
+            CallPurchase callPurchase = new CallPurchase(userId, pdUserId, amountToCharge, BigDecimal.ZERO, callType, callId, giftId);
+            callPurchaseRepository.save(callPurchase);
+            earningService.addLeafsToEarning(pdUserId, amountToCharge);
+            ledgerService.saveToLedger(callPurchase.getId(), new BigDecimal(0), amountToCharge, callType, userId);
+        }
 
         return "Leafs charge was successful";
     }
@@ -131,8 +140,42 @@ public class CallPurchaseService {
 
                 userLeafsSpentMapping.put(userId, balanceBeforeThisTxn);
 
-                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(userId, callId, balanceBeforeThisTxn, new BigDecimal(0));
-                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(pdUserID, callId, new BigDecimal(0), leafsToaAdd);
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(userId, callId, balanceBeforeThisTxn, new BigDecimal(0), new BigDecimal(0), new BigDecimal(0));
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(pdUserID, callId, new BigDecimal(0), leafsToaAdd, new BigDecimal(0), new BigDecimal(0));
+            }
+
+        } catch (Exception e) {
+            pdLogger.logException(e);
+        }
+
+    }
+
+    public void addCallTransactionEntryByTreeToRealTimeDatabase(String callId) {
+        log.info("Update call transaction entry to real time database for callId {}", LogSanitizer.sanitizeForLog(callId));
+        try {
+            List<Object[]> callPurchaseList = callPurchaseRepository.findUserIdPdUserIdAndSumLeafsTransactedByCallId(callId);
+            Map<String, BigDecimal> userTreesSpentMapping = new HashMap<>();
+
+            BigDecimal treeToAdd = new BigDecimal(0);
+            for (Object[] callPurchase : callPurchaseList) {
+                String userId = callPurchase[0].toString();
+                String pdUserID = callPurchase[1].toString();
+                String treesTransacted = callPurchase[3].toString();
+
+                treeToAdd = treeToAdd.add(new BigDecimal(treesTransacted)); //Add this balance in PdUserIds Earning Wallet
+
+                // Adding the spending info in Map as in one call there can be multiple users
+                BigDecimal balanceBeforeThisTxn = userTreesSpentMapping.get(userId);
+                if (balanceBeforeThisTxn == null) {
+                    balanceBeforeThisTxn = new BigDecimal(treesTransacted);
+                } else {
+                    balanceBeforeThisTxn = balanceBeforeThisTxn.add(new BigDecimal(treesTransacted));
+                }
+
+                userTreesSpentMapping.put(userId, balanceBeforeThisTxn);
+
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(userId, callId, new BigDecimal(0), new BigDecimal(0), balanceBeforeThisTxn, new BigDecimal(0));
+                firebaseRealtimeDbHelper.updateCallChargesDetailsInFirebase(pdUserID, callId, new BigDecimal(0), new BigDecimal(0), new BigDecimal(0), treeToAdd);
             }
 
         } catch (Exception e) {
