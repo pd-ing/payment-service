@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -83,5 +84,34 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
 
     @Query(value = "select d from Donation d where d.pdUserId = :pdId and d.lastUpdateDate >= :startDate and d.lastUpdateDate <= :endDate")
     List<Donation> findDonationsByPdIdAndDateRange(@Param("pdId") String pdId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query(value = "" +
+            " select d.donor_user_id, " +
+            "       sum(d.donated_trees)                 as totalTreeDonation, " +
+            "       (select sum(trees_consumed) " +
+            "        from video_purchase vp " +
+            "        where vp.video_owner_user_id = :pdUserId " +
+            "          and vp.user_id = d.donor_user_id " +
+            "          and vp.last_update_date >= :startDate " +
+            "          and vp.last_update_date <= :endDate) as totalPurchasedVideoTree, " +
+            "       (select max(last_update_date) " +
+            "        from video_purchase vp " +
+            "        where vp.video_owner_user_id = :pdUserId " +
+            "          and vp.user_id = d.donor_user_id " +
+            "          and vp.last_update_date >= :startDate " +
+            "          and vp.last_update_date <= :endDate) as lastPurchasedVideoDate, " +
+            "       max(d.last_update_date)              as lastDonationDate " +
+            " from donation d " +
+            " where d.pd_user_id = :pdUserId " +
+            "   and d.last_update_date >= :startDate " +
+            "   and d.last_update_date <= :endDate " +
+            " group by d.donor_user_id " +
+            " ORDER BY totalTreeDonation + totalPurchasedVideoTree desc",
+            countQuery = "select count(*) from donation d where d.pd_user_id = :pdUserId " +
+                    "  and d.last_update_date >= :startDate " +
+                    "  and d.last_update_date <= :endDate " +
+                    " group by d.donor_user_id",
+            nativeQuery = true)
+    List<Object[]> findTopDonorUserByDateRanger(String pdUserId, LocalDate startDate, LocalDate endDate);
 
 }

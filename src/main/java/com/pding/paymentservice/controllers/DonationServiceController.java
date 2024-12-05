@@ -20,10 +20,12 @@ import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.EarningService;
 import com.pding.paymentservice.service.SendNotificationService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -197,5 +200,13 @@ public class DonationServiceController {
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
         String paramName = ex.getParameterName();
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
+    }
+
+    @GetMapping(value = "/topDonorsListDownload")
+    public ResponseEntity<List<DonorData>> topDonorsListDownload(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+    )  throws Exception {
+        return donationService.topDonorsListDownload(startDate, endDate);
     }
 }

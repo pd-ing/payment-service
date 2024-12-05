@@ -5,6 +5,7 @@ import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -103,6 +104,24 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
     Page<Object[]> getSalesHistoryByUserIdAndDates(String searchString, String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    @Query(value =
+            "SELECT COALESCE(vp.last_update_date, ''), " +
+                    "COALESCE(vp.trees_consumed, ''), " +
+                    "COALESCE(u.email, ''), " +
+                    "COALESCE(vp.duration, ''), " +
+                    "COALESCE(vp.expiry_date, '') " +
+                    "FROM video_purchase vp " +
+                    "LEFT JOIN videos v ON vp.video_id = v.video_id " +
+                    "LEFT JOIN users u ON vp.user_id = u.id " +
+                    "WHERE vp.video_owner_user_id = :userId " +
+                    "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
+                    "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
+                    "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
+                    "ORDER BY CASE WHEN :sortDirection = 'ASC' THEN vp.last_update_date END ASC, " +
+                    "CASE WHEN :sortDirection = 'DESC' THEN vp.last_update_date END DESC",
+            nativeQuery = true)
+    List<Object[]> getAllSalesHistoryByUserIdAndDates(String searchString, String userId, LocalDate startDate, LocalDate endDate, String sortDirection);
 
     @Query(value =
             "SELECT sum(vp.trees_consumed) " +

@@ -3,6 +3,7 @@ package com.pding.paymentservice.controllers;
 import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
+import com.pding.paymentservice.payload.response.SalesHistoryData;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -175,6 +176,16 @@ public class VideoPurchaseServiceController {
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
         String paramName = ex.getParameterName();
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
+    }
+
+    @GetMapping(value = "/salesHistoryDownload")
+    public ResponseEntity<SalesHistoryData> salesHistoryDownload(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+            @RequestParam(value = "searchString", required = false) String searchString
+    )  throws Exception {
+        return videoPurchaseService.downloadSaleHistoryOfUser(searchString, startDate, endDate, sortOrder);
     }
 
 }

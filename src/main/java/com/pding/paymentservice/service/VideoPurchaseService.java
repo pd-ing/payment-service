@@ -26,10 +26,12 @@ import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.payload.response.VideoPurchaseTimeRemainingResponse;
+import com.pding.paymentservice.payload.response.SalesHistoryData;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
@@ -38,8 +40,11 @@ import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.EmailValidator;
 import com.pding.paymentservice.util.LogSanitizer;
+import com.pding.paymentservice.util.StringUtil;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -324,7 +329,7 @@ public class VideoPurchaseService {
         }
     }
 
-//    @Cacheable(value = "notExpiredVideo", key = "{#userId, #pdId, #page, #size}", cacheManager = "cacheManager")
+    //    @Cacheable(value = "notExpiredVideo", key = "{#userId, #pdId, #page, #size}", cacheManager = "cacheManager")
     public GetVideoTransactionsResponse getVideoTransactions(String userId, String pdId, int page, int size, int sort) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "lastUpdateDate"));
         Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
@@ -565,27 +570,9 @@ public class VideoPurchaseService {
             return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, totalTreesEarned, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null,  null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
-
-//    public ResponseEntity<?> searchSalesHistoryOfUser(String searchString, int page, int size, int sort) {
-//        try {
-//            String userId = authHelper.getUserId();
-//            List<VideoSalesHistoryRecord> shList = null;
-//            Pageable pageable = null;
-//            Page<Object[]> shPage = null;
-//            if (sort == 0 || sort == 1) {
-//                pageable = PageRequest.of(page, size, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "last_update_date"));
-//                shPage = videoPurchaseRepository.searchSalesHistoryByUserId(userId, searchString, pageable);
-//                shList = createSalesHistoryList(shPage.getContent());
-//            }
-//            return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
-//        } catch (Exception e) {
-//            pdLogger.logException(PdLogger.EVENT.VIDEO_PURCHASE_HISTORY, e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new VideoSalesHistoryResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-//        }
-//    }
 
     private List<VideoSalesHistoryRecord> createSalesHistoryList(List<Object[]> shPage) {
         List<VideoSalesHistoryRecord> shList = new ArrayList<>();
@@ -688,7 +675,7 @@ public class VideoPurchaseService {
         }
     }
 
-//    @Cacheable(value = "expiredVideoPurchases", key = "#userId + #creatorUserId + #page + #pageSize", cacheManager = "cacheManager")
+    //    @Cacheable(value = "expiredVideoPurchases", key = "#userId + #creatorUserId + #page + #pageSize", cacheManager = "cacheManager")
     public GetVideoTransactionsResponse expiredVideoPurchases(String userId, String creatorUserId, int page, int pageSize, int sort) {
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sort == 0 ? Sort.Direction.ASC : Sort.Direction.DESC, "maxExpiryDate"));
         Page<VideoPurchase> videoPurchases = videoPurchaseRepository.findExpiredVideoPurchases(userId, creatorUserId, pageable);
@@ -725,5 +712,64 @@ public class VideoPurchaseService {
 
                     return new VideoSaleHistory(vId, videoOwnerUserId, userEmail, userId, totalSales, purchaseLiteDTOList);
                 });
+    }
+
+    public ResponseEntity<SalesHistoryData> downloadSaleHistoryOfUser(String searchString, LocalDate startDate, LocalDate endDate, int sort) throws Exception{
+        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(searchString, startDate, endDate, sort);
+        return ResponseEntity.ok(salesHistoryData);
+    }
+
+    private SalesHistoryData getAllSalesHistoryByDate(
+            String searchString,
+            LocalDate startDate,
+            LocalDate endDate,
+            int sort
+    ) {
+        String userId = authHelper.getUserId();
+        if (userId == null) {
+            throw new IllegalArgumentException("UserId null; cannot get video sales history.");
+        }
+
+        if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+            throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
+        }
+        if (startDate == null) {
+            throw new IllegalArgumentException("Both start date and end date cannot be null at the same time");
+        }
+        endDate = endDate.plusDays(1L);
+
+        if (StringUtils.isBlank(searchString)) {
+            searchString = null;
+        }
+        // Create pageable object
+        String sortSaleHistory = sort == 0 ? "ASC" : "DESC";
+        // Fetch paginated sales history
+
+        List<Object[]> shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, sortSaleHistory);
+
+        // Transform database records into a list of DTOs
+        List<VideoSalesHistoryRecord> shList = getSaleHistoryData(shPage);
+
+        // Calculate total trees earned
+        Long totalTreesEarned = Optional.ofNullable(videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate)).orElse(0L);
+
+        // Return the response object
+        return new SalesHistoryData(null, totalTreesEarned,shList);
+    }
+
+    private List<VideoSalesHistoryRecord> getSaleHistoryData(List<Object[]> shPage) {
+        List<VideoSalesHistoryRecord> shList = new ArrayList<>();
+        for (Object innerObject : shPage) {
+            Object[] salesHistory = (Object[]) innerObject;
+            VideoSalesHistoryRecord shObj = new VideoSalesHistoryRecord();
+            String email = salesHistory[2].toString();
+            shObj.setPurchaseDate(salesHistory[0].toString());
+            shObj.setAmount(salesHistory[1].toString());
+            shObj.setBuyerEmail(StringUtil.maskEmail(email));
+            shObj.setDuration(salesHistory[3].toString());
+            shObj.setExpiryDate(salesHistory[4].toString());
+            shList.add(shObj);
+        }
+        return shList;
     }
 }

@@ -22,9 +22,11 @@ import com.pding.paymentservice.repository.DonationRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.LogSanitizer;
+import com.pding.paymentservice.util.StringUtil;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,8 +41,10 @@ import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -314,4 +318,73 @@ public class DonationService {
         }
     }
 
+    public ResponseEntity<List<DonorData>> topDonorsListDownload(LocalDate startDate, LocalDate endDate) throws Exception{
+        String userId = authHelper.getUserId();
+
+        if (userId == null) {
+            throw new IllegalArgumentException("UserId null; cannot get video sales history.");
+        }
+
+        if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
+            throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
+        }
+        if (startDate == null) {
+            throw new IllegalArgumentException("Both start date and end date cannot be null at the same time");
+        }
+        endDate = endDate.plusDays(1L);
+
+        List<Object[]> donorUserObjects = donationRepository.findTopDonorUserByDateRanger(userId, startDate,endDate);
+
+        if (donorUserObjects.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<String> donorUserIds = donorUserObjects.stream()
+                .map(row -> (String) row[0])
+                .collect(Collectors.toList());
+
+        List<PublicUserNet> publicUsers = userServiceNetworkManager
+                .getUsersListFlux(donorUserIds)
+                .collect(Collectors.toList())
+                .block();
+
+        if (publicUsers == null || publicUsers.isEmpty()) {
+            // Optionally log this condition
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
+                .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+
+
+        List<DonorData> donorDataList = donorUserObjects.stream().map(objects -> {
+            DonorData donorData = new DonorData();
+            donorData.setDonorUserId((String) objects[0]);
+            donorData.setTotalTreeDonation((BigDecimal) objects[1]);
+            donorData.setTotalPurchasedVideoTree((BigDecimal) objects[2]);
+            Timestamp lastPurchasedVideoDate = (Timestamp) objects[3];
+            Timestamp lastDonationDate = (Timestamp) objects[4];
+
+            if (lastPurchasedVideoDate != null && lastDonationDate != null) {
+                donorData.setLastUsedDate(lastPurchasedVideoDate.after(lastDonationDate)
+                        ? lastPurchasedVideoDate.toLocalDateTime() : lastDonationDate.toLocalDateTime());
+            } else if (lastPurchasedVideoDate != null) {
+                donorData.setLastUsedDate(lastPurchasedVideoDate.toLocalDateTime());
+            } else if (lastDonationDate != null) {
+                donorData.setLastUsedDate(lastDonationDate.toLocalDateTime());
+            }
+
+            // Setting other donor details
+            PublicUserNet user = publicUserMap.get(donorData.getDonorUserId());
+            if (user != null) {
+                donorData.setEmail(StringUtil.maskEmail(user.getEmail()));
+                donorData.setNickname(user.getNickname());
+            }
+
+            return donorData;
+        }).collect(Collectors.toList());
+
+        // Return the list of donor data
+        return ResponseEntity.ok(donorDataList);
+    }
 }
