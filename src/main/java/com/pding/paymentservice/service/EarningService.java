@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -202,5 +201,9 @@ public class EarningService {
             pdLogger.logException(PdLogger.EVENT.WITHDRAW_TRANSACTION, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaginationResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
         }
+    }
+
+    public BigDecimal sumOfAllTreesEarned() {
+        return earningRepository.sumOfAllTreesEarned();
     }
 }
