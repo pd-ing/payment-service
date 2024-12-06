@@ -719,6 +719,7 @@ public class VideoPurchaseService {
                                           HttpServletResponse httpServletResponse) throws Exception {
         SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(userId, email, searchString, startDate, endDate, sort);
         pdfService.generatePDFSellerHistory(httpServletResponse, salesHistoryData);
+
     }
 
     private SalesHistoryData getAllSalesHistoryByDate(

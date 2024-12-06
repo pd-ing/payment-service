@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -204,13 +205,16 @@ public class DonationServiceController {
     }
 
     @GetMapping(value = "/topDonorsListDownload")
-    public void topDonorsListDownload(
+    public Mono<ResponseEntity<String>> topDonorsListDownload(
             @RequestParam(required = false, value = "pdUserId") String pdUserId,
             @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             HttpServletResponse response
-    )  throws Exception {
-        donationService.topDonorsListDownload(email,pdUserId,startDate, endDate, response);
+    ) throws Exception {
+        donationService.topDonorsListDownload(email, pdUserId, startDate, endDate, response);
+        return Mono.just(ResponseEntity.accepted()
+                .body("File generation started. You will receive an email when it's complete."));
     }
+
 }

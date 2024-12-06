@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -180,7 +181,7 @@ public class VideoPurchaseServiceController {
     }
 
     @GetMapping(value = "/salesHistoryDownload")
-    public void salesHistoryDownload(
+    public Mono<ResponseEntity<String>> salesHistoryDownload(
             @RequestParam(required = false, value = "pdUserId") String pdUserId,
             @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
@@ -190,6 +191,8 @@ public class VideoPurchaseServiceController {
             HttpServletResponse httpServletResponse
     )  throws Exception {
         videoPurchaseService.downloadSaleHistoryOfUser(pdUserId,email,searchString, startDate, endDate, sortOrder, httpServletResponse);
+        return Mono.just(ResponseEntity.accepted()
+                .body("File generation started. You will receive an email when it's complete."));
     }
 
 }

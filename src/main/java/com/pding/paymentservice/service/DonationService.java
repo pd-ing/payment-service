@@ -39,6 +39,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
 import java.io.IOException;
@@ -85,6 +86,9 @@ public class DonationService {
 
     @Autowired
     PDFService pdfService;
+
+    @Autowired
+    EmailSenderService emailSenderService;
 
     @Transactional
     public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
@@ -324,6 +328,25 @@ public class DonationService {
     }
 
     public void topDonorsListDownload(String email, String userId, LocalDate startDate, LocalDate endDate, HttpServletResponse response) throws Exception {
+        List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
+        String nickname = "";
+        if (userInfo != null) {
+            for (Object user : userInfo) {
+                Object[] dataUser = (Object[]) user;
+                email = dataUser != null ? dataUser[0].toString() : "";
+                nickname = dataUser != null ? dataUser[1].toString() : "";
+            }
+        }
+        try {
+            List<DonorData> donorDataList = getTopDonorsList(email, userId, startDate, endDate, response);
+
+            pdfService.generatePDFDonation(response, donorDataList, userId, email, nickname);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<DonorData> getTopDonorsList(String email, String userId, LocalDate startDate, LocalDate endDate, HttpServletResponse response) throws Exception {
         if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
             throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
         }
@@ -344,7 +367,7 @@ public class DonationService {
         }
 
         if (donorUserObjects.isEmpty()) {
-//            return ResponseEntity.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
 
         List<String> donorUserIds = donorUserObjects.stream()
@@ -357,15 +380,13 @@ public class DonationService {
                 .block();
 
         if (publicUsers == null || publicUsers.isEmpty()) {
-            // Optionally log this condition
-//            return ResponseEntity.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
 
         Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
                 .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
 
-
-        List<DonorData> donorDataList = donorUserObjects.stream().map(objects -> {
+        return donorUserObjects.stream().map(objects -> {
             DonorData donorData = new DonorData();
             donorData.setDonorUserId((String) objects[0]);
             donorData.setTotalTreeDonation((BigDecimal) objects[1]);
@@ -397,23 +418,6 @@ public class DonationService {
 
             return donorData;
         }).collect(Collectors.toList());
-        List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
-        String nickname = "";
-        if (userInfo != null) {
-            for (Object user : userInfo) {
-                Object[] dataUser = (Object[]) user;
-                email = dataUser!=null? dataUser[0].toString():"";
-                nickname = dataUser!=null? dataUser[1].toString():"";
-            }
-        }
-        try {
-            // Generate the header HTML
-            pdfService.generatePDFDonation(response, donorDataList, userId, email, nickname);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Return the list of donor data
-//        return ResponseEntity.ok(donorDataList);
     }
+
 }
