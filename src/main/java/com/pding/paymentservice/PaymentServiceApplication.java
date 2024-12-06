@@ -1,13 +1,17 @@
 package com.pding.paymentservice;
 
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.logging.Logger;
 
 @SpringBootApplication
 @EnableAsync
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30S")
+@EnableScheduling
 public class PaymentServiceApplication {
 
     private static final Logger logger = Logger.getLogger(PaymentServiceApplication.class.getName());
