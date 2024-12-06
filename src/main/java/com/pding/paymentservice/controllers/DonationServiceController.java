@@ -20,6 +20,7 @@ import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.EarningService;
 import com.pding.paymentservice.service.SendNotificationService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -203,10 +204,13 @@ public class DonationServiceController {
     }
 
     @GetMapping(value = "/topDonorsListDownload")
-    public ResponseEntity<List<DonorData>> topDonorsListDownload(
+    public void topDonorsListDownload(
+            @RequestParam(required = false, value = "pdUserId") String pdUserId,
+            @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            HttpServletResponse response
     )  throws Exception {
-        return donationService.topDonorsListDownload(startDate, endDate);
+        donationService.topDonorsListDownload(email,pdUserId,startDate, endDate, response);
     }
 }

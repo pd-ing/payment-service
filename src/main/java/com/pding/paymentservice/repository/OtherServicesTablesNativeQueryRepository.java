@@ -279,4 +279,10 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     @Query(value = "select target_user_id " +
             "from block_user where blocker_user_id = :userid", nativeQuery = true)
     List<String> findBlockedUsersByUserId(@Param("userid") String userId);
+
+    @Query(value = "SELECT u.id FROM users u WHERE u.email = :email",nativeQuery = true)
+    String findUserIdByEmail(@Param("email") String email);
+
+    @Query(value = "SELECT u.email, u.nickname FROM users u WHERE u.id = :userId", nativeQuery = true)
+    List<Object[]> findEmailAndNicknameByUserId(@Param("userId") String userId);
 }

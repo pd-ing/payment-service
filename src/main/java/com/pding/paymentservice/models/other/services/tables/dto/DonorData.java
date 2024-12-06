@@ -11,6 +11,7 @@ public class DonorData {
     private BigDecimal totalTreeDonation;
     private BigDecimal totalPurchasedVideoTree;
     private LocalDateTime lastUsedDate;
+    private String lastUsedDateFormatted;
     private String email;
     private String nickname;
     private String profilePicture;

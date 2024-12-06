@@ -7,6 +7,7 @@ import com.pding.paymentservice.payload.response.SalesHistoryData;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.apache.commons.lang3.StringUtils;
@@ -179,13 +180,16 @@ public class VideoPurchaseServiceController {
     }
 
     @GetMapping(value = "/salesHistoryDownload")
-    public ResponseEntity<SalesHistoryData> salesHistoryDownload(
+    public void salesHistoryDownload(
+            @RequestParam(required = false, value = "pdUserId") String pdUserId,
+            @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
-            @RequestParam(value = "searchString", required = false) String searchString
+            @RequestParam(value = "searchString", required = false) String searchString,
+            HttpServletResponse httpServletResponse
     )  throws Exception {
-        return videoPurchaseService.downloadSaleHistoryOfUser(searchString, startDate, endDate, sortOrder);
+        videoPurchaseService.downloadSaleHistoryOfUser(pdUserId,email,searchString, startDate, endDate, sortOrder, httpServletResponse);
     }
 
 }

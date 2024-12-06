@@ -21,9 +21,11 @@ import com.pding.paymentservice.repository.DonationRepository;
 
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.DateTimeUtil;
 import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.StringUtil;
 import com.pding.paymentservice.util.TokenSigner;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -80,11 +83,13 @@ public class DonationService {
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
+    @Autowired
+    PDFService pdfService;
 
     @Transactional
     public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
         log.info("start donation transaction for userId: {}, trees: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(treesToDonate), LogSanitizer.sanitizeForLog(PdUserId));
-        if(otherServicesTablesNativeQueryRepository.findUserInfoByUserId(PdUserId).isEmpty()){
+        if (otherServicesTablesNativeQueryRepository.findUserInfoByUserId(PdUserId).isEmpty()) {
             log.error("PD User ID doesn't exist, {}", LogSanitizer.sanitizeForLog(PdUserId));
             throw new InvalidUserException("PD User ID doesn't exist");
         }
@@ -153,9 +158,9 @@ public class DonationService {
                 .collect(Collectors.toList());
 
         List<PublicUserNet> publicUsers = userServiceNetworkManager
-            .getUsersListFlux(donorUserIds)
-            .collect(Collectors.toList())
-            .block();
+                .getUsersListFlux(donorUserIds)
+                .collect(Collectors.toList())
+                .block();
 
         for (Object innerObject : donationPage.getContent()) {
 
@@ -239,13 +244,13 @@ public class DonationService {
         }
 
         List<String> donorUserIds = donorUserObjects.stream()
-            .map(row -> (String) row[0])
-            .collect(Collectors.toList());
+                .map(row -> (String) row[0])
+                .collect(Collectors.toList());
 
         List<PublicUserNet> publicUsers = userServiceNetworkManager
-            .getUsersListFlux(donorUserIds)
-            .collect(Collectors.toList())
-            .block();
+                .getUsersListFlux(donorUserIds)
+                .collect(Collectors.toList())
+                .block();
 
         for (PublicUserNet user : publicUsers) {
             String profilePicture = null;
@@ -262,7 +267,7 @@ public class DonationService {
 
 
         Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
-            .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+                .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
 
 
         Page<DonorData> donorDataPage = donorUserObjects.map(objects -> {
@@ -318,13 +323,7 @@ public class DonationService {
         }
     }
 
-    public ResponseEntity<List<DonorData>> topDonorsListDownload(LocalDate startDate, LocalDate endDate) throws Exception{
-        String userId = authHelper.getUserId();
-
-        if (userId == null) {
-            throw new IllegalArgumentException("UserId null; cannot get video sales history.");
-        }
-
+    public void topDonorsListDownload(String email, String userId, LocalDate startDate, LocalDate endDate, HttpServletResponse response) throws Exception {
         if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
             throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
         }
@@ -332,11 +331,20 @@ public class DonationService {
             throw new IllegalArgumentException("Both start date and end date cannot be null at the same time");
         }
         endDate = endDate.plusDays(1L);
-
-        List<Object[]> donorUserObjects = donationRepository.findTopDonorUserByDateRanger(userId, startDate,endDate);
+        List<Object[]> donorUserObjects;
+        if (userId == null) {
+            if (email != null) {
+                String id = otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
+                donorUserObjects = donationRepository.findTopDonorUserByDateRanger(id, startDate, endDate);
+            } else {
+                throw new IllegalArgumentException("UserId null; cannot get video sales history.");
+            }
+        } else {
+            donorUserObjects = donationRepository.findTopDonorUserByDateRanger(userId, startDate, endDate);
+        }
 
         if (donorUserObjects.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
+//            return ResponseEntity.ok(Collections.emptyList());
         }
 
         List<String> donorUserIds = donorUserObjects.stream()
@@ -350,7 +358,7 @@ public class DonationService {
 
         if (publicUsers == null || publicUsers.isEmpty()) {
             // Optionally log this condition
-            return ResponseEntity.ok(Collections.emptyList());
+//            return ResponseEntity.ok(Collections.emptyList());
         }
 
         Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
@@ -366,14 +374,20 @@ public class DonationService {
             Timestamp lastDonationDate = (Timestamp) objects[4];
 
             if (lastPurchasedVideoDate != null && lastDonationDate != null) {
-                donorData.setLastUsedDate(lastPurchasedVideoDate.after(lastDonationDate)
-                        ? lastPurchasedVideoDate.toLocalDateTime() : lastDonationDate.toLocalDateTime());
-            } else if (lastPurchasedVideoDate != null) {
-                donorData.setLastUsedDate(lastPurchasedVideoDate.toLocalDateTime());
-            } else if (lastDonationDate != null) {
-                donorData.setLastUsedDate(lastDonationDate.toLocalDateTime());
-            }
+                LocalDateTime lastPurchasedVideoDateTime = DateTimeUtil.convertToLocalDateTime(lastPurchasedVideoDate);
+                LocalDateTime lastDonationDateTime = DateTimeUtil.convertToLocalDateTime(lastDonationDate);
 
+                donorData.setLastUsedDate(
+                        lastPurchasedVideoDateTime.isAfter(lastDonationDateTime)
+                                ? lastPurchasedVideoDateTime
+                                : lastDonationDateTime
+                );
+            } else if (lastPurchasedVideoDate != null) {
+                donorData.setLastUsedDate(DateTimeUtil.convertToLocalDateTime(lastPurchasedVideoDate));
+            } else if (lastDonationDate != null) {
+                donorData.setLastUsedDate(DateTimeUtil.convertToLocalDateTime(lastDonationDate));
+            }
+            donorData.setLastUsedDateFormatted(DateTimeUtil.formatLocalDateTime(donorData.getLastUsedDate()));
             // Setting other donor details
             PublicUserNet user = publicUserMap.get(donorData.getDonorUserId());
             if (user != null) {
@@ -383,8 +397,23 @@ public class DonationService {
 
             return donorData;
         }).collect(Collectors.toList());
+        List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
+        String nickname = "";
+        if (userInfo != null) {
+            for (Object user : userInfo) {
+                Object[] dataUser = (Object[]) user;
+                email = dataUser!=null? dataUser[0].toString():"";
+                nickname = dataUser!=null? dataUser[1].toString():"";
+            }
+        }
+        try {
+            // Generate the header HTML
+            pdfService.generatePDFDonation(response, donorDataList, userId, email, nickname);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // Return the list of donor data
-        return ResponseEntity.ok(donorDataList);
+//        return ResponseEntity.ok(donorDataList);
     }
 }

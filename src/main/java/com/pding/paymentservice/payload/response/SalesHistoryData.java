@@ -15,5 +15,8 @@ import java.util.List;
 public class SalesHistoryData {
     ErrorResponse errorResponse;
     Long totalTreesEarned;
+    String userId;
+    String email;
+    String name;
     List<VideoSalesHistoryRecord> videoSalesHistoryRecord;
 }

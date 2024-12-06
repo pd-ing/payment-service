@@ -38,10 +38,8 @@ import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRes
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
-import com.pding.paymentservice.util.EmailValidator;
-import com.pding.paymentservice.util.LogSanitizer;
-import com.pding.paymentservice.util.StringUtil;
-import com.pding.paymentservice.util.TokenSigner;
+import com.pding.paymentservice.util.*;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -110,6 +108,9 @@ public class VideoPurchaseService {
 
     @Autowired
     AsyncOperationService asyncOperationService;
+
+    @Autowired
+    PDFService pdfService;
 
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
@@ -714,22 +715,20 @@ public class VideoPurchaseService {
                 });
     }
 
-    public ResponseEntity<SalesHistoryData> downloadSaleHistoryOfUser(String searchString, LocalDate startDate, LocalDate endDate, int sort) throws Exception{
-        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(searchString, startDate, endDate, sort);
-        return ResponseEntity.ok(salesHistoryData);
+    public void downloadSaleHistoryOfUser(String userId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sort,
+                                          HttpServletResponse httpServletResponse) throws Exception {
+        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(userId, email, searchString, startDate, endDate, sort);
+        pdfService.generatePDFSellerHistory(httpServletResponse, salesHistoryData);
     }
 
     private SalesHistoryData getAllSalesHistoryByDate(
+            String userId,
+            String email,
             String searchString,
             LocalDate startDate,
             LocalDate endDate,
             int sort
     ) {
-        String userId = authHelper.getUserId();
-        if (userId == null) {
-            throw new IllegalArgumentException("UserId null; cannot get video sales history.");
-        }
-
         if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
             throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
         }
@@ -737,24 +736,41 @@ public class VideoPurchaseService {
             throw new IllegalArgumentException("Both start date and end date cannot be null at the same time");
         }
         endDate = endDate.plusDays(1L);
-
         if (StringUtils.isBlank(searchString)) {
             searchString = null;
         }
         // Create pageable object
         String sortSaleHistory = sort == 0 ? "ASC" : "DESC";
         // Fetch paginated sales history
+        List<Object[]> shPage;
+        if (userId == null) {
+            if (email != null) {
+                String id = otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
+                shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, id, startDate, endDate, sortSaleHistory);
 
-        List<Object[]> shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, sortSaleHistory);
+            } else {
+                throw new IllegalArgumentException("UserId null; cannot get video sales history.");
+            }
+
+        } else {
+            shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, sortSaleHistory);
+        }
 
         // Transform database records into a list of DTOs
         List<VideoSalesHistoryRecord> shList = getSaleHistoryData(shPage);
 
         // Calculate total trees earned
         Long totalTreesEarned = Optional.ofNullable(videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate)).orElse(0L);
-
-        // Return the response object
-        return new SalesHistoryData(null, totalTreesEarned,shList);
+        List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
+        String nickname = "";
+        if (userInfo != null) {
+            for (Object user : userInfo) {
+                Object[] dataUser = (Object[]) user;
+                email = dataUser!=null? dataUser[0].toString():"";
+                nickname = dataUser!=null? dataUser[1].toString():"";
+            }
+        }
+        return new SalesHistoryData(null, totalTreesEarned, userId, email, nickname, shList);
     }
 
     private List<VideoSalesHistoryRecord> getSaleHistoryData(List<Object[]> shPage) {
@@ -763,11 +779,12 @@ public class VideoPurchaseService {
             Object[] salesHistory = (Object[]) innerObject;
             VideoSalesHistoryRecord shObj = new VideoSalesHistoryRecord();
             String email = salesHistory[2].toString();
-            shObj.setPurchaseDate(salesHistory[0].toString());
+
+            shObj.setPurchaseDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[0].toString())));
             shObj.setAmount(salesHistory[1].toString());
             shObj.setBuyerEmail(StringUtil.maskEmail(email));
-            shObj.setDuration(salesHistory[3].toString());
-            shObj.setExpiryDate(salesHistory[4].toString());
+            shObj.setDuration(StringUtil.convertDurationKeyToValue(salesHistory[3].toString()));
+            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString())));
             shList.add(shObj);
         }
         return shList;
