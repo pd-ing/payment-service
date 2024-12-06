@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -32,5 +33,15 @@ public class PdStatisticController {
                                                @RequestParam LocalDate toDate) {
         String userId = authHelper.getUserId();
         return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraph(userId, fromDate, toDate));
+    }
+
+    @GetMapping("/daily-total-tree-graph")
+    public ResponseEntity getTotalTreeGraph(@RequestParam LocalDate fromDate, @RequestParam LocalDate toDate, @RequestParam String unit) {
+        return ResponseEntity.ok(paymentStatisticService.getDailyTotalTreeGraph(fromDate, toDate, unit));
+    }
+
+    @GetMapping("/hourly-total-tree-graph")
+    public ResponseEntity getTotalTreeGraph(@RequestParam LocalDate date) {
+        return ResponseEntity.ok(paymentStatisticService.getHourlyTotalTreeGraph(date));
     }
 }

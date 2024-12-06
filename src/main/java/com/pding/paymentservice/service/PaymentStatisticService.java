@@ -14,6 +14,7 @@ import com.pding.paymentservice.repository.DonationRepository;
 import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.PaymentStatisticRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import com.pding.paymentservice.repository.WalletHourlyCaptureRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ public class PaymentStatisticService {
     private final EarningRepository earningRepository;
     private final VideoPurchaseRepository videoPurchaseRepository;
     private final DonationRepository donationRepository;
+    private final WalletHourlyCaptureRepository walletHourlyCaptureRepository;
 
     public Page<LeafEarningInCallingHistoryDTO> leafsEarningHistory(String pdId, String startDate, String endDate, Pageable pageable) {
         return paymentStatisticRepository.getLeafEarningInCallingHistory(pdId, startDate, endDate, pageable);
@@ -186,5 +188,13 @@ public class PaymentStatisticService {
         Map<LocalDate, BigDecimal> sortedMap = new TreeMap<>(mergedMap);
 
         return new GrossRevenueByDateRangeGraph(fromDate, toDate, grossRevenue, sortedMap);
+    }
+
+    public Object getDailyTotalTreeGraph(LocalDate fromDate, LocalDate toDate, String unit) {
+        return null;
+    }
+
+    public Object getHourlyTotalTreeGraph(LocalDate date) {
+        return null;
     }
 }
