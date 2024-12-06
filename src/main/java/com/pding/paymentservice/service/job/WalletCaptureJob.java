@@ -25,9 +25,7 @@ public class WalletCaptureJob {
     @Autowired
     WalletHourlyCaptureRepository walletHourlyCaptureRepository;
 
-    //at the end of every hour
-    @Scheduled(cron = "59 * * ? * *", zone = "Asia/Seoul")
-
+    @Scheduled(cron = "59 59 * ? * *", zone = "Asia/Seoul")
     //for test
 //    @Scheduled(cron = "0 * * ? * *", zone = "Asia/Seoul")
     @SchedulerLock(name = "WalletCaptureJob_captureWallet",
