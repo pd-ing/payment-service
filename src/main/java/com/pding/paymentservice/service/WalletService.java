@@ -180,4 +180,8 @@ public class WalletService {
         }
     }
 
+    public BigDecimal getTotalTrees() {
+        return walletRepository.sumOfAllTreesForUser();
+    }
+
 }
