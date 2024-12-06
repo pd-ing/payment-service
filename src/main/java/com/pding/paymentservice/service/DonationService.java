@@ -39,6 +39,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
 
@@ -339,7 +340,9 @@ public class DonationService {
         }
         try {
             List<DonorData> donorDataList = getTopDonorsList(email, userId, startDate, endDate, response);
-
+            if(donorDataList.isEmpty()){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No donor data available for the given criteria.");
+            }
             pdfService.generatePDFDonation(response, donorDataList, userId, email, nickname);
         } catch (IOException e) {
             e.printStackTrace();

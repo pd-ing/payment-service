@@ -22,8 +22,8 @@ public class PDFService {
 
     @Autowired
     EmailSenderService emailSenderService;
-    public void generatePDFDonation(HttpServletResponse response, List<DonorData> donorDataList,
-                                    String userId, String email, String nickname) throws IOException, MessagingException {
+
+    public void generatePDFDonation(HttpServletResponse response, List<DonorData> donorDataList, String userId, String email, String nickname) throws IOException, MessagingException {
         File tempFile = File.createTempFile("donation_report_", ".pdf");
         tempFile.deleteOnExit();
 
@@ -44,8 +44,12 @@ public class PDFService {
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=donation_report.pdf");
 
-        try (InputStream inputStream = new FileInputStream(tempFile);
-             OutputStream outputStream = response.getOutputStream()) {
+        downloadFilePDF(response, tempFile);
+
+    }
+
+    private void downloadFilePDF(HttpServletResponse response, File tempFile) throws IOException {
+        try (InputStream inputStream = new FileInputStream(tempFile); OutputStream outputStream = response.getOutputStream()) {
             byte[] buffer = new byte[1024];
             int bytesRead;
 
@@ -53,7 +57,6 @@ public class PDFService {
                 outputStream.write(buffer, 0, bytesRead);
             }
         }
-
     }
 
     public void generatePDFSellerHistory(HttpServletResponse httpServletResponse, SalesHistoryData salesHistoryData) throws IOException, MessagingException {
@@ -76,19 +79,10 @@ public class PDFService {
 
         emailSenderService.sendEmailWithAttachment(salesHistoryData.getEmail(), "Your Requested PDF Report is Ready for Download", "PDF Report", tempFile);
 
-
         httpServletResponse.setContentType("application/pdf");
         httpServletResponse.setHeader("Content-Disposition", "attachment; filename=sales_report.pdf");
+        downloadFilePDF(httpServletResponse, tempFile);
 
-        try (InputStream inputStream = new FileInputStream(tempFile);
-             OutputStream outputStream = httpServletResponse.getOutputStream()) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        }
     }
 
     private String generateSponsorHtml(List<DonorData> donorDataList, String userId, String email, String nickname) {

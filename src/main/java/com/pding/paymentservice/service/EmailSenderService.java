@@ -55,12 +55,9 @@ public class EmailSenderService {
 
         String fromAddress = "no-reply@pd-ing.com";
         String senderName = "PD-ING LLC";
-        String subjectText = subject;
-
-
         helper.setFrom(fromAddress, senderName);
         helper.setTo(email);
-        helper.setSubject(subjectText);
+        helper.setSubject(subject);
         helper.setText(emailContent, true);
 
         MimeMultipart multipart = new MimeMultipart();

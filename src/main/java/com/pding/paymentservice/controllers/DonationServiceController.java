@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -211,10 +212,25 @@ public class DonationServiceController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             HttpServletResponse response
-    ) throws Exception {
-        donationService.topDonorsListDownload(email, pdUserId, startDate, endDate, response);
-        return Mono.just(ResponseEntity.accepted()
-                .body("File generation started. You will receive an email when it's complete."));
+    ) {
+//        donationService.topDonorsListDownload(email, pdUserId, startDate, endDate, response);
+//        return Mono.just(ResponseEntity.accepted()
+//                .body("File generation started. You will receive an email when it's complete."));
+        return Mono.fromCallable(() -> {
+                    donationService.topDonorsListDownload(email, pdUserId, startDate, endDate, response);
+                    return "File generation started. Check your downloads or email.";
+                })
+                .map(successMessage -> ResponseEntity.accepted()
+                .body("File generation started. You will receive an email when it's complete."))
+                .onErrorResume(ResponseStatusException.class, ex -> {
+                    String message = "Error: " + ex.getReason();
+                    return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(message));
+                })
+                .onErrorResume(Exception.class, ex -> {
+                    ex.printStackTrace();
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Failed to generate file: " + ex.getMessage()));
+                });
     }
 
 }

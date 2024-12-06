@@ -53,6 +53,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -718,8 +719,10 @@ public class VideoPurchaseService {
     public void downloadSaleHistoryOfUser(String userId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sort,
                                           HttpServletResponse httpServletResponse) throws Exception {
         SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(userId, email, searchString, startDate, endDate, sort);
+        if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period.");
+        }
         pdfService.generatePDFSellerHistory(httpServletResponse, salesHistoryData);
-
     }
 
     private SalesHistoryData getAllSalesHistoryByDate(
