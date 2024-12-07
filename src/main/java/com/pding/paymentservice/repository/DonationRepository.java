@@ -107,11 +107,26 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             "   and d.last_update_date >= :startDate " +
             "   and d.last_update_date <= :endDate " +
             " group by d.donor_user_id " +
+            " having sum(d.donated_trees) > 0 " +
+            "     or (select sum(trees_consumed) " +
+            "         from video_purchase vp " +
+            "         where vp.video_owner_user_id = :pdUserId " +
+            "           and vp.user_id = d.donor_user_id " +
+            "           and vp.last_update_date >= :startDate " +
+            "           and vp.last_update_date <= :endDate) > 0 " +
             " ORDER BY totalTreeDonation + totalPurchasedVideoTree desc",
-            countQuery = "select count(*) from donation d where d.pd_user_id = :pdUserId " +
-                    "  and d.last_update_date >= :startDate " +
-                    "  and d.last_update_date <= :endDate " +
-                    " group by d.donor_user_id",
+            countQuery = "select count(*) from donation d " +
+                    " where d.pd_user_id = :pdUserId " +
+                    "   and d.last_update_date >= :startDate " +
+                    "   and d.last_update_date <= :endDate " +
+                    " group by d.donor_user_id " +
+                    " having sum(d.donated_trees) > 0 " +
+                    "     or (select sum(trees_consumed) " +
+                    "         from video_purchase vp " +
+                    "         where vp.video_owner_user_id = :pdUserId " +
+                    "           and vp.user_id = d.donor_user_id " +
+                    "           and vp.last_update_date >= :startDate " +
+                    "           and vp.last_update_date <= :endDate) > 0",
             nativeQuery = true)
     List<Object[]> findTopDonorUserByDateRanger(String pdUserId, LocalDate startDate, LocalDate endDate);
 
