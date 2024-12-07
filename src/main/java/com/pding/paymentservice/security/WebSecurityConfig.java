@@ -148,7 +148,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/statistic/videoSaleHistory").authenticated()
                                 .requestMatchers("/api/payment/statistic/gross-revenue-graph").authenticated()
                                 .requestMatchers("/api/payment/statistic/gross-revenue-graph-by-date-range").authenticated()
-                                .requestMatchers("/api/payment/statistic/daily-total-tree-graph").authenticated()
+                                .requestMatchers("/api/payment/statistic/total-tree-graph").authenticated()
                                 .requestMatchers("/api/payment/statistic/hourly-total-tree-graph").authenticated()
                                 .requestMatchers("/actuator/health/*").permitAll()
 

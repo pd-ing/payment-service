@@ -3,8 +3,10 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.models.WalletHourlyCapture;
 import com.pding.paymentservice.payload.dto.GrossRevenueByDateGraph;
 import com.pding.paymentservice.payload.dto.GrossRevenueByDateRangeGraph;
+import com.pding.paymentservice.payload.dto.TotalTreeGraphData;
 import com.pding.paymentservice.payload.dto.LeafEarningInCallingHistoryDTO;
 import com.pding.paymentservice.payload.dto.LeafGiftHistoryDTO;
 import com.pding.paymentservice.payload.dto.PdSummaryDTO;
@@ -25,6 +27,8 @@ import reactor.core.scheduler.Schedulers;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -190,11 +194,37 @@ public class PaymentStatisticService {
         return new GrossRevenueByDateRangeGraph(fromDate, toDate, grossRevenue, sortedMap);
     }
 
-    public Object getDailyTotalTreeGraph(LocalDate fromDate, LocalDate toDate, String unit) {
-        return null;
+    public List<TotalTreeGraphData> getDailyTotalTreeGraph(LocalDate fromDate, LocalDate toDate, String unit) {
+        ZonedDateTime fromDateZoned = fromDate.atStartOfDay().atZone(ZoneId.of("Asia/Seoul"));
+        ZonedDateTime toDateZoned = toDate.plusDays(1).atStartOfDay().atZone(ZoneId.of("Asia/Seoul"));
+        List<WalletHourlyCapture> walletHourlyCaptures;
+        if ("day".equalsIgnoreCase(unit)) {
+            walletHourlyCaptures = walletHourlyCaptureRepository.getWalletDailyCaptureByDateRange(fromDateZoned, toDateZoned);
+        } else if ("week".equalsIgnoreCase(unit)) {
+            walletHourlyCaptures = walletHourlyCaptureRepository.getWalletWeeklyCaptureByDateRange(fromDateZoned, toDateZoned);
+        } else if ("month".equalsIgnoreCase(unit)) {
+            walletHourlyCaptures = walletHourlyCaptureRepository.getWalletMonthlyCaptureByDateRange(fromDateZoned, toDateZoned);
+        } else {
+            walletHourlyCaptures = walletHourlyCaptureRepository.getWalletHourlyCaptureByDateRange(fromDateZoned, toDateZoned);
+        }
+        return walletHourlyCaptures.stream().
+            map(w ->
+            {
+                TotalTreeGraphData totalTreeGraphData = new TotalTreeGraphData();
+                totalTreeGraphData.setTime(w.getCaptureTime());
+                totalTreeGraphData.setTotalPDTreeOfPd(w.getTotalTreeLeftInEarning());
+                totalTreeGraphData.setTotalTreeOfUser(w.getTotalTreeLeftInWallet());
+                return totalTreeGraphData;
+            }).collect(Collectors.toList());
     }
 
-    public Object getHourlyTotalTreeGraph(LocalDate date) {
-        return null;
+    public List<TotalTreeGraphData> getHourlyTotalTreeGraph(LocalDate date) {
+        return walletHourlyCaptureRepository.getWalletHourlyCaptureByDate(date).stream().map(w -> {
+            TotalTreeGraphData totalTreeGraphData = new TotalTreeGraphData();
+            totalTreeGraphData.setTime(w.getCaptureTime());
+            totalTreeGraphData.setTotalPDTreeOfPd(w.getTotalTreeLeftInEarning());
+            totalTreeGraphData.setTotalTreeOfUser(w.getTotalTreeLeftInWallet());
+            return totalTreeGraphData;
+        }).collect(Collectors.toList());
     }
 }
