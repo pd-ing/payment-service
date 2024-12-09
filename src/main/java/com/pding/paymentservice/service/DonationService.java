@@ -8,23 +8,23 @@ import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
+import com.pding.paymentservice.models.report.*;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.response.DonationResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.net.PublicUserNet;
-import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.DonationHistoryForAdminDashboard;
 import com.pding.paymentservice.payload.response.donation.DonationHistoryResponse;
 import com.pding.paymentservice.payload.response.donation.DonationHistoryWithVideoStatsResponse;
-import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.repository.DonationRepository;
 
+import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.DateTimeUtil;
 import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.StringUtil;
 import com.pding.paymentservice.util.TokenSigner;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,18 +40,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.services.ssm.endpoints.internal.Value;
+import reactor.core.scheduler.Schedulers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -339,7 +342,7 @@ public class DonationService {
             }
         }
         try {
-            List<DonorData> donorDataList = getTopDonorsList(email, userId, startDate, endDate, response);
+            List<DonorData> donorDataList = getTopDonorsList(userId, startDate, endDate);
             if(donorDataList.isEmpty()){
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No donor data available for the given criteria.");
             }
@@ -349,7 +352,7 @@ public class DonationService {
         }
     }
 
-    private List<DonorData> getTopDonorsList(String email, String userId, LocalDate startDate, LocalDate endDate, HttpServletResponse response) throws Exception {
+    private List<DonorData> getTopDonorsList(String userId, LocalDate startDate, LocalDate endDate) throws Exception {
         if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
             throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
         }
@@ -357,17 +360,7 @@ public class DonationService {
             throw new IllegalArgumentException("Both start date and end date cannot be null at the same time");
         }
         endDate = endDate.plusDays(1L);
-        List<Object[]> donorUserObjects;
-        if (userId == null) {
-            if (email != null) {
-                String id = otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
-                donorUserObjects = donationRepository.findTopDonorUserByDateRanger(id, startDate, endDate);
-            } else {
-                throw new IllegalArgumentException("UserId null; cannot get video sales history.");
-            }
-        } else {
-            donorUserObjects = donationRepository.findTopDonorUserByDateRanger(userId, startDate, endDate);
-        }
+        List<Object[]> donorUserObjects = donationRepository.findTopDonorUserByDateRanger(userId, startDate, endDate);
 
         if (donorUserObjects.isEmpty()) {
             return Collections.emptyList();
@@ -421,6 +414,191 @@ public class DonationService {
 
             return donorData;
         }).collect(Collectors.toList());
+    }
+
+    public Mono<Void> generateTopDonorsReport(String userId, String email, LocalDate startDate, LocalDate endDate , Boolean isSendEmail, HttpServletResponse response) {
+        String reportId = UUID.randomUUID().toString();
+        Flux<GenerateReportEvent> reportGenerationEvents;
+        // Start generate report event
+        if (Boolean.FALSE.equals(isSendEmail)){
+            reportGenerationEvents = generateReportEventsDownload(reportId, email, userId, startDate, endDate, response);
+        }else{
+            reportGenerationEvents = generateReportEventsSendEmail(reportId, email, userId, startDate, endDate, response);
+        }
+        return reportGenerationEvents
+                .doOnNext(event -> {
+                    // handle event
+                    if (event instanceof ReportGenerationStartedEvent) {
+                        log.info("Report generation started: " + event.getReportId());
+                    } else if (event instanceof ReportGenerationInProgressEvent) {
+                        log.info("Report is in progress: " + event.getReportId());
+                    } else if (event instanceof ReportGenerationCompletedEvent) {
+                        log.info("Report generation completed: " + event.getReportId());
+                    } else if (event instanceof ReportGenerationFailedEvent) {
+                        log.error("Report generation failed: " + event.getReportId());
+                    }
+                })
+                .then();
+    }
+    private Flux<GenerateReportEvent> generateReportEventsDownload(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, HttpServletResponse response) {
+        return Flux.<GenerateReportEvent>create(emitter -> {
+                    try {
+                        // Step 1: Report Generation Started
+                        emitter.next(ReportGenerationStartedEvent.builder()
+                                .reportId(reportId)
+                                .reportType("Top Donors Report")
+                                .parameters(Map.of( "startDate", startDate, "endDate", endDate, "response" ,response))
+                                .timestamp(System.currentTimeMillis())
+                                .build());
+
+                        String userId;
+                        if (pdUserId == null) {
+                            if (email != null) {
+                                userId = otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
+                            } else {
+                                emitter.error(new IllegalArgumentException("UserId null; cannot get video sales history."));
+                                return;
+                            }
+                        }else{
+                            userId = pdUserId;
+                        }
+                        // Step 2: Query data from database report and find email, nickname
+                        List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
+                        String nickname = "";
+                        String getEmail = "";
+                        if (userInfo != null && !userInfo.isEmpty()) {
+                            for (Object user : userInfo) {
+                                Object[] dataUser = (Object[]) user;
+                                getEmail = dataUser != null ? dataUser[0].toString() : "";
+                                nickname = dataUser != null ? dataUser[1].toString() : "";
+                            }
+                        }
+
+                        List<DonorData> donorDataList =  getTopDonorsList(userId, startDate, endDate);
+                        if (donorDataList.isEmpty()) {
+                            emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No donor data available for the given criteria."));
+                            return;
+                        }
+
+                        // Step 2: Generating PDF
+                        ByteArrayOutputStream pdfContent = pdfService.generateTempFilePDFDonation(donorDataList, userId, nickname);
+
+                        if (pdfContent == null || pdfContent.size() == 0) {
+                            emitter.error(new IllegalStateException("Can't create PDF"));
+                            return;
+                        }
+
+                        // create pdf Bytes
+                        byte[] pdfBytes = pdfContent.toByteArray();
+
+                        // setting response for download
+                        response.setContentType("application/pdf");
+                        response.setHeader("Content-Disposition", "attachment; filename=top_donors_report.pdf");
+                        response.setContentLength(pdfBytes.length);
+
+                        // save PDF to response
+                        try (ServletOutputStream outputStream = response.getOutputStream()) {
+                            outputStream.write(pdfBytes);
+                            outputStream.flush();
+                        }
+
+                        // Step 3: Completing Export
+                        emitter.next(ReportGenerationCompletedEvent.builder()
+                                .reportId(reportId)
+                                .timestamp(System.currentTimeMillis())
+                                .downloadUrl("top_donors_report.pdf")
+                                .format("PDF")
+                                .fileSize(pdfBytes.length)
+                                .metadata(Map.of("contentType", "application/pdf"))
+                                .build());
+
+                        emitter.complete();
+
+                    } catch (Exception e) {
+                        log.error("Error generating report", e);
+                        emitter.next(ReportGenerationFailedEvent.builder()
+                                .reportId(reportId)
+                                .errorCode("GEN-001")
+                                .errorMessage(e.getMessage())
+                                .failureStep("PROCESSING")
+                                .timestamp(System.currentTimeMillis())
+                                .errorDetails(Map.of("exception", e.getClass().getName()))
+                                .build());
+
+                        emitter.error(e);
+                    }
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private Flux<GenerateReportEvent> generateReportEventsSendEmail(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, HttpServletResponse response) {
+        return Flux.<GenerateReportEvent>create(emitter -> {
+                    try {
+                        // Step 1: Report Generation Started
+                        emitter.next(ReportGenerationStartedEvent.builder()
+                                .reportId(reportId)
+                                .reportType("Top Donors Report")
+                                .parameters(Map.of( "startDate", startDate, "endDate", endDate, "response" ,response))
+                                .timestamp(System.currentTimeMillis())
+                                .build());
+
+                        String userId;
+                        String nickname = "";
+                        String getEmail = "";
+                        if (pdUserId == null) {
+                            if (email != null) {
+                                userId = otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
+
+                            } else {
+                                emitter.error(new IllegalArgumentException("UserId null; cannot get video sales history."));
+                                return;
+                            }
+                        }else{
+                            userId = pdUserId;
+                        }
+                        // Step 2: Query data from database report and find email, nickname
+                        List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
+
+                        if (userInfo != null && !userInfo.isEmpty()) {
+                            for (Object user : userInfo) {
+                                Object[] dataUser = (Object[]) user;
+                                getEmail = dataUser != null ? dataUser[0].toString() : "";
+                                nickname = dataUser != null ? dataUser[1].toString() : "";
+                            }
+                        }
+
+                        List<DonorData> donorDataList =  getTopDonorsList(userId, startDate, endDate);
+                        if (donorDataList.isEmpty()) {
+                            emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No donor data available for the given criteria."));
+                            return;
+                        }
+
+                        // Step 2: Generating PDF
+                       pdfService.generatePDFDonationSendEmail(donorDataList, userId, getEmail, nickname);
+
+                        // Step 3: Completing Export
+                        emitter.next(ReportGenerationCompletedEvent.builder()
+                                .reportId(reportId)
+                                .timestamp(System.currentTimeMillis())
+                                .metadata(Map.of("message", "Email sent successfully"))
+                                .build());
+                        emitter.complete();
+
+                    } catch (Exception e) {
+                        log.error("Error generating report", e);
+                        emitter.next(ReportGenerationFailedEvent.builder()
+                                .reportId(reportId)
+                                .errorCode("GEN-001")
+                                .errorMessage(e.getMessage())
+                                .failureStep("PROCESSING")
+                                .timestamp(System.currentTimeMillis())
+                                .errorDetails(Map.of("exception", e.getClass().getName()))
+                                .build());
+
+                        emitter.error(e);
+                    }
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
 }

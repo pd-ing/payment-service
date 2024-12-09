@@ -7,7 +7,12 @@ import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
+import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
+import com.pding.paymentservice.models.report.ReportGenerationCompletedEvent;
+import com.pding.paymentservice.models.report.ReportGenerationFailedEvent;
+import com.pding.paymentservice.models.report.ReportGenerationInProgressEvent;
+import com.pding.paymentservice.models.report.ReportGenerationStartedEvent;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.dto.VideoPurchaseLiteDTO;
@@ -35,10 +40,12 @@ import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
+import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.*;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -54,20 +61,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -723,6 +729,145 @@ public class VideoPurchaseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period.");
         }
         pdfService.generatePDFSellerHistory(httpServletResponse, salesHistoryData);
+    }
+
+    public Mono<Void> downloadMonoSaleHistoryOfUser(String userId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sort,
+                                                    Boolean isSendEmail ,HttpServletResponse httpServletResponse) throws Exception {
+        String reportId = UUID.randomUUID().toString();
+        Flux<GenerateReportEvent> reportGenerationEvents;
+        if (Boolean.FALSE.equals(isSendEmail)){
+            reportGenerationEvents = generateReportEventsDownload(reportId, email, userId, startDate, endDate, searchString, sort, httpServletResponse);
+        }else{
+            reportGenerationEvents = generateReportEventsSendEmail(reportId, email, userId, startDate, endDate, httpServletResponse);
+        }
+        return reportGenerationEvents
+                .doOnNext(event -> {
+                    // handle event
+                    if (event instanceof ReportGenerationStartedEvent) {
+                        log.info("Report generation started: " + event.getReportId());
+                    } else if (event instanceof ReportGenerationInProgressEvent) {
+                        log.info("Report is in progress: " + event.getReportId());
+                    } else if (event instanceof ReportGenerationCompletedEvent) {
+                        log.info("Report generation completed: " + event.getReportId());
+                    } else if (event instanceof ReportGenerationFailedEvent) {
+                        log.error("Report generation failed: " + event.getReportId());
+                    }
+                })
+                .then();
+    }
+
+    private Flux<GenerateReportEvent> generateReportEventsDownload(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate,String searchString, int sort, HttpServletResponse response) {
+        return Flux.<GenerateReportEvent>create(emitter -> {
+                    try {
+                        // Step 1: Report Generation Started
+                        emitter.next(ReportGenerationStartedEvent.builder()
+                                .reportId(reportId)
+                                .reportType("Top Sales Report")
+                                .parameters(Map.of( "startDate", startDate, "endDate", endDate, "response" ,response))
+                                .timestamp(System.currentTimeMillis())
+                                .build());
+
+                        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sort);
+                        if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
+                            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period.");
+                        }
+
+                        // Step 2: Generating PDF
+
+                        ByteArrayOutputStream pdfContent = pdfService.generateTempPDFSellerHistory(response, salesHistoryData);
+
+                        if (pdfContent == null || pdfContent.size() == 0) {
+                            emitter.error(new IllegalStateException("Can't create PDF"));
+                            return;
+                        }
+
+                        // create pdf Bytes
+                        byte[] pdfBytes = pdfContent.toByteArray();
+
+                        // setting response for download
+                        response.setContentType("application/pdf");
+                        response.setHeader("Content-Disposition", "attachment; filename=top_donors_report.pdf");
+                        response.setContentLength(pdfBytes.length);
+
+                        // save PDF to response
+                        try (ServletOutputStream outputStream = response.getOutputStream()) {
+                            outputStream.write(pdfBytes);
+                            outputStream.flush();
+                        }
+
+                        // Step 3: Completing Export
+                        emitter.next(ReportGenerationCompletedEvent.builder()
+                                .reportId(reportId)
+                                .timestamp(System.currentTimeMillis())
+                                .downloadUrl("top_donors_report.pdf")
+                                .format("PDF")
+                                .fileSize(pdfBytes.length)
+                                .metadata(Map.of("contentType", "application/pdf"))
+                                .build());
+
+                        emitter.complete();
+
+                    } catch (Exception e) {
+                        log.error("Error generating report", e);
+                        emitter.next(ReportGenerationFailedEvent.builder()
+                                .reportId(reportId)
+                                .errorCode("GEN-001")
+                                .errorMessage(e.getMessage())
+                                .failureStep("PROCESSING")
+                                .timestamp(System.currentTimeMillis())
+                                .errorDetails(Map.of("exception", e.getClass().getName()))
+                                .build());
+
+                        emitter.error(e);
+                    }
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private Flux<GenerateReportEvent> generateReportEventsSendEmail(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate,String searchString, int sort, HttpServletResponse response) {
+        return Flux.<GenerateReportEvent>create(emitter -> {
+                    try {
+                        // Step 1: Report Generation Started
+                        emitter.next(ReportGenerationStartedEvent.builder()
+                                .reportId(reportId)
+                                .reportType("Top Sales Report")
+                                .parameters(Map.of( "startDate", startDate, "endDate", endDate, "response" ,response))
+                                .timestamp(System.currentTimeMillis())
+                                .build());
+
+                        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sort);
+                        if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
+                            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period.");
+                        }
+
+                        // Step 2: Generating PDF
+
+                        pdfService.generatePDFSalesSendEmail(salesHistoryData);
+
+                        // Step 3: Completing Export
+                        emitter.next(ReportGenerationCompletedEvent.builder()
+                                .reportId(reportId)
+                                .timestamp(System.currentTimeMillis())
+                                .metadata(Map.of("message", "Email sent successfully"))
+                                .build());
+                        emitter.complete();
+
+
+                    } catch (Exception e) {
+                        log.error("Error generating report", e);
+                        emitter.next(ReportGenerationFailedEvent.builder()
+                                .reportId(reportId)
+                                .errorCode("GEN-001")
+                                .errorMessage(e.getMessage())
+                                .failureStep("PROCESSING")
+                                .timestamp(System.currentTimeMillis())
+                                .errorDetails(Map.of("exception", e.getClass().getName()))
+                                .build());
+
+                        emitter.error(e);
+                    }
+                }, FluxSink.OverflowStrategy.BUFFER)
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     private SalesHistoryData getAllSalesHistoryByDate(

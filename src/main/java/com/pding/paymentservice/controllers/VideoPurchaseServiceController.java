@@ -208,4 +208,38 @@ public class VideoPurchaseServiceController {
                 });
     }
 
+
+    @GetMapping(value = "/salesHistoryDownloadPDF")
+    public Mono<ResponseEntity<String>> salesHistoryDownload(
+            @RequestParam(required = false, value = "pdUserId") String pdUserId,
+            @RequestParam(required = false, value = "email") String email,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+            @RequestParam(value = "searchString", required = false) String searchString,
+            @RequestParam(required = false, value = "isSendEmail", defaultValue = "false") Boolean isSendEmail,
+            HttpServletResponse httpServletResponse
+    ) throws Exception {
+        return videoPurchaseService.downloadMonoSaleHistoryOfUser(pdUserId, email, searchString, startDate, endDate, sortOrder, isSendEmail, httpServletResponse)
+                .then(Mono.fromCallable(() -> ResponseEntity.accepted()
+                        .body("Export preparation is underway. You will be notified once the report is ready for download.")));
+
+//        return Mono.fromCallable(() -> {
+//                    videoPurchaseService.downloadSaleHistoryOfUser(pdUserId, email, searchString, startDate, endDate, sortOrder, httpServletResponse);
+//                    return "File generation started. You will receive an email when it's complete.";
+//                })
+//                .map(successMessage -> ResponseEntity.accepted()
+//                        .body("File generation started. You will receive an email when it's complete."))
+//                .onErrorResume(ResponseStatusException.class, ex -> {
+//                    String message = "Error: " + ex.getReason();
+//                    return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(message));
+//                })
+//                .onErrorResume(Exception.class, ex -> {
+//                    ex.printStackTrace();
+//                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                            .body("Failed to generate file: " + ex.getMessage()));
+//                });
+    }
+
+
 }

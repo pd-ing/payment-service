@@ -6,7 +6,6 @@ import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.InvalidUserException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
-import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.DonationResponse;
@@ -17,11 +16,8 @@ import com.pding.paymentservice.payload.response.generic.GenericListDataResponse
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.DonationService;
-import com.pding.paymentservice.service.EarningService;
 import com.pding.paymentservice.service.SendNotificationService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -231,6 +227,20 @@ public class DonationServiceController {
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body("Failed to generate file: " + ex.getMessage()));
                 });
+    }
+
+    @GetMapping(value = "/topDonorsListDownloadPDF")
+    public Mono<ResponseEntity<String>> topDonorsListDownloadPDF(
+            @RequestParam(required = false, value = "pdUserId") String pdUserId,
+            @RequestParam(required = false, value = "email") String email,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false, value = "isSendEmail", defaultValue = "false") Boolean isSendEmail,
+            HttpServletResponse response) {
+        // Call service to process export
+        return donationService.generateTopDonorsReport(pdUserId, email, startDate, endDate, isSendEmail, response)
+                .then(Mono.fromCallable(() -> ResponseEntity.accepted()
+                        .body("Export preparation is underway. You will be notified once the report is ready for download.")));
     }
 
 }
