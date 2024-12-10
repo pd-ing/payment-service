@@ -1,9 +1,11 @@
 package com.pding.paymentservice.service;
 
+import jakarta.activation.DataHandler;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -11,6 +13,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -74,6 +77,38 @@ public class EmailSenderService {
 
         javaMailSender.send(mimeMessage);
     }
+
+    public void sendEmailWithAttachmentBytes(String email, String subject, String body, String fileName, byte[] pdfBytes) throws MessagingException, IOException {
+
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+
+        String emailContent = getEmailContent();
+
+        String fromAddress = "no-reply@pd-ing.com";
+        String senderName = "PD-ING LLC";
+        helper.setFrom(fromAddress, senderName);
+        helper.setTo(email);
+        helper.setSubject(subject);
+        helper.setText(emailContent, true);
+
+        MimeMultipart multipart = new MimeMultipart("mixed");
+
+        MimeBodyPart textPart = new MimeBodyPart();
+        textPart.setContent(emailContent, "text/html");
+        multipart.addBodyPart(textPart);
+
+        ByteArrayDataSource dataSource = new ByteArrayDataSource(pdfBytes, "application/pdf");
+        MimeBodyPart attachmentPart = new MimeBodyPart();
+        attachmentPart.setDataHandler(new DataHandler(dataSource));
+        attachmentPart.setFileName(fileName); // Tên file đính kèm
+        multipart.addBodyPart(attachmentPart);
+
+        mimeMessage.setContent(multipart);
+
+        javaMailSender.send(mimeMessage);
+    }
+
 
     private String getEmailContent() {
         String tepmplate = """

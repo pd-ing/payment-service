@@ -1,5 +1,6 @@
 package com.pding.paymentservice.controllers;
 
+import com.google.common.net.HttpHeaders;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
@@ -14,6 +15,7 @@ import com.pding.paymentservice.payload.response.donation.DonationHistoryRespons
 import com.pding.paymentservice.payload.response.donation.DonationHistoryWithVideoStatsResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
+import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.SendNotificationService;
@@ -24,7 +26,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,11 +38,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -201,46 +209,43 @@ public class DonationServiceController {
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
     }
 
-    @GetMapping(value = "/topDonorsListDownload")
-    public Mono<ResponseEntity<String>> topDonorsListDownload(
+    @GetMapping(value = "/topDonorsListDownloadPreparing", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public Flux<ServerSentEvent<GenerateReportEvent>> topDonorsListDownloadPreparing(
             @RequestParam(required = false, value = "pdUserId") String pdUserId,
             @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-            HttpServletResponse response
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) {
-//        donationService.topDonorsListDownload(email, pdUserId, startDate, endDate, response);
-//        return Mono.just(ResponseEntity.accepted()
-//                .body("File generation started. You will receive an email when it's complete."));
-        return Mono.fromCallable(() -> {
-                    donationService.topDonorsListDownload(email, pdUserId, startDate, endDate, response);
-                    return "File generation started. Check your downloads or email.";
-                })
-                .map(successMessage -> ResponseEntity.accepted()
-                .body("File generation started. You will receive an email when it's complete."))
-                .onErrorResume(ResponseStatusException.class, ex -> {
-                    String message = "Error: " + ex.getReason();
-                    return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(message));
-                })
-                .onErrorResume(Exception.class, ex -> {
-                    ex.printStackTrace();
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body("Failed to generate file: " + ex.getMessage()));
-                });
+        // Call service to process export
+        return donationService.topDonorsListDownloadPreparing(pdUserId, email, startDate, endDate)
+                .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
+                        .id(event.getReportId())
+                        .event(event.getEventType())
+                        .data(event)
+                        .build())
+                .doOnNext(sse -> pdLogger.logInfo("Emitting SSE: {}", sse.event()))
+                .doOnError(error -> pdLogger.logInfo("Error in report generation", error.toString()));
     }
 
-    @GetMapping(value = "/topDonorsListDownloadPDF")
-    public Mono<ResponseEntity<String>> topDonorsListDownloadPDF(
-            @RequestParam(required = false, value = "pdUserId") String pdUserId,
-            @RequestParam(required = false, value = "email") String email,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+    @GetMapping(value = "/topDonorsListDownload", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, String>> topDonorsListDownload(
+            @RequestParam String reportId,
             @RequestParam(required = false, value = "isSendEmail", defaultValue = "false") Boolean isSendEmail,
-            HttpServletResponse response) {
-        // Call service to process export
-        return donationService.generateTopDonorsReport(pdUserId, email, startDate, endDate, isSendEmail, response)
-                .then(Mono.fromCallable(() -> ResponseEntity.accepted()
-                        .body("Export preparation is underway. You will be notified once the report is ready for download.")));
+            HttpServletResponse httpServletResponse
+            ){
+        try {
+            return donationService.topDonorsListDownload(reportId,isSendEmail,httpServletResponse);
+        } catch (ResponseStatusException e) {
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", e.getReason());
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(responseMap);
+        } catch (Exception e) {
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(responseMap);
+        }
     }
 
 }

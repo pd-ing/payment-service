@@ -15,8 +15,8 @@ import java.util.Map;
 public class ReportGenerationCompletedEvent implements GenerateReportEvent {
     private String reportId;
     private long timestamp;
-    private String downloadUrl;
-    private String format;
+    private String reportTitle;
+    private String message;
     private long fileSize;
     private Map<String, Object> metadata;
     @Override

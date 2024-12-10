@@ -285,4 +285,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
 
     @Query(value = "SELECT u.email, u.nickname FROM users u WHERE u.id = :userId", nativeQuery = true)
     List<Object[]> findEmailAndNicknameByUserId(@Param("userId") String userId);
+
+    @Query(value = "SELECT email FROM users WHERE id = :userId", nativeQuery = true)
+    Optional<String> findEmailByUserId(@Param("userId") String userId);
 }
