@@ -833,19 +833,43 @@ public class VideoPurchaseService {
                 // Determine the user ID
                 String userId = pdUserId != null ? pdUserId : otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
                 if (userId == null) {
-                    emitter.error(new IllegalArgumentException("User ID or email must be provided."));
+                    emitter.next(ReportGenerationFailedEvent.builder()
+                            .reportId(reportId)
+                            .errorCode("ERROR-001")
+                            .errorMessage("User ID or email must be provided.")
+                            .failureStep("INITIALIZATION")
+                            .timestamp(System.currentTimeMillis())
+                            .build());
+                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User ID or email must be provided."));
                     return;
                 }
 
                 SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sortOrder);
                 if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
+                    emitter.next(ReportGenerationFailedEvent.builder()
+                            .reportId(reportId)
+                            .errorCode("ERROR-002")
+                            .errorMessage("No sales history data available for the selected period.")
+                            .failureStep("INITIALIZATION")
+                            .timestamp(System.currentTimeMillis())
+                            .build());
                     emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period."));
                     return;
                 }
+
+
                 ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
                 try {
                     pdfService.cachePdfContent(reportId,pdfContent.toByteArray());
                 } catch (IOException e) {
+                    emitter.next(ReportGenerationFailedEvent.builder()
+                            .reportId(reportId)
+                            .errorCode("ERROR-003")
+                            .errorMessage(e.getMessage())
+                            .failureStep("INITIALIZATION")
+                            .errorDetails(Map.of("exception", e.getClass().getName()))
+                            .timestamp(System.currentTimeMillis())
+                            .build());
                     emitter.error(new RuntimeException(e));
                     return;
                 }
