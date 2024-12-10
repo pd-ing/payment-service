@@ -35,7 +35,8 @@ public class PDFService {
 
     @Value("${app.temp.dir:${java.io.tmpdir}}")
     private String tempDirPath;
-    public ByteArrayOutputStream generateTempFilePDFDonation(List<DonorData> donorDataList, String userId, String nickname) throws IOException {
+
+    public ByteArrayOutputStream generateFilePDFDonation(List<DonorData> donorDataList, String userId, String nickname) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try {
@@ -52,18 +53,8 @@ public class PDFService {
         return byteArrayOutputStream;
     }
 
-    private void downloadFilePDF(HttpServletResponse response, File tempFile) throws IOException {
-        try (InputStream inputStream = new FileInputStream(tempFile); OutputStream outputStream = response.getOutputStream()) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
 
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-        }
-    }
-
-    public ByteArrayOutputStream generateTempPDFSellerHistory( SalesHistoryData salesHistoryData) {
+    public ByteArrayOutputStream generatePDFSellerHistory(SalesHistoryData salesHistoryData) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try {
@@ -80,51 +71,25 @@ public class PDFService {
         return byteArrayOutputStream;
     }
 
-    public void generatePDFSellerHistory(HttpServletResponse httpServletResponse, SalesHistoryData salesHistoryData) throws IOException, MessagingException {
-
-        File tempFile = File.createTempFile("sales_report_", ".pdf");
-        tempFile.deleteOnExit();
-
-        try (OutputStream outputStream = new FileOutputStream(tempFile)) {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-            String headerHtml = generateSellerHtml(salesHistoryData);
-            ITextRenderer renderer = new ITextRenderer();
-            renderer.setDocumentFromString(headerHtml);
-            renderer.layout();
-            renderer.createPDF(byteArrayOutputStream);
-            byteArrayOutputStream.writeTo(outputStream);
-        } catch (DocumentException e) {
-            throw new RuntimeException(e);
-        }
-
-        emailSenderService.sendEmailWithAttachment(salesHistoryData.getEmail(), "Your Requested PDF Report is Ready for Download", "PDF Report", tempFile);
-
-        httpServletResponse.setContentType("application/pdf");
-        httpServletResponse.setHeader("Content-Disposition", "attachment; filename=sales_report.pdf");
-        downloadFilePDF(httpServletResponse, tempFile);
-
-    }
-
     private String generateSponsorHtml(List<DonorData> donorDataList, String userId, String nickname) {
         Context context = new Context();
         context.setVariable("donorDataList", donorDataList);
         context.setVariable("userId", userId);
         context.setVariable("nickname", nickname);
-        context.setVariable("issueDate",DateTimeUtil.getCurrentTimeNow());
+        context.setVariable("issueDate", DateTimeUtil.getCurrentTimeNow());
         return templateEngine.process("pdf-sponsor", context);
     }
 
     private String generateSellerHtml(SalesHistoryData salesHistoryData) {
         Context context = new Context();
         context.setVariable("salesHistoryData", salesHistoryData);
-        context.setVariable("issueDate",DateTimeUtil.getCurrentTimeNow());
+        context.setVariable("issueDate", DateTimeUtil.getCurrentTimeNow());
         return templateEngine.process("pdf-seller-history", context);
     }
 
     public void cachePdfContent(String reportId, byte[] pdfBytes) throws IOException {
 
-        File tempFile = new File(tempDirPath, FILE_PREFIX+ reportId + ".pdf");
+        File tempFile = new File(tempDirPath, FILE_PREFIX + reportId + ".pdf");
         long fileSize = tempFile.length();
         checkAndClearTmpDir(fileSize);
         File dir = new File(tempDirPath);
@@ -198,7 +163,7 @@ public class PDFService {
         return size;
     }
 
-    private void freeUpSpace(File dir, long spaceToFree){
+    private void freeUpSpace(File dir, long spaceToFree) {
         // List all files and directories in the specified directory
         File[] files = dir.listFiles();
         if (files != null) {

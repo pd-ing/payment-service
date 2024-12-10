@@ -728,14 +728,6 @@ public class VideoPurchaseService {
                 });
     }
 
-    public void downloadSaleHistoryOfUser(String userId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sort,
-                                          HttpServletResponse httpServletResponse) throws Exception {
-        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(userId, email, searchString, startDate, endDate, sort);
-        if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period.");
-        }
-        pdfService.generatePDFSellerHistory(httpServletResponse, salesHistoryData);
-    }
 
     private SalesHistoryData getAllSalesHistoryByDate(
             String userId,
@@ -850,7 +842,7 @@ public class VideoPurchaseService {
                     emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period."));
                     return;
                 }
-                ByteArrayOutputStream pdfContent = pdfService.generateTempPDFSellerHistory(salesHistoryData);
+                ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
                 try {
                     pdfService.cachePdfContent(reportId,pdfContent.toByteArray());
                 } catch (IOException e) {

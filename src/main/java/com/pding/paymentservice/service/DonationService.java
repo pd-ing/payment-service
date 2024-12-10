@@ -386,7 +386,7 @@ public class DonationService {
 
                             // Step 3: Generate PDF
                             return Mono.fromCallable(() -> {
-                                ByteArrayOutputStream pdfContent = pdfService.generateTempFilePDFDonation(donorDataList, userId, nickname);
+                                ByteArrayOutputStream pdfContent = pdfService.generateFilePDFDonation(donorDataList, userId, nickname);
                                 if (pdfContent == null || pdfContent.size() == 0) {
                                     throw new IllegalStateException("Failed to generate PDF content.");
                                 }
