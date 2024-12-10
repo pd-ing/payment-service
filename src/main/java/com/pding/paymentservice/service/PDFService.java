@@ -29,9 +29,7 @@ public class PDFService {
     @Autowired
     EmailSenderService emailSenderService;
 
-    private static final long MAX_DIR_SIZE = 100 * 1024 * 1024; // 100MB
-    private static final long REQUIRED_FREE_SPACE = 20 * 1024 * 1024; // 20MB
-
+    private static final long MAX_DIR_SIZE = 200 * 1024 * 1024; // 200MB
     private static final String FILE_PREFIX = "pding_report_";
     private static final String FILE_SUFFIX = ".pdf";
 
@@ -125,9 +123,10 @@ public class PDFService {
     }
 
     public void cachePdfContent(String reportId, byte[] pdfBytes) throws IOException {
-        checkAndClearTmpDir(REQUIRED_FREE_SPACE);
 
         File tempFile = new File(tempDirPath, FILE_PREFIX+ reportId + ".pdf");
+        long fileSize = tempFile.length();
+        checkAndClearTmpDir(fileSize);
         File dir = new File(tempDirPath);
         // Check if the directory exists, create it if it doesn't
         if (!dir.exists()) {
@@ -208,20 +207,15 @@ public class PDFService {
 
             for (File file : files) {
                 // Check if the file starts with "report_" and ends with ".pdf"
-                if (file.getName().startsWith(FILE_PREFIX) || file.getName().startsWith("report_") && file.getName().endsWith(FILE_SUFFIX)) {
+                if (file.getName().startsWith(FILE_PREFIX) && file.getName().endsWith(FILE_SUFFIX)) {
                     // Try to delete the file
                     if (file.delete()) {
                         // Reduce the required free space by the size of the deleted file
                         spaceToFree -= file.length();
-                        System.out.println("Deleted file: " + file.getName());
-
                         // If enough space has been freed, exit the loop
                         if (spaceToFree <= 0) {
                             break;
                         }
-                    } else {
-                        // Log the failure to delete the file
-                        System.out.println("Failed to delete file: " + file.getName());
                     }
                 }
             }
