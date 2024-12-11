@@ -1,18 +1,24 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
+import com.pding.paymentservice.payload.response.SalesHistoryData;
+import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,10 +28,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -36,7 +47,8 @@ public class VideoPurchaseServiceController {
     AuthHelper authHelper;
     @Autowired
     VideoPurchaseService videoPurchaseService;
-
+    @Autowired
+    PdLogger pdLogger;
 //    @PostMapping(value = "/buyVideo")
 //    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
 //        return videoPurchaseService.buyVideo(authHelper.getUserId(), videoId, trees, videoOwnerUserId);
@@ -175,6 +187,47 @@ public class VideoPurchaseServiceController {
     public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
         String paramName = ex.getParameterName();
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
+    }
+
+    @GetMapping(value = "/salesHistoryDownloadPreparing")
+    public Flux<ServerSentEvent<GenerateReportEvent>> salesHistoryDownloadPreparing(
+            @RequestParam(required = false, value = "pdUserId") String pdUserId,
+            @RequestParam(required = false, value = "email") String email,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+            @RequestParam(value = "searchString", required = false) String searchString
+    ){
+        // Call service to process export
+        return videoPurchaseService.salesHistoryDownloadPreparing(pdUserId, email, searchString, startDate, endDate, sortOrder)
+                .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
+                        .id(event.getReportId())
+                        .event(event.getEventType())
+                        .data(event)
+                        .build())
+                .doOnNext(sse -> pdLogger.logInfo("Emitting SSE: {}", sse.event()))
+                .doOnError(error -> pdLogger.logInfo("Error in report generation", error.toString()));
+    }
+
+    @GetMapping(value = "/salesHistoryDownload", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, String>> salesHistoryDownload(
+            @RequestParam String reportId,
+            @RequestParam(required = false, value = "isSendEmail", defaultValue = "false") Boolean isSendEmail,
+            HttpServletResponse httpServletResponse
+    ){
+        try {
+            return videoPurchaseService.salesHistoryDownloadPDF(reportId,isSendEmail,httpServletResponse);
+        } catch (ResponseStatusException e) {
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", e.getReason());
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(responseMap);
+        } catch (Exception e) {
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(responseMap);
+        }
     }
 
 }

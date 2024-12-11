@@ -1,12 +1,12 @@
 package com.pding.paymentservice.controllers;
 
+import com.google.common.net.HttpHeaders;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.InvalidUserException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.Donation;
-import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.DonationResponse;
@@ -15,17 +15,20 @@ import com.pding.paymentservice.payload.response.donation.DonationHistoryRespons
 import com.pding.paymentservice.payload.response.donation.DonationHistoryWithVideoStatsResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
+import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.DonationService;
-import com.pding.paymentservice.service.EarningService;
 import com.pding.paymentservice.service.SendNotificationService;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,9 +37,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -198,4 +208,44 @@ public class DonationServiceController {
         String paramName = ex.getParameterName();
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
     }
+
+    @GetMapping(value = "/topDonorsListDownloadPreparing", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public Flux<ServerSentEvent<GenerateReportEvent>> topDonorsListDownloadPreparing(
+            @RequestParam(required = false, value = "pdUserId") String pdUserId,
+            @RequestParam(required = false, value = "email") String email,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+    ) {
+        // Call service to process export
+        return donationService.topDonorsListDownloadPreparing(pdUserId, email, startDate, endDate)
+                .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
+                        .id(event.getReportId())
+                        .event(event.getEventType())
+                        .data(event)
+                        .build())
+                .doOnNext(sse -> pdLogger.logInfo("Emitting SSE: {}", sse.event()))
+                .doOnError(error -> pdLogger.logInfo("Error in report generation", error.toString()));
+    }
+
+    @GetMapping(value = "/topDonorsListDownload", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, String>> topDonorsListDownload(
+            @RequestParam String reportId,
+            @RequestParam(required = false, value = "isSendEmail", defaultValue = "false") Boolean isSendEmail,
+            HttpServletResponse httpServletResponse
+            ){
+        try {
+            return donationService.topDonorsListDownload(reportId,isSendEmail,httpServletResponse);
+        } catch (ResponseStatusException e) {
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", e.getReason());
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(responseMap);
+        } catch (Exception e) {
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(responseMap);
+        }
+    }
+
 }
