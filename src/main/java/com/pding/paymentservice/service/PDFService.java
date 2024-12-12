@@ -88,7 +88,7 @@ public class PDFService {
     }
 
     public void cachePdfContent(String reportId, byte[] pdfBytes) throws IOException {
-
+        validateReportId(reportId);
         File tempFile = new File(tempDirPath, FILE_PREFIX + reportId + ".pdf");
         long fileSize = tempFile.length();
         checkAndClearTmpDir(fileSize);
@@ -110,6 +110,7 @@ public class PDFService {
     }
 
     public byte[] getPDF(String reportId) throws IOException {
+        validateReportId(reportId);
         File file = new File(tempDirPath, FILE_PREFIX + reportId + ".pdf");
         if (!file.exists()) {
             throw new IOException("PDF not found for reportId: " + reportId);
@@ -118,6 +119,7 @@ public class PDFService {
     }
 
     public void deletePDF(String reportId) {
+        validateReportId(reportId);
         File file = new File(tempDirPath, FILE_PREFIX + reportId + ".pdf");
         if (file.exists()) {
             file.delete();
@@ -184,6 +186,12 @@ public class PDFService {
                     }
                 }
             }
+        }
+    }
+
+    private void validateReportId(String reportId) {
+        if (reportId.contains("..") || reportId.contains("/") || reportId.contains("\\")) {
+            throw new IllegalArgumentException("Invalid reportId");
         }
     }
 
