@@ -6,28 +6,42 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class AuthHelper implements FirebaseDataInfo{
 
     public String getUserId() {
-        Authentication authentication =  SecurityContextHolder.getContext().getAuthentication();
-        Object principal = authentication.getPrincipal();
-        if(principal instanceof PdingSecurityHolder holder){
-            return holder.getUid();
-        }else{
-            return null;
-        }
+        return getSecurityHolder()
+                .map(PdingSecurityHolder::getUid)
+                .orElseThrow();
     }
     public String getIdToken() throws Exception {
         return getLoggedInFirebaseUser().idToken;
     }
     @Override
-    public String getUserEmail() throws Exception {
-        return getLoggedInFirebaseUser().getEmail();
+    public String getUserEmail() {
+        return getSecurityHolder()
+                .flatMap(holder -> {
+                    if (holder.getEmail() != null) {
+                        return Optional.of(holder.getEmail());
+                    } else {
+                        return getLoggedInFirebaseUserOptional().map(LoggedInUserRecord::getEmail);
+                    }
+                })
+                .orElseThrow();
     }
     @Override
     public Boolean isEmailVerified() throws Exception {
-        return getLoggedInFirebaseUser().getEmailVerified();
+        return getSecurityHolder()
+                .flatMap(holder -> {
+                    if (holder.getEmailVerified() != null) {
+                        return Optional.of(holder.getEmailVerified());
+                    } else {
+                        return getLoggedInFirebaseUserOptional().map(LoggedInUserRecord::getEmailVerified);
+                    }
+                })
+                .orElseThrow();
     }
 
     public LoggedInUserRecord getLoggedInFirebaseUser() throws Exception {
@@ -49,6 +63,24 @@ public class AuthHelper implements FirebaseDataInfo{
         }
 
         throw new Exception("Login again.");
+    }
+
+    public Optional<LoggedInUserRecord> getLoggedInFirebaseUserOptional() {
+        try {
+            LoggedInUserRecord userRecord = getLoggedInFirebaseUser();
+            return Optional.of(userRecord);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<PdingSecurityHolder> getSecurityHolder() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof PdingSecurityHolder) {
+            return Optional.of((PdingSecurityHolder) principal);
+        } else {
+            return Optional.empty();
+        }
     }
 
 }
