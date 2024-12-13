@@ -1,31 +1,37 @@
 package com.pding.paymentservice.controllers;
 
-import com.google.api.services.androidpublisher.model.InAppProduct;
-import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.pding.paymentservice.PdLogger;
-import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.payload.request.AddLeafsRequest;
 import com.pding.paymentservice.payload.request.AddOrRemoveTreesRequest;
-import com.pding.paymentservice.payload.request.BuyLeafsRequest;
 import com.pding.paymentservice.payload.request.ReferralCommissionRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.TreeSummary;
+import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.admin.TreeSummaryGridResult;
-import com.pding.paymentservice.payload.response.admin.userTabs.*;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.GiftHistoryForPd;
+import com.pding.paymentservice.payload.response.admin.userTabs.PaymentHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.RealTimeLeafTransactionHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.RealTimeTreeTransactionHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.Status;
+import com.pding.paymentservice.payload.response.admin.userTabs.StatusForPd;
+import com.pding.paymentservice.payload.response.admin.userTabs.TotalLeavesUsageSummary;
+import com.pding.paymentservice.payload.response.admin.userTabs.TotalTreeUsageSummary;
+import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistory;
+import com.pding.paymentservice.payload.response.admin.userTabs.ViewingHistoryForPd;
+import com.pding.paymentservice.payload.response.admin.userTabs.WithdrawHistoryForPd;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferralCommissionHistory;
 import com.pding.paymentservice.payload.response.admin.userTabs.entitesForAdminDasboard.ReferredPdDetails;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
-import com.pding.paymentservice.payload.response.admin.AdminDashboardUserPaymentStats;
 import com.pding.paymentservice.payload.response.referralTab.ReferredPDDetailsRecord;
-import com.pding.paymentservice.payload.response.referralTab.ReferredPDWithdrawalRecord;
 import com.pding.paymentservice.payload.response.referralTab.ReferrerPDDetailsRecord;
 import com.pding.paymentservice.service.AdminDashboard.AdminDashboardUserPaymentStatsService;
 import com.pding.paymentservice.util.LogSanitizer;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +50,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -62,15 +65,15 @@ public class AdminDashboardUserPaymentStatsController {
 
     @PostMapping(value = "/addTrees")
     public ResponseEntity<?> addTreesFromBackend(@Valid @RequestBody AddOrRemoveTreesRequest addOrRemoveTreesRequest) {
-        try {
-            if (addOrRemoveTreesRequest.getTrees().compareTo(BigDecimal.ZERO) < 0) {
-                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
-            }
-            String strResponse = adminDashboardUserPaymentStatsService.addTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
-            return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericStringResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
+//        try {
+//            if (addOrRemoveTreesRequest.getTrees().compareTo(BigDecimal.ZERO) < 0) {
+//                return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "trees parameter should have a positive value"));
+//            }
+//            String strResponse = adminDashboardUserPaymentStatsService.addTreesFromBackend(addOrRemoveTreesRequest.getUserId(), addOrRemoveTreesRequest.getTrees());
+//            return ResponseEntity.ok().body(new GenericStringResponse(null, strResponse));
+//        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericStringResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "This function is removed"), null));
+//        }
     }
 
     @PostMapping(value = "/removeTrees")
