@@ -91,19 +91,23 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         try {
             String userId;
-
+            String email = null;
+            Boolean emailVerified = null;
             if (serverToken != null && !serverToken.isEmpty()) {
                 userId = getUidFromServerToken(serverToken);
             } else if (idToken != null && !idToken.isEmpty()) {
                 FirebaseToken firebaseToken = FirebaseAuth.getInstance().verifyIdToken(idToken, false);
                 userId = firebaseToken.getUid();
+                email = firebaseToken.getEmail();
+                emailVerified = firebaseToken.isEmailVerified();
             } else {
                 userId = null;
             }
 
             PdingSecurityHolder holder = PdingSecurityHolder.builder()
-                    .token(idToken)
                     .uid(userId)
+                    .email(email)
+                    .emailVerified(emailVerified)
                     .request(request)
                     .build();
 
@@ -136,7 +140,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7, headerAuth.length());
+            return headerAuth.substring(7);
         }
         return null;
     }
@@ -144,7 +148,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private String parseServerToken(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("BearerServer ")) {
-            return headerAuth.substring(13, headerAuth.length());
+            return headerAuth.substring(13);
         }
         return null;
     }
