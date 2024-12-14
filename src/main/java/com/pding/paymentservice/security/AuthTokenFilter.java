@@ -3,11 +3,7 @@ package com.pding.paymentservice.security;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserInfo;
-import com.google.firebase.auth.UserRecord;
 import com.pding.paymentservice.security.jwt.JwtUtils;
-import io.sentry.Sentry;
-import io.sentry.protocol.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,16 +19,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
-
-//    @Autowired
-//    PdLogger pdLogger;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -92,8 +82,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String idToken = parseJwt(request);
         String serverToken = parseServerToken(request);
 
-        setSentryScope(request, idToken, serverToken);
-
         // for CORS error
         if (request.getMethod().equals(HttpMethod.OPTIONS.toString())) {
             SecurityContextHolder.getContext().setAuthentication(null);
@@ -103,25 +91,29 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         try {
             String userId;
-
+            String email = null;
+            Boolean emailVerified = null;
             if (serverToken != null && !serverToken.isEmpty()) {
                 userId = getUidFromServerToken(serverToken);
             } else if (idToken != null && !idToken.isEmpty()) {
-                FirebaseToken firebaseToken = FirebaseAuth.getInstance().verifyIdToken(idToken, true);
+                FirebaseToken firebaseToken = FirebaseAuth.getInstance().verifyIdToken(idToken, false);
                 userId = firebaseToken.getUid();
+                email = firebaseToken.getEmail();
+                emailVerified = firebaseToken.isEmailVerified();
             } else {
                 userId = null;
             }
 
-            UserRecord userRecord = FirebaseAuth.getInstance().getUser(userId);
-            setSentryUserScope(userRecord);
-
-            LoggedInUserRecord loggedInUserRecord = LoggedInUserRecord.fromUserRecord(userRecord, request);
-            loggedInUserRecord.setIdToken(idToken);
+            PdingSecurityHolder holder = PdingSecurityHolder.builder()
+                    .uid(userId)
+                    .email(email)
+                    .emailVerified(emailVerified)
+                    .request(request)
+                    .build();
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            loggedInUserRecord,
+                            holder,
                             null,
                             null
                     );
@@ -145,42 +137,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         return jwtUtils.getUserIdFromToken(serverToken);
     }
 
-    private void setSentryScope(HttpServletRequest request, String idToken, String serverToken) {
-        Sentry.configureScope(scope -> {
-            scope.setExtra("httpApiEndpoint", request.getRequestURI());
-            scope.setExtra("httpMethod", request.getMethod());
-            scope.setExtra("httpRemoteAddr", request.getRemoteAddr());
-            scope.setExtra("httpUserAgent", request.getHeader("User-Agent"));
-            scope.setExtra("httpQueryString", request.getQueryString());
-            scope.setExtra("httpRequestParameters", extractRequestParameters(request));
-            scope.setExtra("isIdTokenPresent", idToken == null || idToken.isEmpty() ? "false" : "true");
-            scope.setExtra("isFromInternalServer", serverToken == null || serverToken.isEmpty() ? "false" : "true");
-            scope.setExtra("platform", request.getHeader("PDing-Platform"));
-            scope.setExtra("clientVersion", request.getHeader("PDing-ClientVersion"));
-        });
-    }
-
-    private void setSentryUserScope(UserRecord record) {
-        User user = new User();
-        user.setEmail(record.getEmail());
-        user.setId(record.getUid());
-
-        Map<String, String> data = new HashMap<>();
-        data.put("providers", Arrays.stream(record.getProviderData())
-                .map(UserInfo::getProviderId)
-                .collect(Collectors.joining(",")));
-        user.setData(data);
-
-        Sentry.configureScope(scope -> {
-            scope.setExtra("isIdTokenValid", "true");
-            scope.setUser(user);
-        });
-    }
-
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7, headerAuth.length());
+            return headerAuth.substring(7);
         }
         return null;
     }
@@ -188,34 +148,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private String parseServerToken(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("BearerServer ")) {
-            return headerAuth.substring(13, headerAuth.length());
+            return headerAuth.substring(13);
         }
         return null;
-    }
-
-    private static String extractRequestParameters(HttpServletRequest request) {
-        StringBuilder formattedParameters = new StringBuilder();
-
-        Map<String, String[]> parameterMap = request.getParameterMap();
-
-        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-            String paramName = entry.getKey();
-            String[] paramValues = entry.getValue();
-
-            for (String paramValue : paramValues) {
-                formattedParameters.append(paramName)
-                        .append("=")
-                        .append(paramValue)
-                        .append(", ");
-            }
-        }
-
-        // Remove the trailing comma and space
-        if (formattedParameters.length() > 0) {
-            formattedParameters.setLength(formattedParameters.length() - 2);
-        }
-
-        return formattedParameters.toString();
     }
 
 }
