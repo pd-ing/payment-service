@@ -106,6 +106,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
             PdingSecurityHolder holder = PdingSecurityHolder.builder()
                     .uid(userId)
+                    .idToken(idToken)
                     .email(email)
                     .emailVerified(emailVerified)
                     .request(request)

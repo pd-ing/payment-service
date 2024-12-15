@@ -17,7 +17,15 @@ public class AuthHelper implements FirebaseDataInfo{
                 .orElseThrow();
     }
     public String getIdToken() throws Exception {
-        return getLoggedInFirebaseUser().idToken;
+        return getSecurityHolder()
+                .flatMap(holder -> {
+                    if (holder.getEmail() != null) {
+                        return Optional.of(holder.getIdToken());
+                    } else {
+                        return getLoggedInFirebaseUserOptional().map(LoggedInUserRecord::getIdToken);
+                    }
+                })
+                .orElseThrow();
     }
     @Override
     public String getUserEmail() {
