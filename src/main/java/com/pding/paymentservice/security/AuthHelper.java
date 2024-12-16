@@ -17,7 +17,9 @@ public class AuthHelper implements FirebaseDataInfo{
                 .orElseThrow();
     }
     public String getIdToken() throws Exception {
-        return getLoggedInFirebaseUser().idToken;
+        return getSecurityHolder()
+                .map(PdingSecurityHolder::getIdToken)
+                .orElseThrow();
     }
     @Override
     public String getUserEmail() {
