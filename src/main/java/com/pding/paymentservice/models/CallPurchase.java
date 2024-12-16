@@ -32,6 +32,7 @@ public class CallPurchase {
     String pdUserId;
 
     BigDecimal leafsTransacted;
+    BigDecimal treesTransacted;
 
     @Enumerated(EnumType.STRING)
     TransactionType callType; // Audio or Video
@@ -42,10 +43,11 @@ public class CallPurchase {
 
     private LocalDateTime lastUpdateDate;
 
-    public CallPurchase(String userId, String pdUserId, BigDecimal leafsTransacted, TransactionType callType, String callId, String giftId) {
+    public CallPurchase(String userId, String pdUserId, BigDecimal leafsTransacted, BigDecimal treesTransacted, TransactionType callType, String callId, String giftId) {
         this.userId = userId;
         this.pdUserId = pdUserId;
         this.leafsTransacted = leafsTransacted;
+        this.treesTransacted = treesTransacted;
         this.callType = callType;
         this.lastUpdateDate = LocalDateTime.now();
         this.callId = callId;

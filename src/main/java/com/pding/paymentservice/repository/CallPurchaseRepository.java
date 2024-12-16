@@ -38,7 +38,7 @@ public interface CallPurchaseRepository extends JpaRepository<CallPurchase, Stri
             "LIMIT :limit")
     List<Object[]> findTopCallerUsers(@Param("userId") String userId, @Param("limit") Long limit);
 
-    @Query("SELECT cp.userId, cp.pdUserId, SUM(cp.leafsTransacted) " +
+    @Query("SELECT cp.userId, cp.pdUserId, SUM(cp.leafsTransacted), SUM(cp.treesTransacted) " +
             "FROM CallPurchase cp " +
             "WHERE cp.callId = :callId " +
             "GROUP BY cp.userId, cp.pdUserId")

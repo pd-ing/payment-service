@@ -11,6 +11,7 @@ import lombok.Data;
 @AllArgsConstructor
 class PdingSecurityHolder {
     private String uid;
+    private String idToken;
     private String email;
     private Boolean emailVerified;
     private UserRecord userRecord;
