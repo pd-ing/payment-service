@@ -62,6 +62,14 @@ spec:
 #            limits:
 #              memory: "4Gi"
 #              cpu: "1000m"
+          volumeMounts:
+            - mountPath: /var/logs/pding/
+              name: log-volume
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /var/logs/pding/payment-service/
+            type: DirectoryOrCreate
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
