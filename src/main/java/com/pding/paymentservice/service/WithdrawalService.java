@@ -77,13 +77,17 @@ public class WithdrawalService {
 
     @Transactional
     public Withdrawal startWithdrawal(String pdUserId, BigDecimal trees, BigDecimal leafs) throws Exception {
-        if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
-            throw new Exception("Withdrawal requests can only be made on Mondays.");
+//        if (LocalDateTime.now().getDayOfWeek() != DayOfWeek.MONDAY) {
+//            throw new Exception("Withdrawal requests can only be made on Mondays.");
+//        }
+
+        if(!userServiceNetworkManager.isExchangeAllowedWithW8BenDocument().block()) {
+            throw new IllegalArgumentException("Please complete the W8Ben form before making a withdrawal request.");
         }
 
         List<Withdrawal> withdrawalList = withdrawalRepository.findByPdUserIdAndStatus(pdUserId, WithdrawalStatus.PENDING);
         if (!withdrawalList.isEmpty()) {
-            throw new Exception("You already have an ongoing withdrawal request.");
+            throw new IllegalArgumentException("You already have an ongoing withdrawal request.");
         }
 
         earningService.deductTreesAndLeafs(pdUserId, trees, leafs);
