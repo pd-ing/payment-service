@@ -4,12 +4,15 @@ import com.pding.paymentservice.payload.net.GetUserWithStripeIdResponseNet;
 import com.pding.paymentservice.payload.net.GetUsersResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.PublicUserWithStripeIdNet;
+import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.security.jwt.JwtUtils;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -26,9 +29,17 @@ public class UserServiceNetworkManager {
     @Value("${service.user.host}")
     private String userService;
 
+    @Value("${service.backend.host}")
+    private String backendHost;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @Value("${service.user.host.admin}")
     private String userServiceAdmin;
     private final OkHttpClient client;
+    @Autowired
+    private AuthHelper authHelper;
 
     @Autowired
     public UserServiceNetworkManager(WebClient.Builder webClientBuilder) {
@@ -123,5 +134,13 @@ public class UserServiceNetworkManager {
                         return Flux.empty();
                     }
                 });
+    }
+
+    public Mono<Boolean> isExchangeAllowedWithW8BenDocument() throws Exception {
+        return webClient.get()
+                .uri(backendHost + "/api/user/w8ben/isExchangeAllowedWithW8BenDocument")
+            .header("Authorization", "Bearer " + authHelper.getIdToken())
+                .retrieve()
+                .bodyToMono(Boolean.class);
     }
 }
