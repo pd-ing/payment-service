@@ -1,6 +1,5 @@
 package com.pding.paymentservice.service;
 
-import com.google.common.io.Files;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
@@ -8,7 +7,6 @@ import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
-import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
 import com.pding.paymentservice.models.report.ReportGenerationCompletedEvent;
 import com.pding.paymentservice.models.report.ReportGenerationFailedEvent;
@@ -37,7 +35,6 @@ import com.pding.paymentservice.payload.response.custompagination.PaginationInfo
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
-import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
@@ -45,12 +42,11 @@ import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.service.cache.VideoSalesAndPurchaseNetCacheService;
 import com.pding.paymentservice.util.*;
-import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -61,11 +57,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.SignalType;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.ByteArrayOutputStream;
@@ -125,6 +121,9 @@ public class VideoPurchaseService {
     @Autowired
     EmailSenderService emailSenderService;
 
+    @Autowired
+    private VideoSalesAndPurchaseNetCacheService videoSalesAndPurchaseNetCacheService;
+
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
         log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
@@ -153,6 +152,13 @@ public class VideoPurchaseService {
         earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
         log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                videoSalesAndPurchaseNetCacheService.refreshCacheByVideoId(videoId);
+            }
+        });
         return video;
     }
 

@@ -4,8 +4,8 @@ import com.pding.grpc.user_management.GetVideoIdsRequest;
 import com.pding.grpc.user_management.PaymentServiceGrpc;
 import com.pding.grpc.user_management.VideoSalesAndPurchaseNet;
 import com.pding.grpc.user_management.VideoSalesAndPurchaseResponseNetResponse;
-import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
-import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import com.pding.paymentservice.payload.dto.VideoSalesAndPurchaseNetCache;
+import com.pding.paymentservice.service.cache.VideoSalesAndPurchaseNetCacheService;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.commons.lang3.ObjectUtils;
@@ -23,13 +23,12 @@ public class VideoEarnGRPCService extends PaymentServiceGrpc.PaymentServiceImplB
     private final Logger log = LoggerFactory.getLogger(VideoEarnGRPCService.class);
 
     @Autowired
-    private VideoPurchaseRepository videoPurchaseRepo;
+    private VideoSalesAndPurchaseNetCacheService videoSalesAndPurchaseNetCacheService;
 
     @Override
     public void getSalesAndPurchaseDataOfVideos(GetVideoIdsRequest request, StreamObserver<VideoSalesAndPurchaseResponseNetResponse> responseObserver) {
-        log.info("Received GRPC request to get video earns for video id: " + request.getIdsList());
         long s = System.currentTimeMillis();
-        Map<String, VideoEarningsAndSales> totalTreesEarnedAndSalesCountMapForVideoIds = videoPurchaseRepo.getTotalTreesEarnedAndSalesCountMapForVideoIds(request.getIdsList());
+        Map<String, VideoSalesAndPurchaseNetCache> totalTreesEarnedAndSalesCountMapForVideoIds = this.videoSalesAndPurchaseNetCacheService.getVideoAndSaleByVideoIds(request.getIdsList());
 
         Map<String, VideoSalesAndPurchaseNet> mapByVideoId = totalTreesEarnedAndSalesCountMapForVideoIds.entrySet().stream().collect(
                 Collectors.toMap(
