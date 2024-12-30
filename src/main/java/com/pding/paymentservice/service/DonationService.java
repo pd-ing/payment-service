@@ -25,12 +25,11 @@ import com.pding.paymentservice.util.DateTimeUtil;
 import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.StringUtil;
 import com.pding.paymentservice.util.TokenSigner;
-import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -53,9 +52,6 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,6 +91,9 @@ public class DonationService {
     @Autowired
     EmailSenderService emailSenderService;
 
+    @Autowired
+    private AsyncOperationService asyncOperationService;
+
     @Transactional
     public Donation createTreesDonationTransaction(String userId, BigDecimal treesToDonate, String PdUserId) {
         log.info("start donation transaction for userId: {}, trees: {}, pdUserId: {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(treesToDonate), LogSanitizer.sanitizeForLog(PdUserId));
@@ -107,6 +106,7 @@ public class DonationService {
 
         Donation transaction = new Donation(userId, PdUserId, treesToDonate, null);
         Donation donation = donationRepository.save(transaction);
+        this.removeCacheTopDonations(PdUserId);
 
         earningService.addTreesToEarning(PdUserId, treesToDonate);
         ledgerService.saveToLedger(donation.getId(), treesToDonate, new BigDecimal(0), TransactionType.DONATION, userId);
@@ -123,6 +123,7 @@ public class DonationService {
 
         Donation transaction = new Donation(userId, PdUserId, null, leafsToDonate);
         Donation donation = donationRepository.save(transaction);
+        this.removeCacheTopDonations(PdUserId);
 
         earningService.addLeafsToEarning(PdUserId, leafsToDonate);
         ledgerService.saveToLedger(donation.getId(), new BigDecimal(0), leafsToDonate, TransactionType.DONATION, userId);
@@ -131,6 +132,9 @@ public class DonationService {
         return donation;
     }
 
+    private void removeCacheTopDonations(String pdUserId) {
+        this.asyncOperationService.removeCachePattern("top_donations::" + pdUserId + "*");
+    }
 
     public List<Donation> userDonationHistory(String userId) {
         return donationRepository.findByDonorUserId(userId);
@@ -190,6 +194,7 @@ public class DonationService {
         return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
     }
 
+    @Cacheable(value = "top_donations", key = "{#pdUserId, #limit}", cacheManager = "cacheManager")
     public List<PublicUserNet> getTopDonorsInfo(String pdUserId, Long limit) throws Exception {
         List<Object[]> donorUserObjects = donationRepository.findTopDonorUserAndDonatedTreesByPdUserID(pdUserId, limit);
         if (donorUserObjects.isEmpty()) {
