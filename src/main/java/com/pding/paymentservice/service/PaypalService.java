@@ -2,9 +2,13 @@ package com.pding.paymentservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paypal.sdk.models.Capture;
+import com.paypal.sdk.models.CapturedPayment;
+import com.paypal.sdk.models.OrdersCaptureInput;
 import com.pding.paymentservice.network.PaypalNetworkService;
 import com.pding.paymentservice.payload.request.PaymentRequest;
 import com.pding.paymentservice.payload.response.PaypalOrderResponse;
+import com.pding.paymentservice.payload.response.paypal.PayPalCaptureOrder;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.security.AuthHelper;
 import com.stripe.exception.StripeException;
@@ -58,5 +62,15 @@ public class PaypalService {
         paymentRequest.setPurchaseUnits(purchaseUnits);
 
         return paypalNetworkService.createOrder(paymentRequest);
+    }
+
+    public PayPalCaptureOrder captureOrder(String orderId) {
+//        CapturedPayment
+        PayPalCaptureOrder captureOrderResponse = paypalNetworkService.captureOrder(orderId);
+        if("COMPLETED".equalsIgnoreCase(captureOrderResponse.getStatus())) {
+            //
+        }
+
+        return captureOrderResponse;
     }
 }

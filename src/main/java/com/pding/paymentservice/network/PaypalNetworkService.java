@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pding.paymentservice.payload.request.PaymentRequest;
 import com.pding.paymentservice.payload.response.PaypalAuthenticationResponse;
 import com.pding.paymentservice.payload.response.PaypalOrderResponse;
+import com.pding.paymentservice.payload.response.paypal.PayPalCaptureOrder;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,8 +61,6 @@ public class PaypalNetworkService {
             throw new IllegalStateException("Failed to generate access token.");
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-
         String uri = paypalBaseUrl + "/v2/checkout/orders";
 
         Mono<PaypalOrderResponse> responseMono = webClient.post()
@@ -74,5 +73,24 @@ public class PaypalNetworkService {
 
         return responseMono.block();
 
+    }
+
+    public PayPalCaptureOrder captureOrder(String orderId) {
+        String accessToken = generateAccessToken();
+
+        if (accessToken == null) {
+            throw new IllegalStateException("Failed to generate access token.");
+        }
+
+        String uri = paypalBaseUrl + "/v2/checkout/orders/" + orderId + "/capture";
+
+        Mono<PayPalCaptureOrder> responseMono = webClient.post()
+            .uri(uri)
+            .header("Authorization", "Bearer " + accessToken)
+            .header("Content-Type", "application/json")
+            .retrieve()
+            .bodyToMono(PayPalCaptureOrder.class);
+
+        return responseMono.block();
     }
 }

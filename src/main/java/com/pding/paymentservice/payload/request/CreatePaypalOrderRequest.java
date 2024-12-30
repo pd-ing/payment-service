@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class CreatePaypalOrderRequest {
     private String priceId;
+    private String orderId;
 }
