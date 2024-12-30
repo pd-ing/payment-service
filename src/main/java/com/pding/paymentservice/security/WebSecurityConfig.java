@@ -153,6 +153,8 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/statistic/gross-revenue-graph").authenticated()
                                 .requestMatchers("/api/payment/statistic/gross-revenue-graph-by-date-range").authenticated()
                                 .requestMatchers("/actuator/health/*").permitAll()
+                                .requestMatchers("/api/payment/paypal/webhook").permitAll()
+                                .requestMatchers("/api/payment/paypal/createOrder").authenticated()
 
                 );
 
