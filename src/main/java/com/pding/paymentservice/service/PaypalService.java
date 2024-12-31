@@ -2,26 +2,27 @@ package com.pding.paymentservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.paypal.sdk.models.Capture;
-import com.paypal.sdk.models.CapturedPayment;
-import com.paypal.sdk.models.OrdersCaptureInput;
 import com.pding.paymentservice.network.PaypalNetworkService;
 import com.pding.paymentservice.payload.request.PaymentRequest;
 import com.pding.paymentservice.payload.response.PaypalOrderResponse;
 import com.pding.paymentservice.payload.response.paypal.PayPalCaptureOrder;
+import com.pding.paymentservice.payload.response.paypal.PurchaseUnit;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.security.AuthHelper;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class PaypalService {
 
     @Autowired
@@ -32,6 +33,9 @@ public class PaypalService {
 
     @Autowired
     PaypalNetworkService paypalNetworkService;
+
+    @Autowired
+    PaymentService paymentService;
 
     public PaypalOrderResponse createOrder(String priceId) throws StripeException, JsonProcessingException {
         Price price = stripeClient.getPrice(priceId);
@@ -52,7 +56,7 @@ public class PaypalService {
 
         PaymentRequest.PurchaseUnit purchaseUnit = new PaymentRequest.PurchaseUnit();
         purchaseUnit.setAmount(requestedAmount);
-        purchaseUnit.setCustomId(userId+ "_" + map.get("trees"));
+        purchaseUnit.setCustomId(userId + "_" + map.get("trees"));
 
         List<PaymentRequest.PurchaseUnit> purchaseUnits = new ArrayList<>();
         purchaseUnits.add(purchaseUnit);
@@ -67,8 +71,24 @@ public class PaypalService {
     public PayPalCaptureOrder captureOrder(String orderId) {
 //        CapturedPayment
         PayPalCaptureOrder captureOrderResponse = paypalNetworkService.captureOrder(orderId);
-        if("COMPLETED".equalsIgnoreCase(captureOrderResponse.getStatus())) {
-            //
+        if ("COMPLETED".equalsIgnoreCase(captureOrderResponse.getStatus())) {
+            PurchaseUnit.Payments.Capture capture = captureOrderResponse.getPurchaseUnits().get(0).getPayments().getCaptures().get(0);
+            com.pding.paymentservice.payload.response.paypal.Amount amount = capture.getAmount();
+            String customId = capture.getCustomId();
+            String transactionId = capture.getId();
+            String[] userId_tree = customId.split("_");
+            String userId = userId_tree[0];
+            BigDecimal treeAmount = new BigDecimal(userId_tree[1]);
+
+            if (paymentService.checkIfTxnIdExists(transactionId)) {
+                log.info("paypal checkout, transaction is existed in DB");
+                return captureOrderResponse;
+            }
+
+            paymentService.completePaymentToBuyTreesPaypal(userId, treeAmount, LocalDateTime.now(), transactionId,
+                new BigDecimal(amount.getValue()), amount.getCurrencyCode(), "PAYPAL", captureOrderResponse.getStatus(),
+                "Added " + treeAmount + " trees successfully for user via paypal",
+                null);
         }
 
         return captureOrderResponse;
