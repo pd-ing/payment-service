@@ -400,6 +400,21 @@ public class PaymentService {
         }
     }
 
+    @Transactional
+    public String completePaymentToBuyTreesPaypal(String userId, BigDecimal purchasedTrees, LocalDateTime purchasedDate,
+                                                  String transactionID, BigDecimal amount, String currency,
+                                                  String paymentMethod,  String transactionStatus,
+                                                  String description, String ipAddress) {
+        log.info("Start add tree transaction via paypal for userId: {}", userId);
+        Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, new BigDecimal(0), purchasedDate);
+        walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, new BigDecimal(0), purchasedDate, transactionID, transactionStatus,
+            amount, paymentMethod, currency, description, ipAddress);
+
+        ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.TREE_PURCHASE, userId);
+        log.info("tree transaction via paypal completed successfully for userId: {}", userId);
+        return "Tree added successfully for user";
+    }
+
     public String completeRefundLeafs(String purchaseToken) {
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(purchaseToken);
         //Check if refund is already done for this TxnId
