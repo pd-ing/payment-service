@@ -29,6 +29,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     List<String> permitAllEndpoints = Arrays.asList(
             "/api/payment/webhook",
+            "/api/payment/paypal-webhook",
             "/api/payment/ggPlayStoreWebhook",
             "/api/payment/appStoreWebhook",
             "/api/payment/videoEarningAndSales",
