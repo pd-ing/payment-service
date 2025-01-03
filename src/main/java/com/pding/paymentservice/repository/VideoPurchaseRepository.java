@@ -3,9 +3,9 @@ package com.pding.paymentservice.repository;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 
+import com.pding.paymentservice.payload.response.StatisticTopSellPDResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -212,4 +212,11 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT vp.userId from VideoPurchase vp where vp.lastUpdateDate >= :fromDateTime")
     List<String> findUsersPurchaseFromDateTime(@Param("fromDateTime") LocalDateTime fromDateTime);
+
+    @Query("SELECT new com.pding.paymentservice.payload.response.StatisticTopSellPDResponse(vp.userId, SUM(vp.treesConsumed)) " +
+            "FROM VideoPurchase vp " +
+            "WHERE (vp.isReplacementOfDeletedVideo = false OR vp.isReplacementOfDeletedVideo IS NULL) " +
+            "AND vp.lastUpdateDate >= :fromDateTime AND vp.videoOwnerUserId IN :pdIds " +
+            "GROUP BY vp.videoOwnerUserId")
+    List<StatisticTopSellPDResponse> statisticTopSellPDs(@Param("pdIds") List<String> pdIds, @Param("fromDateTime") LocalDateTime fromDateTime);
 }
