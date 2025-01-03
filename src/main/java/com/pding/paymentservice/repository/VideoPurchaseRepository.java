@@ -209,4 +209,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query(value = "SELECT vp.userId from VideoPurchase vp where vp.lastUpdateDate >= :fromDateTime")
+    List<String> findUsersPurchaseFromDateTime(@Param("fromDateTime") LocalDateTime fromDateTime);
 }
