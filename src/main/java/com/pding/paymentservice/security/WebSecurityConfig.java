@@ -153,7 +153,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/statistic/gross-revenue-graph").authenticated()
                                 .requestMatchers("/api/payment/statistic/gross-revenue-graph-by-date-range").authenticated()
                                 .requestMatchers("/actuator/health/*").permitAll()
-                                .requestMatchers("/api/payment/exposure-ticket").authenticated()
+                                .requestMatchers("/api/payment/exposure-ticket-prices").authenticated()
 
                 );
 

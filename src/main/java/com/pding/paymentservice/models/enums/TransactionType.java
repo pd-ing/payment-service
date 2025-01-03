@@ -30,7 +30,9 @@ public enum TransactionType {
 
     REMOVE_TREES_FROM_BACKEND("removeTreesFromBackend"),
 
-    MEDIA_TRADING("mediaTrading");
+    MEDIA_TRADING("mediaTrading"),
+
+    BUY_EXPOSURE_TICKET("buyExposureTicket"),;
 
     private final String displayName;
 
