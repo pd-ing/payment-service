@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.models.MExposureSlot;
@@ -137,8 +138,14 @@ public class ExposureTicketPurchaseService {
     }
 
     public void forceReleaseTicket(String userId) {
-        exposureSlotRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+        exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
         exposureSlotRepository.deleteById(userId);
+        sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
+    }
+
+    public void handleAutoExpireSlot(String userId) {
+        MExposureSlot slot = exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+        exposureSlotRepository.delete(slot);
         sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
     }
 }

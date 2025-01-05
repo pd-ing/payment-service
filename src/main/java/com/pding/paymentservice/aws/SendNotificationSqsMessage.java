@@ -140,13 +140,25 @@ public class SendNotificationSqsMessage extends BaseService {
         }
     }
 
+    public void sendReleaseTopExposureNotification(String userId) {
+        try {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("type", "RELEASE_TOP_EXPOSURE");
+            map.put("userId", userId);
+            map.put("time", new Date());
+            sendNotification(map);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+        }
+    }
+
     public boolean sendAutoExpireTopExposureSlot(String userId) {
         try {
             Map<String, String> map = new HashMap<>();
             map.put("userId", userId);
             String json = objectMapper.writeValueAsString(map);
 
-            String messageId = sqsTemplate.send(to -> to.queue("TopExposureSlot.fifo")
+            String messageId = sqsTemplate.send(to -> to.queue("TopExposureSlotQueue")
                 .payload(json)
                 .delaySeconds(3600)
             ).messageId().toString();
