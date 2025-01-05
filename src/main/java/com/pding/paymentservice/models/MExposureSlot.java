@@ -1,6 +1,10 @@
 package com.pding.paymentservice.models;
 
+import com.pding.paymentservice.models.enums.ExposureSlotNumber;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,4 +24,8 @@ import java.time.Instant;
 public class MExposureSlot {
     @Id
     private String userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "slot_number", unique = true)
+    private ExposureSlotNumber slotNumber;
 }

@@ -4,6 +4,7 @@ import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.models.MExposureSlot;
 import com.pding.paymentservice.models.MExposureTicket;
+import com.pding.paymentservice.models.enums.ExposureSlotNumber;
 import com.pding.paymentservice.models.enums.ExposureTicketStatus;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.models.enums.TransactionType;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -79,19 +81,29 @@ public class ExposureTicketPurchaseService {
         if (purchaseTicket.getStatus() == ExposureTicketStatus.USED) {
             throw new IllegalArgumentException("Ticket already used");
         }
-        //TODO: Add logic to assign top slot
+
         ExposureTicketType type = purchaseTicket.getType();
-        //TODO: validate type
+        //TODO: validate type & time
 
         //assign top slot
-        boolean hasEmptySlot = exposureSlotRepository.findAll().size() < 3;
+        List<MExposureSlot> allSlots = exposureSlotRepository.findAll();
+        boolean hasEmptySlot = allSlots.size() < 3;
         if (hasEmptySlot) {
-            MExposureSlot slot = exposureSlotRepository.findById(userId).orElse(null);
+            MExposureSlot slot = allSlots.stream().filter(s -> s.getUserId().equals(userId)).findFirst().orElse(null);
             if(slot != null) {
                 throw new IllegalArgumentException("You already has exposure slot");
             }
+
+            //assign slot
+            List<ExposureSlotNumber> selectedSlotNumber = allSlots.stream().map(MExposureSlot::getSlotNumber).collect(Collectors.toList());
+            ExposureSlotNumber emptySlotNumber = Arrays.stream(ExposureSlotNumber.values()).filter(s -> !selectedSlotNumber.contains(s)).findFirst().orElse(null);
+            if(emptySlotNumber == null) {
+                throw new IllegalArgumentException("Failed to assign slot, please try again");
+            }
+
             slot = new MExposureSlot();
             slot.setUserId(userId);
+            slot.setSlotNumber(emptySlotNumber);
             exposureSlotRepository.save(slot);
 
             if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
