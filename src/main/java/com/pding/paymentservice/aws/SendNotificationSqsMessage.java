@@ -1,10 +1,14 @@
 package com.pding.paymentservice.aws;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pding.paymentservice.BaseService;
+import io.awspring.cloud.sqs.operations.SendResult;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -12,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class SendNotificationSqsMessage extends BaseService {
 
     @Autowired
@@ -132,6 +137,24 @@ public class SendNotificationSqsMessage extends BaseService {
             sendNotification(map);
         } catch (Exception ex) {
             pdLogger.logException(ex);
+        }
+    }
+
+    public boolean sendAutoExpireTopExposureSlot(String userId) {
+        try {
+            Map<String, String> map = new HashMap<>();
+            map.put("userId", userId);
+            String json = objectMapper.writeValueAsString(map);
+
+            String messageId = sqsTemplate.send(to -> to.queue("TopExposureSlot.fifo")
+                .payload(json)
+                .delaySeconds(3600)
+            ).messageId().toString();
+
+            return messageId != null;
+        } catch (Exception ex) {
+            log.error("Error in sendAutoExpireTopExposureSlot", ex);
+            return false;
         }
     }
 

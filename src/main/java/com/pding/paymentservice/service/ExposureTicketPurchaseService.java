@@ -17,11 +17,14 @@ import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +55,7 @@ public class ExposureTicketPurchaseService {
         purchase.setUserId(userId);
         purchase.setType(type);
         purchase.setTreesConsumed(ticketPrice);
-        purchase.setPurchasedDate(LocalDateTime.now());
+        purchase.setPurchasedDate(Instant.now());
         purchase.setStatus(ExposureTicketStatus.UNUSED);
         purchase = exposureTicketPurchaseRepository.save(purchase);
 
@@ -62,23 +65,43 @@ public class ExposureTicketPurchaseService {
 
     public Page<ExposureTicketPurchase> getPurchasedTicketOfUser(Pageable pageable) {
         String userId = authHelper.getUserId();
-        return exposureTicketPurchaseRepository.findByUserId(userId, pageable);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "purchasedDate"));
+        return exposureTicketPurchaseRepository.findByUserId(userId, pageRequest);
     }
 
+    @Transactional
     public ExposureTicketPurchase useTicket(String ticketId) {
         String userId = authHelper.getUserId();
-        ExposureTicketPurchase purchase = exposureTicketPurchaseRepository.findById(ticketId).orElseThrow(() -> new IllegalArgumentException("Invalid ticket id"));
-        if (!userId.equalsIgnoreCase(purchase.getUserId())) {
+        ExposureTicketPurchase purchaseTicket = exposureTicketPurchaseRepository.findById(ticketId).orElseThrow(() -> new IllegalArgumentException("Invalid ticket id"));
+        if (!userId.equalsIgnoreCase(purchaseTicket.getUserId())) {
             throw new IllegalArgumentException("Ticket does not belong to user");
         }
-        if (purchase.getStatus() == ExposureTicketStatus.USED) {
+        if (purchaseTicket.getStatus() == ExposureTicketStatus.USED) {
             throw new IllegalArgumentException("Ticket already used");
         }
-        purchase.setStatus(ExposureTicketStatus.USED);
-        purchase.setUsedDate(LocalDateTime.now());
+        //TODO: Add logic to assign top slot
+        ExposureTicketType type = purchaseTicket.getType();
+        //TODO: validate type
 
-        //TODO: Add logic to use exposure ticket
-        return exposureTicketPurchaseRepository.save(purchase);
+        //assign top slot
+        boolean hasEmptySlot = exposureSlotRepository.findAll().size() < 3;
+        if (hasEmptySlot) {
+            MExposureSlot slot = exposureSlotRepository.findById(userId).orElse(null);
+            if(slot != null) {
+                throw new IllegalArgumentException("You already has exposure slot");
+            }
+            slot = new MExposureSlot();
+            slot.setUserId(userId);
+            exposureSlotRepository.save(slot);
+
+            if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
+                throw new IllegalArgumentException("Failed to use ticket, please try again");
+            }
+        }
+
+        purchaseTicket.setStatus(ExposureTicketStatus.USED);
+        purchaseTicket.setUsedDate(Instant.now());
+        return exposureTicketPurchaseRepository.save(purchaseTicket);
     }
 
     public List<UserLite> getTopExposurePds() throws Exception {

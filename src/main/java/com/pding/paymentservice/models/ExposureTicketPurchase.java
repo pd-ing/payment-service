@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @NoArgsConstructor
@@ -32,9 +32,9 @@ public class ExposureTicketPurchase {
 
     private BigDecimal treesConsumed;
 
-    private LocalDateTime purchasedDate;
+    private Instant purchasedDate;
 
-    private LocalDateTime usedDate;
+    private Instant usedDate;
 
     private ExposureTicketStatus status;
 
