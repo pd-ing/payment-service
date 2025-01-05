@@ -1,13 +1,19 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.models.ExposureTicketPurchase;
+import com.pding.paymentservice.models.MExposureSlot;
 import com.pding.paymentservice.models.MExposureTicket;
 import com.pding.paymentservice.models.enums.ExposureTicketStatus;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.response.UserLite;
+import com.pding.paymentservice.repository.ExposureSlotRepository;
 import com.pding.paymentservice.repository.ExposureTicketPurchaseRepository;
 import com.pding.paymentservice.repository.ExposureTicketRepository;
 import com.pding.paymentservice.security.AuthHelper;
+import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +34,10 @@ public class ExposureTicketPurchaseService {
     private final WalletService walletService;
     private final AuthHelper authHelper;
     private final ExposureTicketPurchaseRepository exposureTicketPurchaseRepository;
+    private final ExposureSlotRepository exposureSlotRepository;
     private final LedgerService ledgerService;
+    private final UserServiceNetworkManager userServiceNetworkManager;
+    private final TokenSigner tokenSigner;
 
     @Transactional
     public ExposureTicketPurchase buyTicket(ExposureTicketType type) {
@@ -34,7 +46,7 @@ public class ExposureTicketPurchaseService {
         BigDecimal ticketPrice = ticket.getPrice();
 
         walletService.deductTreesFromWallet(userId, ticketPrice);
-        ExposureTicketPurchase  purchase = new ExposureTicketPurchase();
+        ExposureTicketPurchase purchase = new ExposureTicketPurchase();
         purchase.setUserId(userId);
         purchase.setType(type);
         purchase.setTreesConsumed(ticketPrice);
@@ -54,7 +66,7 @@ public class ExposureTicketPurchaseService {
     public ExposureTicketPurchase useTicket(String ticketId) {
         String userId = authHelper.getUserId();
         ExposureTicketPurchase purchase = exposureTicketPurchaseRepository.findById(ticketId).orElseThrow(() -> new IllegalArgumentException("Invalid ticket id"));
-        if(!userId.equalsIgnoreCase(purchase.getUserId())) {
+        if (!userId.equalsIgnoreCase(purchase.getUserId())) {
             throw new IllegalArgumentException("Ticket does not belong to user");
         }
         if (purchase.getStatus() == ExposureTicketStatus.USED) {
@@ -65,5 +77,13 @@ public class ExposureTicketPurchaseService {
 
         //TODO: Add logic to use exposure ticket
         return exposureTicketPurchaseRepository.save(purchase);
+    }
+
+    public List<UserLite> getTopExposurePds() throws Exception {
+        List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
+        Set<String> userIds = exposureSlots.stream().map(MExposureSlot::getUserId).collect(Collectors.toSet());
+
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
+        return usersFlux.stream().map(user -> UserLite.fromPublicUserNet(user, tokenSigner)).collect(Collectors.toList());
     }
 }
