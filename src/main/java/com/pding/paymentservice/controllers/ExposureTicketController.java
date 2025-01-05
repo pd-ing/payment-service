@@ -2,9 +2,11 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.payload.request.BuyExposureTicketRequest;
+import com.pding.paymentservice.payload.request.ForceReleaseExposureTicketRequest;
 import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.service.ExposureTicketPurchaseService;
 import com.pding.paymentservice.service.ExposureTicketService;
 import lombok.RequiredArgsConstructor;
@@ -49,5 +51,11 @@ public class ExposureTicketController {
     @PostMapping("/top-exposure-pds")
     public ResponseEntity getTopExposurePds() throws Exception {
         return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.getTopExposurePds()));
+    }
+
+    @PostMapping("/admin/force-release-ticket")
+    public ResponseEntity forceReleaseTicket(@RequestBody ForceReleaseExposureTicketRequest request) {
+        exposureTicketPurchaseService.forceReleaseTicket(request.getUserId());
+        return ResponseEntity.ok(new GenericStringResponse(null, "Force release ticket success"));
     }
 }

@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.models.MExposureSlot;
 import com.pding.paymentservice.models.MExposureTicket;
@@ -38,6 +39,7 @@ public class ExposureTicketPurchaseService {
     private final LedgerService ledgerService;
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final TokenSigner tokenSigner;
+    private final SendNotificationSqsMessage sendNotificationSqsMessage;
 
     @Transactional
     public ExposureTicketPurchase buyTicket(ExposureTicketType type) {
@@ -85,5 +87,11 @@ public class ExposureTicketPurchaseService {
 
         List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
         return usersFlux.stream().map(user -> UserLite.fromPublicUserNet(user, tokenSigner)).collect(Collectors.toList());
+    }
+
+    public void forceReleaseTicket(String userId) {
+        exposureSlotRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+        exposureSlotRepository.deleteById(userId);
+        sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
     }
 }

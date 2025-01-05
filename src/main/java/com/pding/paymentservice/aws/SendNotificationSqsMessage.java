@@ -123,6 +123,18 @@ public class SendNotificationSqsMessage extends BaseService {
         }
     }
 
+    public void sendForceReleaseTopExposureNotification(String userId) {
+        try {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("type", "FORCE_RELEASE_TOP_EXPOSURE");
+            map.put("userId", userId);
+            map.put("time", new Date());
+            sendNotification(map);
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+        }
+    }
+
     // is Null or Empty
     private boolean isNotValid(String a) {
         return a == null || a.isEmpty();
