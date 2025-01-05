@@ -3,6 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.models.MExposureSlot;
+import com.pding.paymentservice.models.MExposureSlotHistory;
 import com.pding.paymentservice.models.MExposureTicket;
 import com.pding.paymentservice.models.enums.ExposureSlotNumber;
 import com.pding.paymentservice.models.enums.ExposureTicketStatus;
@@ -11,6 +12,7 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.UserLite;
+import com.pding.paymentservice.repository.ExposureSlotHistoryRepository;
 import com.pding.paymentservice.repository.ExposureSlotRepository;
 import com.pding.paymentservice.repository.ExposureTicketPurchaseRepository;
 import com.pding.paymentservice.repository.ExposureTicketRepository;
@@ -41,6 +43,7 @@ public class ExposureTicketPurchaseService {
     private final AuthHelper authHelper;
     private final ExposureTicketPurchaseRepository exposureTicketPurchaseRepository;
     private final ExposureSlotRepository exposureSlotRepository;
+    private final ExposureSlotHistoryRepository exposureSlotHistoryRepository;
     private final LedgerService ledgerService;
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final TokenSigner tokenSigner;
@@ -96,15 +99,24 @@ public class ExposureTicketPurchaseService {
 
             //assign slot
             List<ExposureSlotNumber> selectedSlotNumber = allSlots.stream().map(MExposureSlot::getSlotNumber).collect(Collectors.toList());
-            ExposureSlotNumber emptySlotNumber = Arrays.stream(ExposureSlotNumber.values()).filter(s -> !selectedSlotNumber.contains(s)).findFirst().orElse(null);
-            if(emptySlotNumber == null) {
+            ExposureSlotNumber slotNumber = Arrays.stream(ExposureSlotNumber.values()).filter(s -> !selectedSlotNumber.contains(s)).findFirst().orElse(null);
+            if(slotNumber == null) {
                 throw new IllegalArgumentException("Failed to assign slot, please try again");
             }
 
             slot = new MExposureSlot();
             slot.setUserId(userId);
-            slot.setSlotNumber(emptySlotNumber);
-            exposureSlotRepository.save(slot);
+            slot.setSlotNumber(slotNumber);
+            slot = exposureSlotRepository.save(slot);
+
+            //save History
+            MExposureSlotHistory history = new MExposureSlotHistory();
+            history.setId(slot.getId());
+            history.setUserId(userId);
+            history.setSlotNumber(slotNumber.toString());
+            history.setStartTime(Instant.now());
+            history.setEndTime(Instant.now().plusSeconds(3600));
+            exposureSlotHistoryRepository.save(history);
 
             if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
                 throw new IllegalArgumentException("Failed to use ticket, please try again");

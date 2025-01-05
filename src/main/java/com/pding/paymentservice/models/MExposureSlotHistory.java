@@ -21,7 +21,9 @@ public class MExposureSlotHistory {
     @Id
     @UuidGenerator
     private String id;
+
     private String userId;
     private Instant startTime;
     private Instant endTime;
+    private String slotNumber;
 }

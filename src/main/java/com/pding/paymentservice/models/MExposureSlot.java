@@ -23,6 +23,9 @@ import java.time.Instant;
 @Getter
 public class MExposureSlot {
     @Id
+    @UuidGenerator
+    private String id;
+
     private String userId;
 
     @Enumerated(EnumType.STRING)
