@@ -4,6 +4,7 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.request.StatisticTopSellPDRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.PdPurchaseResponse;
 import com.pding.paymentservice.payload.response.StatisticTopSellPDResponse;
 import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
@@ -70,6 +71,12 @@ public class TreesController {
     public ResponseEntity<List<StatisticTopSellPDResponse>> statisticTopTreeByPDIds(
                                                 @Valid @RequestBody StatisticTopSellPDRequest statisticTopSellPDRequest) {
         return ResponseEntity.ok().body(treesService.statisticTopTreeByPDIds(statisticTopSellPDRequest));
+    }
+
+    @PostMapping(value = "/internal/find-pd-purchase-by-user-ids")
+    public ResponseEntity<List<PdPurchaseResponse>> findPdPurchaseByUserIds(
+            @Valid @RequestBody List<String> userIds) {
+        return ResponseEntity.ok().body(treesService.findPdPurchaseByUserIds(userIds));
     }
 
     // Handle MissingServletRequestParameterException --

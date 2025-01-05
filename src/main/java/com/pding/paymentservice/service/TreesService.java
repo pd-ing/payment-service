@@ -2,6 +2,7 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.request.StatisticTopSellPDRequest;
+import com.pding.paymentservice.payload.response.PdPurchaseResponse;
 import com.pding.paymentservice.payload.response.StatisticTopSellPDResponse;
 import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryRecord;
 import com.pding.paymentservice.repository.DonationRepository;
@@ -10,7 +11,7 @@ import com.pding.paymentservice.repository.TreesRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.CommonMethods;
-import com.pding.paymentservice.util.TokenSigner;
+import jakarta.validation.Valid;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -104,5 +105,21 @@ public class TreesService {
             response.add(pdResponse);
         }
         return response;
+    }
+
+    public List<PdPurchaseResponse> findPdPurchaseByUserIds(@Valid List<String> userIds) {
+        if (CollectionUtils.isEmpty(userIds)) {
+            return Collections.emptyList();
+        }
+
+        List<Object[]> pdPurchaseList = videoPurchaseRepository.findPdPurchaseByUserIds(userIds);
+        Map<String, List<String>> groupedByUserId = pdPurchaseList.stream().collect(Collectors.groupingBy(
+            pdPurchase -> (String) pdPurchase[0],
+            Collectors.mapping(pdPurchase -> (String) pdPurchase[1], Collectors.toList())
+        ));
+
+        return groupedByUserId.entrySet().stream()
+                .map(entry -> PdPurchaseResponse.builder().userId(entry.getKey()).pdIds(entry.getValue()).build())
+                .collect(Collectors.toList());
     }
 }
