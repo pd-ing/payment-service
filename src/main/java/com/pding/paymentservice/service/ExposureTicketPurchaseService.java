@@ -11,6 +11,7 @@ import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.response.CountUserTicketByType;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.repository.ExposureSlotHistoryRepository;
 import com.pding.paymentservice.repository.ExposureSlotRepository;
@@ -138,5 +139,14 @@ public class ExposureTicketPurchaseService {
         MExposureSlot slot = exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
         exposureSlotRepository.delete(slot);
         sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
+    }
+
+    public List<CountUserTicketByType> countUserTicketByType() {
+        String userId = authHelper.getUserId();
+        List<CountUserTicketByType> result = Arrays.stream(ExposureTicketType.values()).map(type -> {
+            Long count = exposureTicketPurchaseRepository.countByTypeAndUserIdAndStatus(type, userId, ExposureTicketStatus.UNUSED);
+            return new CountUserTicketByType(type, count);
+        }).collect(Collectors.toList());
+        return result;
     }
 }

@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface ExposureTicketPurchaseRepository extends JpaRepository<ExposureTicketPurchase, String> {
     Page<ExposureTicketPurchase> findByUserId(String userId, Pageable pageable);
     Optional<ExposureTicketPurchase> findFirstByTypeAndStatusAndUserId(ExposureTicketType type, ExposureTicketStatus status, String userId);
+    Long countByTypeAndUserIdAndStatus(ExposureTicketType type, String userId, ExposureTicketStatus status);
 }

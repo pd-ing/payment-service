@@ -39,8 +39,8 @@ public class ExposureTicketController {
     }
 
     @GetMapping("/purchased-ticket/count")
-    public ResponseEntity getListPurchasedTicketCount(Pageable pageable) {
-        return ResponseEntity.ok(new GenericPageResponse<>(null, exposureTicketPurchaseService.getPurchasedTicketOfUser(pageable)));
+    public ResponseEntity getListPurchasedTicketCount() {
+        return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.countUserTicketByType()));
     }
 
     @PostMapping("/ticket/buy")

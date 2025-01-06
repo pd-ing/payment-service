@@ -155,6 +155,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/actuator/health/*").permitAll()
                                 .requestMatchers("/api/payment/exposure-ticket-prices").authenticated()
                                 .requestMatchers("/api/payment/purchased-ticket").authenticated()
+                                .requestMatchers("/api/payment/purchased-ticket/count").authenticated()
                                 .requestMatchers("/api/payment/ticket/buy").authenticated()
                                 .requestMatchers("/api/payment/ticket/{ticketId}/use").authenticated()
                                 .requestMatchers("/api/payment/top-exposure-pds").authenticated()
