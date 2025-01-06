@@ -1,6 +1,6 @@
 package com.pding.paymentservice.controllers;
 
-import com.pding.paymentservice.models.ExposureTicketPurchase;
+import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.payload.request.BuyExposureTicketRequest;
 import com.pding.paymentservice.payload.request.ForceReleaseExposureTicketRequest;
 import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
@@ -14,10 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -48,9 +48,14 @@ public class ExposureTicketController {
         return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.buyTicket(request.getType())));
     }
 
-    @PostMapping("/ticket/{ticketId}/use")
-    public ResponseEntity useTicket(@PathVariable String ticketId) {
-        return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.useTicket(ticketId)));
+//    @PostMapping("/ticket/{ticketId}/use")
+//    public ResponseEntity useTicket(@PathVariable String ticketId) {
+//        return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.useTicket(ticketId)));
+//    }
+
+    @PostMapping("/ticket/use")
+    public ResponseEntity useTicketByType(@RequestParam ExposureTicketType type) {
+        return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.useTicket(type)));
     }
 
     @PostMapping("/top-exposure-pds")

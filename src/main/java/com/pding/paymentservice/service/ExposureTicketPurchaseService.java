@@ -1,6 +1,5 @@
 package com.pding.paymentservice.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.models.MExposureSlot;
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -76,17 +74,10 @@ public class ExposureTicketPurchaseService {
     }
 
     @Transactional
-    public ExposureTicketPurchase useTicket(String ticketId) {
+    public ExposureTicketPurchase useTicket(ExposureTicketType type) {
         String userId = authHelper.getUserId();
-        ExposureTicketPurchase purchaseTicket = exposureTicketPurchaseRepository.findById(ticketId).orElseThrow(() -> new IllegalArgumentException("Invalid ticket id"));
-        if (!userId.equalsIgnoreCase(purchaseTicket.getUserId())) {
-            throw new IllegalArgumentException("Ticket does not belong to user");
-        }
-        if (purchaseTicket.getStatus() == ExposureTicketStatus.USED) {
-            throw new IllegalArgumentException("Ticket already used");
-        }
+        ExposureTicketPurchase purchaseTicket = exposureTicketPurchaseRepository.findFirstByTypeAndStatusAndUserId(type, ExposureTicketStatus.UNUSED, userId).orElseThrow(() -> new IllegalArgumentException("No ticket found"));
 
-        ExposureTicketType type = purchaseTicket.getType();
         //TODO: validate type & time
 
         //assign top slot

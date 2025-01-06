@@ -4,7 +4,6 @@ import com.pding.paymentservice.models.enums.ExposureTicketStatus;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
