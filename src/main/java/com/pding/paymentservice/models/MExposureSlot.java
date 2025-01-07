@@ -28,6 +28,10 @@ public class MExposureSlot {
 
     private String userId;
 
+    private Instant startTime;
+
+    private Instant endTime;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "slot_number", unique = true)
     private ExposureSlotNumber slotNumber;

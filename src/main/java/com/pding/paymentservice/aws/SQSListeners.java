@@ -18,10 +18,10 @@ public class SQSListeners {
     ObjectMapper objectMapper;
 
 
-    @SqsListener("TopExposureSlotQueue")
-    public void handleAutoExpireSlot(String message) throws JsonProcessingException {
-        JsonNode jsonNode = objectMapper.readTree(message);
-        exposureTicketPurchaseService.handleAutoExpireSlot(jsonNode.get("userId").asText());
-    }
+//    @SqsListener("TopExposureSlotQueue")
+//    public void handleAutoExpireSlot(String message) throws JsonProcessingException {
+//        JsonNode jsonNode = objectMapper.readTree(message);
+//        exposureTicketPurchaseService.handleAutoExpireSlot(jsonNode.get("userId").asText());
+//    }
 
 }

@@ -152,23 +152,23 @@ public class SendNotificationSqsMessage extends BaseService {
         }
     }
 
-    public boolean sendAutoExpireTopExposureSlot(String userId) {
-        try {
-            Map<String, String> map = new HashMap<>();
-            map.put("userId", userId);
-            String json = objectMapper.writeValueAsString(map);
-
-            String messageId = sqsTemplate.send(to -> to.queue("TopExposureSlotQueue")
-                .payload(json)
-                .delaySeconds(3600)
-            ).messageId().toString();
-
-            return messageId != null;
-        } catch (Exception ex) {
-            log.error("Error in sendAutoExpireTopExposureSlot", ex);
-            return false;
-        }
-    }
+//    public boolean sendAutoExpireTopExposureSlot(String userId) {
+//        try {
+//            Map<String, String> map = new HashMap<>();
+//            map.put("userId", userId);
+//            String json = objectMapper.writeValueAsString(map);
+//
+//            String messageId = sqsTemplate.send(to -> to.queue("TopExposureSlotQueue")
+//                .payload(json)
+//                .delaySeconds(900)
+//            ).messageId().toString();
+//
+//            return messageId != null;
+//        } catch (Exception ex) {
+//            log.error("Error in sendAutoExpireTopExposureSlot", ex);
+//            return false;
+//        }
+//    }
 
     // is Null or Empty
     private boolean isNotValid(String a) {

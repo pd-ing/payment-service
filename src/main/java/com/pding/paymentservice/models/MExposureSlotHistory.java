@@ -26,4 +26,6 @@ public class MExposureSlotHistory {
     private Instant startTime;
     private Instant endTime;
     private String slotNumber;
+    private Instant releasedTime;
+    private Boolean isForcedRelease;
 }

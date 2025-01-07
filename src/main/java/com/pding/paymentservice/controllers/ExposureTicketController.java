@@ -58,7 +58,7 @@ public class ExposureTicketController {
         return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.useTicket(type)));
     }
 
-    @PostMapping("/top-exposure-pds")
+    @GetMapping("/top-exposure-pds")
     public ResponseEntity getTopExposurePds() throws Exception {
         return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.getTopExposurePds()));
     }

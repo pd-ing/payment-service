@@ -97,9 +97,13 @@ public class ExposureTicketPurchaseService {
                 throw new IllegalArgumentException("Failed to assign slot, please try again");
             }
 
+            Instant startTime = Instant.now();
+            Instant endTime = Instant.now().plusSeconds(3600);
             slot = new MExposureSlot();
             slot.setUserId(userId);
             slot.setSlotNumber(slotNumber);
+            slot.setStartTime(startTime);
+            slot.setEndTime(endTime);
             slot = exposureSlotRepository.save(slot);
 
             //save History
@@ -107,13 +111,13 @@ public class ExposureTicketPurchaseService {
             history.setId(slot.getId());
             history.setUserId(userId);
             history.setSlotNumber(slotNumber.toString());
-            history.setStartTime(Instant.now());
-            history.setEndTime(Instant.now().plusSeconds(3600));
+            history.setStartTime(startTime);
+            history.setEndTime(endTime);
             exposureSlotHistoryRepository.save(history);
 
-            if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
-                throw new IllegalArgumentException("Failed to use ticket, please try again");
-            }
+//            if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
+//                throw new IllegalArgumentException("Failed to use ticket, please try again");
+//            }
         }
 
         purchaseTicket.setStatus(ExposureTicketStatus.USED);
@@ -129,17 +133,23 @@ public class ExposureTicketPurchaseService {
         return usersFlux.stream().map(user -> UserLite.fromPublicUserNet(user, tokenSigner)).collect(Collectors.toList());
     }
 
+    @Transactional
     public void forceReleaseTicket(String userId) {
-        exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+        Instant now = Instant.now();
+        MExposureSlot slot =  exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+        MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
+            .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, true));
+        exposureSlotHistoryRepository.save(history);
+
         exposureSlotRepository.deleteById(userId);
         sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
     }
 
-    public void handleAutoExpireSlot(String userId) {
-        MExposureSlot slot = exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
-        exposureSlotRepository.delete(slot);
-        sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
-    }
+//    public void handleAutoExpireSlot(String userId) {
+//        MExposureSlot slot = exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+//        exposureSlotRepository.delete(slot);
+//        sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
+//    }
 
     public List<CountUserTicketByType> countUserTicketByType() {
         String userId = authHelper.getUserId();
