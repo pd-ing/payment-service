@@ -191,7 +191,6 @@ public class VideoPurchaseServiceController {
 
     @GetMapping(value = "/salesHistoryDownloadPreparing")
     public Flux<ServerSentEvent<GenerateReportEvent>> salesHistoryDownloadPreparing(
-            @RequestParam(required = false, value = "pdUserId") String pdUserId,
             @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
@@ -199,6 +198,7 @@ public class VideoPurchaseServiceController {
             @RequestParam(value = "searchString", required = false) String searchString
     ){
         // Call service to process export
+        String pdUserId = authHelper.getUserId();
         return videoPurchaseService.salesHistoryDownloadPreparing(pdUserId, email, searchString, startDate, endDate, sortOrder)
                 .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
                         .id(event.getReportId())
