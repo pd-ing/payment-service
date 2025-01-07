@@ -55,6 +55,7 @@ public class DonationServiceController {
 
     @Autowired
     AuthHelper authHelper;
+
     @Autowired
     DonationService donationService;
 
@@ -211,12 +212,12 @@ public class DonationServiceController {
 
     @GetMapping(value = "/topDonorsListDownloadPreparing", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public Flux<ServerSentEvent<GenerateReportEvent>> topDonorsListDownloadPreparing(
-            @RequestParam(required = false, value = "pdUserId") String pdUserId,
             @RequestParam(required = false, value = "email") String email,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) {
         // Call service to process export
+        String pdUserId = authHelper.getUserId();
         return donationService.topDonorsListDownloadPreparing(pdUserId, email, startDate, endDate)
                 .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
                         .id(event.getReportId())
