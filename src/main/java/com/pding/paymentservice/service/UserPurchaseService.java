@@ -25,7 +25,7 @@ public class UserPurchaseService {
     private VideoPurchaseRepository videoPurchaseRepository;
 
     public List<String> findUserPurchaseFromLastDays(int days) {
-        log.info("Finding users who have not made a purchase in the last {} days", days);
+        log.info("Finding users who have purchase in the last {} days", days);
         LocalDateTime currentDateTime = LocalDateTime.now();
         LocalDateTime fromDateTime = currentDateTime.minusDays(days);
 
