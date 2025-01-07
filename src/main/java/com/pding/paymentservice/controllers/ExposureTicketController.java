@@ -63,6 +63,11 @@ public class ExposureTicketController {
         return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.getTopExposurePds()));
     }
 
+    @GetMapping("/admin/slots-overview")
+    public ResponseEntity getSlotOverview() throws Exception {
+        return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.getSlotOverview()));
+    }
+
     @PostMapping("/admin/force-release-ticket")
     public ResponseEntity forceReleaseTicket(@RequestBody ForceReleaseExposureTicketRequest request) {
         exposureTicketPurchaseService.forceReleaseTicket(request.getUserId());

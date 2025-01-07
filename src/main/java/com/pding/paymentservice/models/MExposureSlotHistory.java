@@ -28,4 +28,5 @@ public class MExposureSlotHistory {
     private String slotNumber;
     private Instant releasedTime;
     private Boolean isForcedRelease;
+    private String ticketType;
 }

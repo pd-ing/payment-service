@@ -12,6 +12,7 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.CountUserTicketByType;
+import com.pding.paymentservice.payload.response.SlotOverviewResponse;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.repository.ExposureSlotHistoryRepository;
 import com.pding.paymentservice.repository.ExposureSlotRepository;
@@ -31,6 +32,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -104,6 +106,7 @@ public class ExposureTicketPurchaseService {
             slot.setSlotNumber(slotNumber);
             slot.setStartTime(startTime);
             slot.setEndTime(endTime);
+            slot.setTicketType(type);
             slot = exposureSlotRepository.save(slot);
 
             //save History
@@ -113,6 +116,7 @@ public class ExposureTicketPurchaseService {
             history.setSlotNumber(slotNumber.toString());
             history.setStartTime(startTime);
             history.setEndTime(endTime);
+            history.setTicketType(type.toString());
             exposureSlotHistoryRepository.save(history);
 
 //            if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
@@ -138,7 +142,7 @@ public class ExposureTicketPurchaseService {
         Instant now = Instant.now();
         MExposureSlot slot =  exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
         MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
-            .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, true));
+            .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, true, slot.getTicketType().toString()));
         exposureSlotHistoryRepository.save(history);
 
         exposureSlotRepository.deleteById(userId);
@@ -158,5 +162,23 @@ public class ExposureTicketPurchaseService {
             return new CountUserTicketByType(type, count);
         }).collect(Collectors.toList());
         return result;
+    }
+
+    public List<SlotOverviewResponse> getSlotOverview() throws Exception {
+        List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
+        Set<String> userIds = exposureSlots.stream().map(MExposureSlot::getUserId).collect(Collectors.toSet());
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
+
+        return exposureSlots.stream().map(slot -> {
+            PublicUserNet user = usersFlux.stream().filter(u -> u.getId().equals(slot.getUserId())).findFirst().orElse(null);
+            if(user == null) {
+                return null;
+            }
+
+            return new SlotOverviewResponse(
+                slot.getUserId(), slot.getId(), user.getNickname(), slot.getTicketType().toString(), slot.getStartTime(), slot.getEndTime()
+            );
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+
     }
 }

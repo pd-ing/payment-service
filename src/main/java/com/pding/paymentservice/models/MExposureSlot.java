@@ -1,6 +1,7 @@
 package com.pding.paymentservice.models;
 
 import com.pding.paymentservice.models.enums.ExposureSlotNumber;
+import com.pding.paymentservice.models.enums.ExposureTicketType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -35,4 +36,6 @@ public class MExposureSlot {
     @Enumerated(EnumType.STRING)
     @Column(name = "slot_number", unique = true)
     private ExposureSlotNumber slotNumber;
+
+    private ExposureTicketType ticketType;
 }

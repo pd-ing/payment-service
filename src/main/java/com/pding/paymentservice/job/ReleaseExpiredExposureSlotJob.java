@@ -31,7 +31,7 @@ public class ReleaseExpiredExposureSlotJob {
         for (MExposureSlot slot : slots) {
             if(slot.getEndTime().isBefore(now)) {
                 MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
-                    .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, false));
+                    .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, false, slot.getTicketType().toString()));
                 history.setReleasedTime(now);
                 history.setIsForcedRelease(false);
                 exposureSlotHistoryRepository.save(history);
