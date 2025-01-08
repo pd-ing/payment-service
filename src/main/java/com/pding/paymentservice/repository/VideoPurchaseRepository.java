@@ -26,13 +26,13 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     List<VideoPurchase> getVideoPurchaseByUserId(String userId);
 
-    @Query("SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId")
+    @Query("SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId and vt.isRefunded != true")
     BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserId);
 
-    // Query method to find records by userID and videoID
+    @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoId = :videoId and vp.isRefunded != true")
     List<VideoPurchase> findByUserIdAndVideoId(String userId, String videoId);
 
-    @Query("SELECT vp.videoId, COALESCE(SUM(vp.treesConsumed), 0), COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId IN :videoIds GROUP BY vp.videoId")
+    @Query("SELECT vp.videoId, COALESCE(SUM(vp.treesConsumed), 0), COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId IN :videoIds and vp.isRefunded != true GROUP BY vp.videoId")
     List<Object[]> getTotalTreesEarnedAndSalesCountForVideoIds(@Param("videoIds") List<String> videoIds);
 
     default Map<String, VideoEarningsAndSales> getTotalTreesEarnedAndSalesCountMapForVideoIds(List<String> videoIds) {
@@ -55,11 +55,13 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
         return resultMap;
     }
 
+    @Query("SELECT vp from VideoPurchase vp where vp.videoId = :videoId and vp.isRefunded != true order by vp.lastUpdateDate desc")
     Page<VideoPurchase> findAllByVideoIdOrderByLastUpdateDateDesc(String videoId, Pageable pageable);
 
+    @Query("SELECT vp from VideoPurchase vp where vp.videoId = :videoId and vp.userId in :onlyTheseUsersList and vp.isRefunded != true order by vp.lastUpdateDate desc")
     Page<VideoPurchase> findAllByVideoIdAndUserIdInOrderByLastUpdateDateDesc(String videoId, List<String> onlyTheseUsersList, Pageable pageable);
 
-    @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId")
+    @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId and vp.isRefunded != true")
     BigDecimal getTotalTreesConsumedByUserId(@Param("userId") String userId);
 
     @Query(value =
@@ -72,7 +74,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "FROM video_purchase vp " +
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
-            "WHERE vp.video_owner_user_id = :userId " +
+            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true" +
             "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
@@ -88,7 +90,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "FROM video_purchase vp " +
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
-                    "WHERE vp.video_owner_user_id = :userId " +
+                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true" +
                     "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
                     "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                     "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
@@ -100,7 +102,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value =
             "SELECT sum(vp.trees_consumed) " +
             "FROM video_purchase vp " +
-            "WHERE vp.video_owner_user_id = :userId " +
+            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true" +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
@@ -109,27 +111,30 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT DISTINCT uf.follower, vp.user_id \n" +
             "FROM user_followings uf LEFT join video_purchase vp \n" +
             "ON uf.follower = vp.user_id\n" +
-            "WHERE uf.is_deleted = FALSE and uf.following = :userId",
+            "WHERE uf.is_deleted = FALSE and uf.following = :userId and vp.is_refunded != true",
             nativeQuery = true)
     List<Object[]> getFollowersList(String userId);
 
-    @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR)", nativeQuery = true)
+    @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR) and vp.is_refunded != true", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
-    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1")
+    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.isRefunded != true")
     Page<String> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, Pageable pageable);
 
+    @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoId in :videoIds and vp.isRefunded != true")
     List<VideoPurchase> findByUserIdAndVideoIdIn(String userId, Set<String> videoIds);
+
+    @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded != true")
     List<VideoPurchase> findByUserId(String userId);
 
-    @Query(value = "select vp from VideoPurchase vp where vp.expiryDate > current_date and vp.userId = :userId and (:ownerId is null or vp.videoOwnerUserId = :ownerId)")
+    @Query(value = "select vp from VideoPurchase vp where vp.expiryDate > current_date and vp.userId = :userId and (:ownerId is null or vp.videoOwnerUserId = :ownerId) and vp.isRefunded != true")
     Page<VideoPurchase> findNotExpiredVideo(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);
 
 
     @Query(value =
             " select *, max(vp.expiry_date) as maxExpiryDate" +
             " from video_purchase vp" +
-            " where 1 = 1 " +
+            " where 1 = 1 and vp.is_refunded != true" +
             "   and user_id = :userId" +
             "   and (:ownerId is null" +
             "     or video_owner_user_id = :ownerId)" +
@@ -137,11 +142,12 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             " having maxExpiryDate < now()", nativeQuery = true)
     Page<VideoPurchase> findExpiredVideoPurchases(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);
 
+    @Query("select count(vp) from VideoPurchase vp where vp.videoId = :videoId and vp.isRefunded != true")
     Long countByVideoId(String videoId);
 
     @Query(value = "select count(distinct user_id)" +
             " from video_purchase" +
-            " where video_id = :videoId", nativeQuery = true)
+            " where video_id = :videoId and is_refunded != true", nativeQuery = true)
     Long countUserBuyVideo(@Param("videoId") String videoId);
 
     @Query(value = " select vp.video_id," +
@@ -155,11 +161,11 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                    "        group_concat(vp.trees_consumed)" +
                    " from video_purchase vp" +
                    "          join users buyer on vp.user_id = buyer.id" +
-                   " where vp.video_id = :videoId" +
+                   " where vp.video_id = :videoId and vp.is_refunded != true" +
                    " group by vp.video_id, vp.user_id", nativeQuery = true)
     Page<Object[]> getSaleHistoryByVideoId(@Param("videoId") String videoId, Pageable pageable);
 
 
-    @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
+    @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.isRefunded != true and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
 }

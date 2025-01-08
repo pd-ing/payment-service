@@ -157,7 +157,7 @@ public class VideoPurchaseService {
     }
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
-        return videoPurchaseRepository.getVideoPurchaseByUserId(userID);
+        return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
     }
 
     public BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserID) {
