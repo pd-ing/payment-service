@@ -73,7 +73,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String idToken = parseJwt(request);
-        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith) && idToken == null;
+        String serverToken = parseServerToken(request);
+        return permitAllEndpoints.stream().anyMatch(request.getRequestURI()::startsWith) && idToken == null && serverToken == null;
     }
 
     @Override
