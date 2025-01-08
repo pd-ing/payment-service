@@ -1,5 +1,6 @@
 package com.pding.paymentservice.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -37,6 +38,9 @@ public class VideoPurchase {
     private String duration;
     private LocalDateTime expiryDate;
 
+    @Column(columnDefinition = "boolean default false")
+    private Boolean isRefunded = false;
+
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
         this.userId = userId;
         this.videoId = videoId;
@@ -45,6 +49,7 @@ public class VideoPurchase {
         this.videoOwnerUserId = videoOwnerUserId;
         this.isReplacementOfDeletedVideo = false;
         this.duration = "PERMANENT";
+        this.isRefunded = false;
     }
 
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate) {
@@ -56,6 +61,7 @@ public class VideoPurchase {
         this.isReplacementOfDeletedVideo = false;
         this.duration = duration;
         this.expiryDate = expiryDate;
+        this.isRefunded = false;
     }
 
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, Boolean isReplacementOfDeletedVideo) {
@@ -65,6 +71,7 @@ public class VideoPurchase {
         this.lastUpdateDate = LocalDateTime.now();
         this.videoOwnerUserId = videoOwnerUserId;
         this.isReplacementOfDeletedVideo = isReplacementOfDeletedVideo;
+        this.isRefunded = false;
     }
 
 }

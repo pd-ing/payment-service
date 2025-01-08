@@ -3,6 +3,8 @@ package com.pding.paymentservice.models;
 import com.pding.paymentservice.models.enums.ExposureTicketStatus;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +27,7 @@ public class ExposureTicketPurchase {
     @UuidGenerator
     private String id;
 
+    @Enumerated(EnumType.STRING)
     private ExposureTicketType type;
 
     private String userId;
@@ -35,6 +38,7 @@ public class ExposureTicketPurchase {
 
     private Instant usedDate;
 
+    @Enumerated(EnumType.STRING)
     private ExposureTicketStatus status;
 
 }

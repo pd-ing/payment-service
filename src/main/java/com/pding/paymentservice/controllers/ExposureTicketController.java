@@ -3,6 +3,7 @@ package com.pding.paymentservice.controllers;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.payload.request.BuyExposureTicketRequest;
 import com.pding.paymentservice.payload.request.ForceReleaseExposureTicketRequest;
+import com.pding.paymentservice.payload.request.RefundExposureTicketRequest;
 import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
@@ -72,5 +73,11 @@ public class ExposureTicketController {
     public ResponseEntity forceReleaseTicket(@RequestBody ForceReleaseExposureTicketRequest request) {
         exposureTicketPurchaseService.forceReleaseTicket(request.getUserId());
         return ResponseEntity.ok(new GenericStringResponse(null, "Force release ticket success"));
+    }
+
+    @PostMapping("/admin/refund-ticket")
+    public ResponseEntity refundTicket(@RequestBody RefundExposureTicketRequest request) {
+        exposureTicketPurchaseService.refundTicket(request.getTransactionId());
+        return ResponseEntity.ok(new GenericStringResponse(null, "Refund ticket success"));
     }
 }

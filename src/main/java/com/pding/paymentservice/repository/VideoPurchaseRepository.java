@@ -26,31 +26,11 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     List<VideoPurchase> getVideoPurchaseByUserId(String userId);
 
-    Page<VideoPurchase> findByUserId(String userId, Pageable pageable);
-
-    Page<VideoPurchase> findByUserIdAndVideoOwnerUserId(String userId, String videoOwnerUserId, Pageable pageable);
-
-
     @Query("SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId")
     BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserId);
 
     // Query method to find records by userID and videoID
     List<VideoPurchase> findByUserIdAndVideoId(String userId, String videoId);
-
-//    @Query("SELECT vp.videoId, COALESCE(SUM(vp.treesConsumed), 0), COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId IN :videoIds GROUP BY vp.videoId")
-//    List<Object[]> getTotalTreesEarnedAndSalesCountForVideoIds(@Param("videoIds") List<String> videoIds);
-//
-//    default Map<String, VideoEarningsAndSales> getTotalTreesEarnedAndSalesCountMapForVideoIds(List<String> videoIds) {
-//        List<Object[]> results = getTotalTreesEarnedAndSalesCountForVideoIds(videoIds);
-//        return results.stream()
-//                .collect(Collectors.toMap(
-//                        result -> (String) result[0],  // videoId
-//                        result -> new VideoEarningsAndSales(
-//                                (BigDecimal) result[1],  // total trees earned
-//                                (Long) result[2]  // total sales count
-//                        )
-//                ));
-//    }
 
     @Query("SELECT vp.videoId, COALESCE(SUM(vp.treesConsumed), 0), COUNT(vp) FROM VideoPurchase vp WHERE vp.videoId IN :videoIds GROUP BY vp.videoId")
     List<Object[]> getTotalTreesEarnedAndSalesCountForVideoIds(@Param("videoIds") List<String> videoIds);
@@ -74,12 +54,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
         return resultMap;
     }
-
-    @Query(value = "SELECT trees FROM videos WHERE video_id = :videoId AND user_id = :userId", nativeQuery = true)
-    BigDecimal findActualCostOfVideo(@Param("videoId") String videoId, @Param("userId") String userId);
-
-    @Query(value = "SELECT user_id, trees FROM videos WHERE video_id = :videoId", nativeQuery = true)
-    List<Object[]> findUserIdAndTreesByVideoId(@Param("videoId") String videoId);
 
     Page<VideoPurchase> findAllByVideoIdOrderByLastUpdateDateDesc(String videoId, Pageable pageable);
 
@@ -139,22 +113,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             nativeQuery = true)
     List<Object[]> getFollowersList(String userId);
 
-    @Query(value = "SELECT COALESCE(vp.last_update_date, ''), " +
-            "COALESCE(v.title, ''), " +
-            "COALESCE(vp.trees_consumed, ''), " +
-            "COALESCE(u.email, ''), " +
-            "COALESCE(vp.duration, ''), " +
-            "COALESCE(vp.expiry_date '') " +
-            "FROM video_purchase vp " +
-            "LEFT JOIN videos v ON vp.video_id = v.video_id " +
-            "LEFT JOIN users u ON vp.user_id = u.id " +
-            "WHERE vp.video_owner_user_id = :userId " +
-            "AND u.email LIKE %:searchString%",
-            countQuery = "SELECT COUNT(*) FROM video_purchase vp WHERE vp.video_owner_user_id = :userId AND " +
-                    "u.email LIKE %:searchString%",
-            nativeQuery = true)
-    Page<Object[]> searchSalesHistoryByUserId(String userId, String searchString, Pageable pageable);
-
     @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR)", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
@@ -164,11 +122,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     List<VideoPurchase> findByUserIdAndVideoIdIn(String userId, Set<String> videoIds);
     List<VideoPurchase> findByUserId(String userId);
 
-//    @Query(value =
-//            " select *" +
-//            " from video_purchase" +
-//            " where " +
-//            "     expiry_date > NOW() and user_id = :userId and (:ownerId is null or video_owner_user_id = :ownerId)", nativeQuery = true)
     @Query(value = "select vp from VideoPurchase vp where vp.expiryDate > current_date and vp.userId = :userId and (:ownerId is null or vp.videoOwnerUserId = :ownerId)")
     Page<VideoPurchase> findNotExpiredVideo(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);
 

@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.payload.request.RefundVideoPurchaseRequest;
 import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -229,5 +230,11 @@ public class VideoPurchaseServiceController {
                     .body(responseMap);
         }
     }
+
+    @PostMapping("/admin/refund-video-purchase")
+    public ResponseEntity<?> refundVideo(@RequestBody RefundVideoPurchaseRequest request) {
+        return videoPurchaseService.refundVideoPurchase(request.getTransactionId());
+    }
+
 
 }

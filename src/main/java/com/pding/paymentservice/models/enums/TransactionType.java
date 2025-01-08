@@ -10,6 +10,7 @@ public enum TransactionType {
     TREES_REVERTED("trees_reverted"),
     LEAFS_REVERTED("leafs_reverted"),
     VIDEO_PURCHASE("videoPurchase"),
+    REFUND_VIDEO_PURCHASE("refundVideoPurchase"),
     IMAGE_PURCHASE("imagePurchase"),
     AUDIO_CALL("audioCall"),
     VIDEO_CALL("videoCall"),
@@ -32,7 +33,9 @@ public enum TransactionType {
 
     MEDIA_TRADING("mediaTrading"),
 
-    BUY_EXPOSURE_TICKET("buyExposureTicket"),;
+    BUY_EXPOSURE_TICKET("buyExposureTicket"),
+    REFUND_EXPOSURE_TICKET("refundExposureTicket"),
+    ;
 
     private final String displayName;
 

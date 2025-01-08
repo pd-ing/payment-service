@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -88,14 +89,14 @@ public class ExposureTicketPurchaseService {
         boolean hasEmptySlot = allSlots.size() < 3;
         if (hasEmptySlot) {
             MExposureSlot slot = allSlots.stream().filter(s -> s.getUserId().equals(userId)).findFirst().orElse(null);
-            if(slot != null) {
+            if (slot != null) {
                 throw new IllegalArgumentException("You already has exposure slot");
             }
 
             //assign slot
             List<ExposureSlotNumber> selectedSlotNumber = allSlots.stream().map(MExposureSlot::getSlotNumber).collect(Collectors.toList());
             ExposureSlotNumber slotNumber = Arrays.stream(ExposureSlotNumber.values()).filter(s -> !selectedSlotNumber.contains(s)).findFirst().orElse(null);
-            if(slotNumber == null) {
+            if (slotNumber == null) {
                 throw new IllegalArgumentException("Failed to assign slot, please try again");
             }
 
@@ -140,7 +141,7 @@ public class ExposureTicketPurchaseService {
     @Transactional
     public void forceReleaseTicket(String userId) {
         Instant now = Instant.now();
-        MExposureSlot slot =  exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
+        MExposureSlot slot = exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
         MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
             .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, true, slot.getTicketType().toString()));
         exposureSlotHistoryRepository.save(history);
@@ -171,7 +172,7 @@ public class ExposureTicketPurchaseService {
 
         return exposureSlots.stream().map(slot -> {
             PublicUserNet user = usersFlux.stream().filter(u -> u.getId().equals(slot.getUserId())).findFirst().orElse(null);
-            if(user == null) {
+            if (user == null) {
                 return null;
             }
 
@@ -180,5 +181,21 @@ public class ExposureTicketPurchaseService {
             );
         }).filter(Objects::nonNull).collect(Collectors.toList());
 
+    }
+
+    @Transactional
+    public void refundTicket(String transactionId) {
+        ExposureTicketPurchase purchase = exposureTicketPurchaseRepository.findById(transactionId).orElseThrow(() -> new IllegalArgumentException("Invalid transaction id"));
+        if (purchase.getStatus() == ExposureTicketStatus.USED) {
+            throw new IllegalArgumentException("Cannot refund used ticket");
+        }
+        if(purchase.getStatus() == ExposureTicketStatus.REFUNDED) {
+            throw new IllegalArgumentException("Ticket already refunded");
+        }
+        purchase.setStatus(ExposureTicketStatus.REFUNDED);
+        exposureTicketPurchaseRepository.save(purchase);
+
+        walletService.addToWallet(purchase.getUserId(), purchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
+        ledgerService.saveToLedger(purchase.getId(), purchase.getTreesConsumed(), new BigDecimal(0), TransactionType.REFUND_EXPOSURE_TICKET, purchase.getUserId());
     }
 }

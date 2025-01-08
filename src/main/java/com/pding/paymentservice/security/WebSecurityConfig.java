@@ -161,7 +161,9 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/ticket/{ticketId}/use").authenticated()
                                 .requestMatchers("/api/payment/top-exposure-pds").authenticated()
                                 .requestMatchers("/api/payment/admin/force-release-ticket").authenticated()
+                                .requestMatchers("/api/payment/admin/refund-ticket").authenticated()
                                 .requestMatchers("/api/payment/admin/slots-overview").authenticated()
+                                .requestMatchers("/api/payment/admin/refund-video-purchase").authenticated()
 
                 );
 

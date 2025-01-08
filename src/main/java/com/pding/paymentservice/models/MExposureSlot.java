@@ -37,5 +37,6 @@ public class MExposureSlot {
     @Column(name = "slot_number", unique = true)
     private ExposureSlotNumber slotNumber;
 
+    @Enumerated(EnumType.STRING)
     private ExposureTicketType ticketType;
 }
