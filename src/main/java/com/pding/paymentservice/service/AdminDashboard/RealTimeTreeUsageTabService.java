@@ -41,10 +41,12 @@ public class RealTimeTreeUsageTabService {
         BigDecimal totalTreesTransacted = new BigDecimal(0.00);
         BigDecimal totalTreesVideoTransaction = realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideos(startDate, endDate);
         BigDecimal totalTreesDonated = realTimeTreeUsageTabRepository.getTotalTreesDonated(startDate, endDate);
-        totalTreesTransacted = totalTreesVideoTransaction.add(totalTreesDonated);
+        BigDecimal totalTreesTransactedForExposureTickets = realTimeTreeUsageTabRepository.getTotalTreesTransactedForExposureTickets(startDate, endDate);
+        totalTreesTransacted = totalTreesVideoTransaction.add(totalTreesDonated).add(totalTreesTransactedForExposureTickets);
         treeSummary.setTotalTreesTransacted(totalTreesTransacted);
         treeSummary.setTotalTreesVideoTransaction(totalTreesVideoTransaction);
         treeSummary.setTotalTreesDonated(totalTreesDonated);
+        treeSummary.setTotalTreesTransactedForExposureTickets(totalTreesTransactedForExposureTickets);
         return treeSummary;
     }
 
@@ -61,7 +63,8 @@ public class RealTimeTreeUsageTabService {
             tranObj.setTransactionType(realTimeTreeTransactionHistory[4].toString());
             tranObj.setPdNickname(realTimeTreeTransactionHistory[5].toString());
             tranObj.setPdUserId(realTimeTreeTransactionHistory[6].toString());
-
+            tranObj.setPdUserId(realTimeTreeTransactionHistory[6].toString());
+            tranObj.setTransactionId(realTimeTreeTransactionHistory[7].toString());
             treeUsageList.add(tranObj);
         }
         return treeUsageList;
