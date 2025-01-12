@@ -1,6 +1,9 @@
 package com.pding.paymentservice.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.pding.paymentservice.payload.request.CreatePaypalOrderRequest;
 import com.pding.paymentservice.service.PaypalService;
 import com.stripe.exception.StripeException;
@@ -21,8 +24,30 @@ public class PaypalController {
     PaypalService paypalService;
 
     @PostMapping("/webhook")
-    public void handlePaypalWebhook(@RequestBody String body) {
-        System.out.println("Paypal webhook received: " + body);
+    public void handlePaypalWebhook(@RequestBody String body) throws JsonProcessingException {
+        ObjectNode json = new ObjectMapper().readValue(body, ObjectNode.class);
+        String eventType = json.get("event_type").asText();
+
+        if(eventType.equalsIgnoreCase("PAYMENT.CAPTURE.REFUNDED") || eventType.equalsIgnoreCase("PAYMENT.CAPTURE.REVERSED")) {
+            ObjectNode resource = (ObjectNode) json.get("resource");
+            ArrayNode links = (ArrayNode) resource.get("links");
+
+            //get rel up link (parrent transaction of refund)
+            String upLink = null;
+            for(int i = 0; i < links.size(); i++) {
+                ObjectNode link = (ObjectNode) links.get(i);
+                if(link.get("rel").asText().equalsIgnoreCase("up")) {
+                    upLink = link.get("href").asText();
+                    break;
+                }
+            }
+
+            if(upLink != null) {
+                //get transaction id from up link
+                String transactionId = upLink.substring(upLink.lastIndexOf('/') + 1);
+                paypalService.refund(transactionId);
+            }
+        }
     }
 
     @PostMapping("/createOrder")

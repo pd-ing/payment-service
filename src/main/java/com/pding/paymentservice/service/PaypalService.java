@@ -93,4 +93,8 @@ public class PaypalService {
 
         return captureOrderResponse;
     }
+
+    public void refund(String transactionId) {
+        paymentService.completeRefundTreesByTransactionId(transactionId);
+    }
 }

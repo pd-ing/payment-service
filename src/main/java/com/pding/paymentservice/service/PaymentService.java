@@ -476,6 +476,67 @@ public class PaymentService {
     }
 
     @Transactional
+    public String completeRefundTreesByTransactionId(String transactionId) {
+        Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(transactionId);
+        //Check if refund is already done for this TxnId
+        String txnIdPattern = "_trees_refunded_for_" + transactionId;
+        if (walletHistoryService.findByTransactionIdWithPattern(txnIdPattern).size() > 0) {
+            log.info("Refund is already done for the given transactionId");
+            return "Refund is already done for the given transactionId";
+        }
+
+        if (walletHistoryOptional.isPresent()) {
+            WalletHistory walletHistory = walletHistoryOptional.get();
+
+            BigDecimal treesToRefund = walletHistory.getPurchasedTrees();
+            if (treesToRefund.compareTo(new BigDecimal("0")) <= 0) {
+                log.error("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId : {}", LogSanitizer.sanitizeForLog(walletHistory.getUserId()));
+                throw new RuntimeException("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For userId :" + walletHistory.getUserId() +
+                        ", treesToRefund:" + treesToRefund + " , purchaseToken:" + transactionId);
+            }
+            Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
+
+            if (userWallet.getTrees().compareTo(treesToRefund) < 0) {
+                log.error("Cannot complete the refund request, because of insufficient leafs balance, For userId : {}", LogSanitizer.sanitizeForLog(walletHistory.getUserId()));
+                throw new RuntimeException("Cannot complete the refund request, because of insufficient leafs balance, For userId :" + walletHistory.getUserId() +
+                        " , refundRequestAmtInTrees:" + treesToRefund + " , leafsInWallet:" + userWallet.getLeafs() + " , transactionId:" + transactionId);
+            }
+
+            String refundTransactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
+            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(refundTransactionId);
+
+            if (walletHistoryRefundEntryOptional.isPresent()) {
+                WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
+                String description = walletHistoryRefundRecord.getDescription() + ", Refund completed successfully";
+                walletHistoryRefundRecord.setDescription(description);
+                walletHistoryRefundRecord.setTransactionStatus(TransactionType.REFUND_COMPLETED.getDisplayName());
+                walletHistoryService.save(walletHistoryRefundRecord);
+            } else {
+                walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
+                        walletHistory.getUserId(),
+                        new BigDecimal(0),
+                        treesToRefund,
+                        LocalDateTime.now(),
+                        transactionId,
+                        TransactionType.REFUND_COMPLETED.getDisplayName(),
+                        walletHistory.getAmount(),
+                        "Refunded tree through backend",
+                        walletHistory.getCurrency(),
+                        "Refund completed successfully",
+                        walletHistory.getIpAddress()
+                );
+            }
+
+            ledgerService.saveToLedger(walletHistory.getWalletId(), treesToRefund, BigDecimal.ZERO, TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
+            walletService.deductTreesFromWallet(walletHistory.getUserId(), treesToRefund);
+
+            return "Refund completed successFully for the transactionId : " + transactionId + " , UserId :" + walletHistory.getUserId() + ", treesToRefund:" + treesToRefund;
+        } else {
+            throw new RuntimeException("Refund failed because record not found in wallet history for transactionId:" + transactionId);
+        }
+    }
+
+    @Transactional
     public String cancelRefundLeafs(String transactionId) {
 
         String txnIdPattern = "_leafs_refunded_for_" + transactionId;
