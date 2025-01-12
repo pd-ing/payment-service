@@ -31,8 +31,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,6 +54,15 @@ public class ExposureTicketPurchaseService {
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final TokenSigner tokenSigner;
     private final SendNotificationSqsMessage sendNotificationSqsMessage;
+
+    private static final Map<String, ZoneId> ZONEID_MAP = Map.of(
+        "kr", ZoneId.of("Asia/Seoul"),
+        "ja", ZoneId.of("Asia/Tokyo"),
+        "th", ZoneId.of("Asia/Bangkok"),
+        "vi", ZoneId.of("Asia/Ho_Chi_Minh"),
+        "zh_TW", ZoneId.of("Asia/Taipei"),
+        "pl", ZoneId.of("Asia/Manila")
+    );
 
     @Transactional
     public ExposureTicketPurchase buyTicket(ExposureTicketType type) {
@@ -84,6 +96,20 @@ public class ExposureTicketPurchaseService {
         if (!usersFlux.get(0).getIsCreator()) {
             throw new IllegalArgumentException("Only creator can use exposure ticket");
         }
+
+        String language = usersFlux.get(0).getLanguage();
+
+        ZoneId zoneId = ZONEID_MAP.getOrDefault(language, ZoneId.of("UTC"));
+        //validate time zone
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        if(type.equals(ExposureTicketType.MORNING_AFTERNOON) && (now.getHour() >= 18 || now.getHour() < 6)) {
+            throw new IllegalArgumentException("Morning-Afternoon Ticket can only be used from 6AM to 6PM");
+        }
+
+        if(type.equals(ExposureTicketType.EVENING_NIGHT) && (now.getHour() >= 6 && now.getHour() < 18)) {
+            throw new IllegalArgumentException("Evening-Night Ticket can only be used from 6PM to 6AM next day");
+        }
+
         ExposureTicketPurchase purchaseTicket = exposureTicketPurchaseRepository.findFirstByTypeAndStatusAndUserId(type, ExposureTicketStatus.UNUSED, userId).orElseThrow(() -> new IllegalArgumentException("No ticket found"));
 
         //TODO: validate type & time
