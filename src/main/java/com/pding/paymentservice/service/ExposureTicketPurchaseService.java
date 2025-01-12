@@ -78,8 +78,12 @@ public class ExposureTicketPurchaseService {
     }
 
     @Transactional
-    public ExposureTicketPurchase useTicket(ExposureTicketType type) {
+    public ExposureTicketPurchase useTicket(ExposureTicketType type) throws Exception {
         String userId = authHelper.getUserId();
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(Set.of(userId)).blockFirst();
+        if (!usersFlux.get(0).getIsCreator()) {
+            throw new IllegalArgumentException("Only creator can use exposure ticket");
+        }
         ExposureTicketPurchase purchaseTicket = exposureTicketPurchaseRepository.findFirstByTypeAndStatusAndUserId(type, ExposureTicketStatus.UNUSED, userId).orElseThrow(() -> new IllegalArgumentException("No ticket found"));
 
         //TODO: validate type & time

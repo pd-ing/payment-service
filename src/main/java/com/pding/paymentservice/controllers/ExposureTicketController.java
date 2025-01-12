@@ -55,7 +55,7 @@ public class ExposureTicketController {
 //    }
 
     @PostMapping("/ticket/use")
-    public ResponseEntity useTicketByType(@RequestParam ExposureTicketType type) {
+    public ResponseEntity useTicketByType(@RequestParam ExposureTicketType type) throws Exception {
         return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.useTicket(type)));
     }
 
