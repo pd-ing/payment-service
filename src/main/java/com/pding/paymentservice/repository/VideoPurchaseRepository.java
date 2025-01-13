@@ -2,10 +2,8 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -74,7 +72,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "FROM video_purchase vp " +
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
-            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true" +
+            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true " +
             "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
@@ -90,7 +88,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "FROM video_purchase vp " +
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
-                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true" +
+                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true " +
                     "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
                     "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                     "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
@@ -102,7 +100,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value =
             "SELECT sum(vp.trees_consumed) " +
             "FROM video_purchase vp " +
-            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true" +
+            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded != true " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
