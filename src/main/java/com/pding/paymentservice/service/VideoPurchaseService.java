@@ -792,7 +792,7 @@ public class VideoPurchaseService {
             shObj.setAmount(salesHistory[1].toString());
             shObj.setBuyerEmail(StringUtil.maskEmail(email));
             shObj.setDuration(StringUtil.convertDurationKeyToValue(salesHistory[3].toString()));
-            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString())));
+            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
             shList.add(shObj);
         }
         return shList;
