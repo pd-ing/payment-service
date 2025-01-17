@@ -65,11 +65,16 @@ spec:
           volumeMounts:
             - mountPath: /var/logs/pding/
               name: log-volume
+            - mountPath: /var/tmp/pding_reports
+              name: report-volume
       volumes:
         - name: log-volume
           hostPath:
             path: /var/logs/pding/payment-service/
             type: DirectoryOrCreate
+        - name: report-volume
+          persistentVolumeClaim:
+            claimName: efs-shared-pvc
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
