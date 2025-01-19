@@ -99,6 +99,10 @@ public class ExposureTicketPurchaseService {
 
         String language = usersFlux.get(0).getLanguage();
 
+        if(language == null || !ZONEID_MAP.containsKey(language)) {
+            throw new IllegalArgumentException("Cannot use the exposure ticket. Please contact support for assistance");
+        }
+
         ZoneId zoneId = ZONEID_MAP.getOrDefault(language, ZoneId.of("UTC"));
         //validate time zone
         ZonedDateTime now = ZonedDateTime.now(zoneId);
