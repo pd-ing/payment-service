@@ -99,6 +99,10 @@ public class ExposureTicketPurchaseService {
 
         String language = usersFlux.get(0).getLanguage();
 
+        if(language == null || !ZONEID_MAP.containsKey(language)) {
+            throw new IllegalArgumentException("Cannot use the exposure ticket. Please contact support for assistance");
+        }
+
         ZoneId zoneId = ZONEID_MAP.getOrDefault(language, ZoneId.of("UTC"));
         //validate time zone
         ZonedDateTime now = ZonedDateTime.now(zoneId);
@@ -163,7 +167,9 @@ public class ExposureTicketPurchaseService {
     public List<UserLite> getTopExposurePds() throws Exception {
         List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
         Set<String> userIds = exposureSlots.stream().map(MExposureSlot::getUserId).collect(Collectors.toSet());
-
+        if(userIds.isEmpty()) {
+            return List.of();
+        }
         List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
         return usersFlux.stream().map(user -> UserLite.fromPublicUserNet(user, tokenSigner)).collect(Collectors.toList());
     }
@@ -176,7 +182,7 @@ public class ExposureTicketPurchaseService {
             .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, true, slot.getTicketType().toString()));
         exposureSlotHistoryRepository.save(history);
 
-        exposureSlotRepository.deleteById(userId);
+        exposureSlotRepository.delete(slot);
         sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
     }
 
