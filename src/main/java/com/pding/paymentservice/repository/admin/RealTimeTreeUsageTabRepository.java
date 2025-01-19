@@ -78,7 +78,8 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "         'VIDEO' as transaction_type," +
         "         COALESCE(pd.nickname, '')," +
         "         COALESCE(pd.id, '')," +
-        "         vp.id" +
+        "         vp.id," +
+        "         case is_refunded when true then 'REFUNDED' else 'COMPLETED' end as status" +
         "  FROM video_purchase vp" +
         "           LEFT JOIN users u ON vp.user_id = u.id" +
         "           LEFT JOIN users pd ON vp.video_owner_user_id = pd.id" +
@@ -94,7 +95,8 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "         'DONATION' as transaction_type," +
         "         COALESCE(pd_don.nickname, '')," +
         "         COALESCE(pd_don.id, '')," +
-        "         d.id" +
+        "         d.id," +
+        "         'COMPLETED' as status" +
         "  FROM donation d" +
         "           LEFT JOIN users u" +
         "                     ON d.donor_user_id = u.id" +
@@ -114,7 +116,8 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "         'EXPOSURE_TICKET' as transaction_type," +
         "         ''," +
         "         ''," +
-        "         ticket.id" +
+        "         ticket.id," +
+        "         ticket.status as status" +
         "  from exposure_ticket_purchase ticket" +
         "           left join users u on ticket.user_id = u.id" +
         "  where (:startDate IS NULL" +
