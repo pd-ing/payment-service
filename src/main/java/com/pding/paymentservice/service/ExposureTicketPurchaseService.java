@@ -167,7 +167,9 @@ public class ExposureTicketPurchaseService {
     public List<UserLite> getTopExposurePds() throws Exception {
         List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
         Set<String> userIds = exposureSlots.stream().map(MExposureSlot::getUserId).collect(Collectors.toSet());
-
+        if(userIds.isEmpty()) {
+            return List.of();
+        }
         List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
         return usersFlux.stream().map(user -> UserLite.fromPublicUserNet(user, tokenSigner)).collect(Collectors.toList());
     }
