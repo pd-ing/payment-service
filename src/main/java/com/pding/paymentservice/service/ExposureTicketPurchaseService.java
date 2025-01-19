@@ -176,7 +176,7 @@ public class ExposureTicketPurchaseService {
             .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, true, slot.getTicketType().toString()));
         exposureSlotHistoryRepository.save(history);
 
-        exposureSlotRepository.deleteById(userId);
+        exposureSlotRepository.delete(slot);
         sendNotificationSqsMessage.sendForceReleaseTopExposureNotification(userId);
     }
 
