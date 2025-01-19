@@ -200,7 +200,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
     @Query(value = "SELECT  COALESCE(SUM(trees_consumed), 0) " +
             "FROM exposure_ticket_purchase " +
             "WHERE (:startDate IS NULL OR purchased_date >= :startDate) " +
-            "AND (:endDate IS NULL OR  purchased_date <= :endDate) ",
+            "AND (:endDate IS NULL OR  purchased_date <= :endDate) and status != 'REFUNDED'",
             nativeQuery = true)
     BigDecimal getTotalTreesTransactedForExposureTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
