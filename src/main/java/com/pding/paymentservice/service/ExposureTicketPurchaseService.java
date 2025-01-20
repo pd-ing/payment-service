@@ -169,22 +169,22 @@ public class ExposureTicketPurchaseService {
 
         //check if any slot is expired
         Instant now = Instant.now();
-        List<MExposureSlot> expiredSlots = exposureSlots.stream().filter(s -> s.getEndTime().isBefore(now)).collect(Collectors.toList());
-        for (MExposureSlot slot : expiredSlots) {
-            try {
-                MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
-                    .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, false, slot.getTicketType().toString()));
-                history.setReleasedTime(now);
-                history.setIsForcedRelease(false);
-                exposureSlotHistoryRepository.save(history);
+//        List<MExposureSlot> expiredSlots = exposureSlots.stream().filter(s -> s.getEndTime().isBefore(now)).collect(Collectors.toList());
+//        for (MExposureSlot slot : expiredSlots) {
+//            try {
+//                MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
+//                    .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, false, slot.getTicketType().toString()));
+//                history.setReleasedTime(now);
+//                history.setIsForcedRelease(false);
+//                exposureSlotHistoryRepository.save(history);
+//
+//                //release the slot
+//                exposureSlotRepository.delete(slot);
+//            } catch (Exception ignored) {
+//            }
+//        }
 
-                //release the slot
-                exposureSlotRepository.delete(slot);
-            } catch (Exception ignored) {
-            }
-        }
-
-        Set<String> userIds = exposureSlots.stream().map(MExposureSlot::getUserId).collect(Collectors.toSet());
+        Set<String> userIds = exposureSlots.stream().filter(s -> s.getEndTime().isAfter(now)).map(MExposureSlot::getUserId).collect(Collectors.toSet());
         if(userIds.isEmpty()) {
             return List.of();
         }
