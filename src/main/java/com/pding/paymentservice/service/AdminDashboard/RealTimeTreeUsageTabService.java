@@ -65,7 +65,7 @@ public class RealTimeTreeUsageTabService {
             tranObj.setPdUserId(realTimeTreeTransactionHistory[6].toString());
             tranObj.setPdUserId(realTimeTreeTransactionHistory[6].toString());
             tranObj.setTransactionId(realTimeTreeTransactionHistory[7].toString());
-            tranObj.setTransactionStatus(realTimeTreeTransactionHistory[7] != null ? realTimeTreeTransactionHistory[7].toString() : "");
+            tranObj.setTransactionStatus(realTimeTreeTransactionHistory[8] != null ? realTimeTreeTransactionHistory[8].toString() : "");
             treeUsageList.add(tranObj);
         }
         return treeUsageList;
