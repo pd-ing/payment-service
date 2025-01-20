@@ -23,5 +23,6 @@ public class TransactionHistoryForAdminDashboard {
     String pdNickname;
     String pdUserId;
     String transactionId;
+    String transactionStatus;
 
 }
