@@ -75,7 +75,7 @@ public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
                 "         etp.trees_consumed as amount" +
                 "  from exposure_ticket_purchase etp" +
                 "           LEFT JOIN users u ON etp.user_id = u.id" +
-                "  WHERE etp.user_id = :userId)" +
+                "  WHERE etp.is_give_by_admin != true and etp.user_id = :userId)" +
                 " ORDER BY last_update_date DESC",
             countQuery =
                 " select count(*) " +
@@ -92,7 +92,7 @@ public interface TreesRepository extends JpaRepository<VideoPurchase, String> {
                 "       (select etp.purchased_date as last_update_date " +
                 "        from exposure_ticket_purchase etp " +
                 "                 LEFT JOIN users u ON etp.user_id = u.id " +
-                "        WHERE etp.user_id = :userId)) as total",
+                "        WHERE etp.is_give_by_admin != true and etp.user_id = :userId)) as total",
             nativeQuery = true)
     Page<Object[]> getTreesSpentHistory(String userId, Pageable pageable);
 

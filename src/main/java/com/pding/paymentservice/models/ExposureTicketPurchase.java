@@ -41,4 +41,6 @@ public class ExposureTicketPurchase {
     @Enumerated(EnumType.STRING)
     private ExposureTicketStatus status;
 
+    private Boolean isGiveByAdmin;
+
 }

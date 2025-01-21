@@ -34,10 +34,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,6 +79,7 @@ public class ExposureTicketPurchaseService {
         purchase.setTreesConsumed(ticketPrice);
         purchase.setPurchasedDate(Instant.now());
         purchase.setStatus(ExposureTicketStatus.UNUSED);
+        purchase.setIsGiveByAdmin(false);
         purchase = exposureTicketPurchaseRepository.save(purchase);
 
         ledgerService.saveToLedger(purchase.getId(), ticketPrice, new BigDecimal(0), TransactionType.BUY_EXPOSURE_TICKET, userId);
@@ -251,5 +254,27 @@ public class ExposureTicketPurchaseService {
 
         walletService.addToWallet(purchase.getUserId(), purchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
         ledgerService.saveToLedger(purchase.getId(), purchase.getTreesConsumed(), new BigDecimal(0), TransactionType.REFUND_EXPOSURE_TICKET, purchase.getUserId());
+    }
+
+    public List<ExposureTicketPurchase> giveTicket(String userId, ExposureTicketType type, Integer numberOfTicket) {
+        MExposureTicket ticket = exposureTicketRepository.findById(type).orElseThrow(() -> new IllegalArgumentException("Invalid ticket type"));
+        BigDecimal ticketPrice = BigDecimal.ZERO;
+
+        List<ExposureTicketPurchase> purchases = new LinkedList<>();
+        for(int i = 0; i < numberOfTicket; i++) {
+            ExposureTicketPurchase purchase = new ExposureTicketPurchase();
+            purchase.setId(UUID.randomUUID().toString());
+            purchase.setUserId(userId);
+            purchase.setType(type);
+            purchase.setTreesConsumed(ticketPrice);
+            purchase.setPurchasedDate(Instant.now());
+            purchase.setStatus(ExposureTicketStatus.UNUSED);
+            purchase.setIsGiveByAdmin(true);
+            purchases.add(purchase);
+
+        }
+        return exposureTicketPurchaseRepository.saveAll(purchases);
+
+
     }
 }

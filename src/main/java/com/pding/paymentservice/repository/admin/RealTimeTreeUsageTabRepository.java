@@ -120,7 +120,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "         ticket.status as status" +
         "  from exposure_ticket_purchase ticket" +
         "           left join users u on ticket.user_id = u.id" +
-        "  where (:startDate IS NULL" +
+        "  where ticket.is_give_by_admin != true and (:startDate IS NULL" +
         "      OR ticket.purchased_date >= :startDate)" +
         "    and (:endDate IS NULL" +
         "      OR ticket.purchased_date <= :endDate)" +
@@ -175,7 +175,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "              ticket.id " +
                 "       from exposure_ticket_purchase ticket " +
                 "                left join users u on ticket.user_id = u.id " +
-                "       where (:startDate IS NULL " +
+                "       where ticket.is_give_by_admin != true and (:startDate IS NULL " +
                 "           OR ticket.purchased_date >= :startDate) " +
                 "         and (:endDate IS NULL " +
                 "           OR ticket.purchased_date <= :endDate) " +
@@ -202,7 +202,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
 
     @Query(value = "SELECT  COALESCE(SUM(trees_consumed), 0) " +
             "FROM exposure_ticket_purchase " +
-            "WHERE (:startDate IS NULL OR purchased_date >= :startDate) " +
+            "WHERE is_give_by_admin != true and (:startDate IS NULL OR purchased_date >= :startDate) " +
             "AND (:endDate IS NULL OR  purchased_date <= :endDate) and status != 'REFUNDED'",
             nativeQuery = true)
     BigDecimal getTotalTreesTransactedForExposureTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
