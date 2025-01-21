@@ -5,6 +5,7 @@ import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryRecord;
 import com.pding.paymentservice.repository.DonationRepository;
+import com.pding.paymentservice.repository.ExposureTicketPurchaseRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.TreesRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
@@ -31,6 +32,9 @@ public class TreesService {
 
     @Autowired
     VideoPurchaseRepository videoPurchaseRepository;
+
+    @Autowired
+    ExposureTicketPurchaseRepository exposureTicketPurchaseRepository;
 
     @Autowired
     TreesRepository treesRepository;
@@ -80,5 +84,9 @@ public class TreesService {
 
     public BigDecimal totalTreesSpentByUserOnDonation(String userId) {
         return videoPurchaseRepository.getTotalTreesConsumedByUserId(userId);
+    }
+
+    public BigDecimal totalTreesSpentByUserOnTicket(String userId) {
+        return exposureTicketPurchaseRepository.getTotalTreesConsumedByUserId(userId);
     }
 }

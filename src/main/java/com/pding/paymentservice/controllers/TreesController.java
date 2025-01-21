@@ -61,7 +61,7 @@ public class TreesController {
         try {
             Page<TreeSpentHistoryRecord> publicUserNetList = treesService.getTreeSpentHistory(page, size);
             String userId = authHelper.getUserId();
-            BigDecimal totalTreesSpent = treesService.totalTreesSpentByUserOnVideo(userId).add(treesService.totalTreesSpentByUserOnDonation(userId));
+            BigDecimal totalTreesSpent = treesService.totalTreesSpentByUserOnVideo(userId).add(treesService.totalTreesSpentByUserOnDonation(userId)).add(treesService.totalTreesSpentByUserOnTicket(userId));
             return ResponseEntity.ok().body(new TreeSpentHistoryResponse(null, totalTreesSpent, publicUserNetList));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.TOP_FAN_LIST, e);
