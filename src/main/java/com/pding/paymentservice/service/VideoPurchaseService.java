@@ -156,70 +156,8 @@ public class VideoPurchaseService {
         return video;
     }
 
-    public ResponseEntity<?> createVideoPurchaseReplacementFromEmail(String videoId, String ownerUserId, String emails) {
-        try {
-            String ownerId;
-            if (ownerUserId == null) {
-                ownerId = authHelper.getUserId();
-            } else {
-                ownerId = ownerUserId;
-            }
-            List<String> validEmails = Arrays.stream(emails.split(","))
-                    .filter(e -> emailValidator.isValidEmail(e))
-                    .toList();
-            List<String> userIds = userServiceNetworkManager.getUsersListByEmailFlux(validEmails)
-                    .map(PublicUserNet::getId) // Transform PublicUserNet to its id
-                    .collect(Collectors.toList()) // Collect ids into a List
-                    .block();
-
-            if (userIds == null || userIds.isEmpty()) {
-                return ResponseEntity.ok("No users added. Check the emails you added are valid. Or Try again. Or contact support.");
-            }
-            List<String> ids = createVideoReplacements(videoId, ownerId, userIds);
-            if (ids.isEmpty()) {
-                return ResponseEntity.ok("Added all users");
-            } else {
-                return ResponseEntity.ok("Added all users except: " + String.join(",", ids));
-            }
-
-        } catch (Exception ex) {
-            pdLogger.logException(ex);
-            int code = HttpStatus.INTERNAL_SERVER_ERROR.value();
-            return ResponseEntity.status(code).body(new ErrorResponse(code, ex.getMessage()));
-        }
-    }
-
-    /**
-     * @param videoId      - video id
-     * @param videoOwnerId - owner of the video
-     * @param userIds      - list of user ids
-     * @return the failed user ids to add in the video purchase table as replacement.
-     */
-    public List<String> createVideoReplacements(String videoId, String videoOwnerId, List<String> userIds) {
-        List<String> failedUIds = new ArrayList<>(List.of());
-        userIds.forEach(uid -> {
-            try {
-                createVideoTransactionForVideoReplacement(uid, videoId, new BigDecimal(0), videoOwnerId);
-            } catch (Exception ex) {
-                failedUIds.add(uid);
-                pdLogger.logException(ex);
-            }
-        });
-        return failedUIds;
-
-    }
-
-    @Transactional
-    public void createVideoTransactionForVideoReplacement(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
-        walletService.deductTreesFromWallet(userId, treesToConsumed);
-
-        VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, true);
-        VideoPurchase video = videoPurchaseRepository.save(transaction);
-//        pdLogger.logInfo("BUY_VIDEO_REPLACEMENT", "Video purchase record created with details UserId : " + userId + " ,VideoId : " + videoId + ", trees : " + treesToConsumed + ", VideoOwnerUserId : " + videoOwnerUserId);
-    }
-
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
-        return videoPurchaseRepository.getVideoPurchaseByUserId(userID);
+        return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
     }
 
     public BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserID) {
@@ -239,22 +177,6 @@ public class VideoPurchaseService {
             return false;
 
         return true;
-    }
-
-    boolean validateActualCostOfVideo(String videoId, String videoOwnerUserId, BigDecimal treesProvidedByUser) {
-        BigDecimal actualVideoCostInTrees = videoPurchaseRepository.findActualCostOfVideo(videoId, videoOwnerUserId);
-
-        if (actualVideoCostInTrees != null) {
-            if (actualVideoCostInTrees.compareTo(treesProvidedByUser) == 0) {
-                return true; //this is the case where treesProvidedByUser match with the actual cost of the video
-            } else {
-                pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, new Exception("treesProvidedByUser does not match with the actual cost of the video"));
-                return false; //this is the case where treesProvidedByUser does not match with the actual cost of the video
-            }
-        } else {
-            pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, new Exception("Buy video request made for the video which is not present in database"));
-            return false; // this is the case where video is not present in video table, Don't allow to buy it
-        }
     }
 
     public Map<String, VideoEarningsAndSales> getVideoStats(List<String> videoId) {
@@ -942,4 +864,33 @@ public class VideoPurchaseService {
         }
     }
 
+    @Transactional
+    public ResponseEntity<?> refundVideoPurchase(String transactionId) {
+        try {
+            VideoPurchase videoPurchase = videoPurchaseRepository.findById(transactionId).orElse(null);
+            if (videoPurchase == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Transaction not found"));
+            }
+            if(videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction already refunded"));
+            }
+//            if (videoPurchase.getExpiryDate() != null && videoPurchase.getExpiryDate().isBefore(LocalDateTime.now())) {
+//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction is expired"));
+//            }
+
+            videoPurchase.setIsRefunded(true);
+            videoPurchaseRepository.save(videoPurchase);
+
+            walletService.addToWallet(videoPurchase.getUserId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
+            earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), videoPurchase.getTreesConsumed());
+            ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO,  TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
+
+            return ResponseEntity.ok().body(new GenericStringResponse(null, "Transaction refunded successfully"));
+        } catch (InsufficientTreesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Cannot deduct trees from PD wallet,  Insufficient trees"));
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
+    }
 }

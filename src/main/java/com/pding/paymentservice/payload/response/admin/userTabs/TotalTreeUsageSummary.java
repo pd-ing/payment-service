@@ -16,4 +16,5 @@ public class TotalTreeUsageSummary {
     BigDecimal totalTreesTransacted;
     BigDecimal totalTreesVideoTransaction;
     BigDecimal totalTreesDonated;
+    BigDecimal totalTreesTransactedForExposureTickets;
 }

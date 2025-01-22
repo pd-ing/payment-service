@@ -42,4 +42,6 @@ public class PublicUserNet {
     private String profileId;
 
     private String pdCategory;
+
+    private String language;
 }
