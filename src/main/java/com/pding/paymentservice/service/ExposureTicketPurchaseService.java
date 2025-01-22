@@ -109,7 +109,7 @@ public class ExposureTicketPurchaseService {
         ZoneId zoneId = ZONEID_MAP.getOrDefault(language, ZoneId.of("UTC"));
         //validate time zone
         ZonedDateTime now = ZonedDateTime.now(zoneId);
-        if(type.equals(ExposureTicketType.MORNING_AFTERNOON) && (now.getHour() >= 18 || now.getHour() < 6)) {
+        if(type.equals(ExposureTicketType.MORNING_AFTERNOON) && !(now.getHour() >= 6 && now.getHour() < 18)) {
             throw new IllegalArgumentException("Morning-Afternoon Ticket can only be used from 6AM to 6PM");
         }
 
@@ -156,15 +156,16 @@ public class ExposureTicketPurchaseService {
             history.setEndTime(endTime);
             history.setTicketType(type.toString());
             exposureSlotHistoryRepository.save(history);
+            purchaseTicket.setStatus(ExposureTicketStatus.USED);
+            purchaseTicket.setUsedDate(Instant.now());
+            return exposureTicketPurchaseRepository.save(purchaseTicket);
 
 //            if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
 //                throw new IllegalArgumentException("Failed to use ticket, please try again");
 //            }
+        } else {
+            throw new IllegalArgumentException("No slot available");
         }
-
-        purchaseTicket.setStatus(ExposureTicketStatus.USED);
-        purchaseTicket.setUsedDate(Instant.now());
-        return exposureTicketPurchaseRepository.save(purchaseTicket);
     }
 
     public List<UserLite> getTopExposurePds() throws Exception {
