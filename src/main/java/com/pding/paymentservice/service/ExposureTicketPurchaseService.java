@@ -156,15 +156,16 @@ public class ExposureTicketPurchaseService {
             history.setEndTime(endTime);
             history.setTicketType(type.toString());
             exposureSlotHistoryRepository.save(history);
+            purchaseTicket.setStatus(ExposureTicketStatus.USED);
+            purchaseTicket.setUsedDate(Instant.now());
+            return exposureTicketPurchaseRepository.save(purchaseTicket);
 
 //            if(!sendNotificationSqsMessage.sendAutoExpireTopExposureSlot(userId)) {
 //                throw new IllegalArgumentException("Failed to use ticket, please try again");
 //            }
+        } else {
+            throw new IllegalArgumentException("No slot available");
         }
-
-        purchaseTicket.setStatus(ExposureTicketStatus.USED);
-        purchaseTicket.setUsedDate(Instant.now());
-        return exposureTicketPurchaseRepository.save(purchaseTicket);
     }
 
     public List<UserLite> getTopExposurePds() throws Exception {
