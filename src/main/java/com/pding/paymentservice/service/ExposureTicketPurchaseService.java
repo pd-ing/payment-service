@@ -22,6 +22,7 @@ import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -88,7 +89,7 @@ public class ExposureTicketPurchaseService {
 
     public Page<ExposureTicketPurchase> getPurchasedTicketOfUser(Pageable pageable) {
         String userId = authHelper.getUserId();
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "purchasedDate"));
+        PageRequest pageRequest = PageRequest.of(0,  Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "purchasedDate"));
         return exposureTicketPurchaseRepository.findByUserId(userId, pageRequest);
     }
 
@@ -258,7 +259,7 @@ public class ExposureTicketPurchaseService {
     }
 
     public List<ExposureTicketPurchase> giveTicket(String userId, ExposureTicketType type, Integer numberOfTicket) {
-        MExposureTicket ticket = exposureTicketRepository.findById(type).orElseThrow(() -> new IllegalArgumentException("Invalid ticket type"));
+//        MExposureTicket ticket = exposureTicketRepository.findById(type).orElseThrow(() -> new IllegalArgumentException("Invalid ticket type"));
         BigDecimal ticketPrice = BigDecimal.ZERO;
 
         List<ExposureTicketPurchase> purchases = new LinkedList<>();
