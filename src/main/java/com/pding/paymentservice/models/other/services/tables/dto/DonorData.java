@@ -15,4 +15,5 @@ public class DonorData {
     private String email;
     private String nickname;
     private String profilePicture;
+    private Boolean isCreator;
 }

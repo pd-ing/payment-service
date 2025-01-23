@@ -298,6 +298,7 @@ public class DonationService {
             donorData.setEmail(publicUserMap.get(donorData.getDonorUserId()).getEmail());
             donorData.setProfilePicture(publicUserMap.get(donorData.getDonorUserId()).getProfilePicture());
             donorData.setNickname(publicUserMap.get(donorData.getDonorUserId()).getNickname());
+            donorData.setIsCreator(publicUserMap.get(donorData.getDonorUserId()).getIsCreator());
 
             return donorData;
         });
