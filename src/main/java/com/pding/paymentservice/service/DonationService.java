@@ -194,7 +194,7 @@ public class DonationService {
         return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
     }
 
-    @Cacheable(value = "top_donations", key = "{#pdUserId, #limit}", cacheManager = "cacheManager")
+//    @Cacheable(value = "top_donations", key = "{#pdUserId, #limit}", cacheManager = "cacheManager")
     public List<PublicUserNet> getTopDonorsInfo(String pdUserId, Long limit) throws Exception {
         List<Object[]> donorUserObjects = donationRepository.findTopDonorUserAndDonatedTreesByPdUserID(pdUserId, limit);
         if (donorUserObjects.isEmpty()) {
@@ -287,9 +287,9 @@ public class DonationService {
         Page<DonorData> donorDataPage = donorUserObjects.map(objects -> {
             DonorData donorData = new DonorData();
             donorData.setDonorUserId((String) objects[0]);
-            donorData.setTotalTreeDonation((BigDecimal) objects[1]);
-            donorData.setTotalPurchasedVideoTree((BigDecimal) objects[2]);
-            Timestamp lastPurchasedVideoDate = (Timestamp) objects[3];
+            donorData.setTotalPurchasedVideoTree((BigDecimal) objects[1]);
+            Timestamp lastPurchasedVideoDate = (Timestamp) objects[2];
+            donorData.setTotalTreeDonation((BigDecimal) objects[3]);
             Timestamp lastDonationDate = (Timestamp) objects[4];
 
             if (lastPurchasedVideoDate != null && lastDonationDate != null) {
@@ -301,7 +301,7 @@ public class DonationService {
             }
 
             donorData.setEmail(publicUserMap.get(donorData.getDonorUserId()).getEmail());
-            donorData.setProfilePicture(publicUserMap.get(donorData.getDonorUserId()).getProfilePicture());
+            donorData.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath(publicUserMap.get(donorData.getDonorUserId()).getProfilePicture()), 8));
             donorData.setNickname(publicUserMap.get(donorData.getDonorUserId()).getNickname());
             donorData.setIsCreator(publicUserMap.get(donorData.getDonorUserId()).getIsCreator());
 
