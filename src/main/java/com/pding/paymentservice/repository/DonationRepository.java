@@ -74,53 +74,65 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
     List<Object[]> findTopDonorUserAndDonatedTreesByPdUserID(@Param("pdUserId") String pdUserId, @Param("limit") Long limit);
 
     @Query(value =
-        " select userId, sum(totalPurchasedVideoTree) as totalVideoPurchase, max(lastPurchaseDate), sum(totalTreeDonation) as totalDonation, max(lastDonationDate)" +
-        " from" +
-        " (SELECT vp.user_id             AS userId," +
-        "        SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
-        "        MAX(last_update_date)  AS lastPurchaseDate," +
-        "        0                      as totalTreeDonation," +
-        "        null                   as lastDonationDate" +
-        " FROM video_purchase vp" +
-        " WHERE vp.video_owner_user_id = :pdUserId" +
-        "   AND vp.is_refunded IS NOT TRUE" +
-        " GROUP BY vp.user_id" +
-        " union all" +
-        " SELECT donor_user_id         AS userId," +
-        "        0                      as totalPurchasedVideoTree," +
-        "        null                   as lastPurchaseDate," +
-        "        SUM(donated_trees)    AS totalTreeDonation," +
-        "        MAX(last_update_date) AS lastDonationDate" +
-        " " +
-        " FROM donation" +
-        " WHERE pd_user_id = :pdUserId" +
-        " GROUP BY donor_user_id) as temp" +
-        " group by userId" +
-        " order by totalVideoPurchase + totalDonation desc",
+            " select userId," +
+            "        sum(totalPurchasedVideoTree) as totalVideoPurchase," +
+            "        max(lastPurchaseDate)," +
+            "        sum(totalTreeDonation)       as totalDonation," +
+            "        max(lastDonationDate)," +
+            "        u.email," +
+            "        COALESCE(u.profile_picture, '')," +
+            "        COALESCE(u.nickname, '')," +
+            "        u.is_creator" +
+            " from (SELECT vp.user_id             AS userId," +
+            "              SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
+            "              MAX(last_update_date)  AS lastPurchaseDate," +
+            "              0                      as totalTreeDonation," +
+            "              null                   as lastDonationDate" +
+            "       FROM video_purchase vp" +
+            "       WHERE vp.video_owner_user_id = :pdUserId" +
+            "         AND vp.is_refunded IS NOT TRUE" +
+            "       GROUP BY vp.user_id" +
+            "       union all" +
+            "       SELECT donor_user_id         AS userId," +
+            "              0                     as totalPurchasedVideoTree," +
+            "              null                  as lastPurchaseDate," +
+            "              SUM(donated_trees)    AS totalTreeDonation," +
+            "              MAX(last_update_date) AS lastDonationDate" +
+            "       FROM donation" +
+            "       WHERE pd_user_id = :pdUserId" +
+            "       GROUP BY donor_user_id) as temp" +
+            "          left join users u on u.id = temp.userId" +
+            " where (:searchString is null or :searchString = '' or u.email like concat('%', :searchString, '%') or" +
+            "        u.nickname like concat('%', :searchString, '%'))" +
+            " group by userId" +
+            " order by totalVideoPurchase + totalDonation desc",
         countQuery =
-                " select count(*)" +
-                " from (select *" +
-                "       from (SELECT vp.user_id             AS userId," +
-                "                    SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
-                "                    MAX(last_update_date)  AS lastPurchaseDate," +
-                "                    0                      as totalTreeDonation," +
-                "                    null                   as lastDonationDate" +
-                "             FROM video_purchase vp" +
-                "             WHERE vp.video_owner_user_id = 'gBb03tijVGcOnB4tDoZhvuTifke2'" +
-                "               AND vp.is_refunded IS NOT TRUE" +
-                "             GROUP BY vp.user_id" +
-                "             union all" +
-                "             SELECT donor_user_id         AS userId," +
-                "                    0                     as totalPurchasedVideoTree," +
-                "                    null                  as lastPurchaseDate," +
-                "                    SUM(donated_trees)    AS totalTreeDonation," +
-                "                    MAX(last_update_date) AS lastDonationDate" +
-                "             FROM donation" +
-                "             WHERE pd_user_id = 'gBb03tijVGcOnB4tDoZhvuTifke2'" +
-                "             GROUP BY donor_user_id) as temp" +
-                "       group by userId) as count",
+                    " select count(*)" +
+                    " from (select *" +
+                    "       from (SELECT vp.user_id             AS userId," +
+                    "                    SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
+                    "                    MAX(last_update_date)  AS lastPurchaseDate," +
+                    "                    0                      as totalTreeDonation," +
+                    "                    null                   as lastDonationDate" +
+                    "             FROM video_purchase vp" +
+                    "             WHERE vp.video_owner_user_id = :pdUserId" +
+                    "               AND vp.is_refunded IS NOT TRUE" +
+                    "             GROUP BY vp.user_id" +
+                    "             union all" +
+                    "             SELECT donor_user_id         AS userId," +
+                    "                    0                     as totalPurchasedVideoTree," +
+                    "                    null                  as lastPurchaseDate," +
+                    "                    SUM(donated_trees)    AS totalTreeDonation," +
+                    "                    MAX(last_update_date) AS lastDonationDate" +
+                    "             FROM donation" +
+                    "             WHERE pd_user_id = :pdUserId" +
+                    "             GROUP BY donor_user_id) as temp" +
+                    "                left join users u on u.id = temp.userId" +
+                    "       where (:searchString is null or :searchString = '' or u.email like concat('%', :searchString, '%') or" +
+                    "              u.nickname like concat('%', :searchString, '%'))" +
+                    "       group by userId) as count",
         nativeQuery = true)
-    Page<Object[]> findTopDonorUser(@Param("pdUserId") String pdUserId, Pageable pageable);
+    Page<Object[]> findTopDonorUser(@Param("pdUserId") String pdUserId, @Param("searchString") String searchString, Pageable pageable);
 
     @Query(value = "SELECT COALESCE(SUM(d.donatedTrees), 0) FROM Donation d WHERE d.donorUserId = :userId")
     BigDecimal getTotalDonatedTreesByDonorUserId(@Param("userId") String userId);

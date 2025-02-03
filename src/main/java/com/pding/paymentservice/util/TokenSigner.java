@@ -194,7 +194,7 @@ public class TokenSigner {
     }
 
     public String composeImagesPath(String fileName) {
-        if (fileName == null) return null;
+        if (fileName == null || fileName.isEmpty()) return null;
         return "/images/" + fileName;
     }
 

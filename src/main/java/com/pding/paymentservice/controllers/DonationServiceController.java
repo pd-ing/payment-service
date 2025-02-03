@@ -190,12 +190,13 @@ public class DonationServiceController {
 
     @GetMapping(value = "/topDonorsList/v2")
     public ResponseEntity<?> getDonationHistoryForPdV2(@RequestParam(value = "pdUserId") String pdUserId,
+                                                       @RequestParam(value = "searchString", required = false) String searchString,
                                                        Pageable pageable) {
         if (pdUserId == null || pdUserId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "pdUserId cannot be null or empty"));
         }
         try {
-            Page<DonorData> donorData = donationService.getTopDonorsInfoV2(pdUserId, pageable);
+            Page<DonorData> donorData = donationService.getTopDonorsInfoV2(pdUserId, searchString,  pageable);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, donorData));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.TOP_DONOR_LIST, e);
