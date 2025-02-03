@@ -250,8 +250,8 @@ public class DonationService {
         return publicUsers;
     }
 
-    public Page<DonorData> getTopDonorsInfoV2(String pdUserId, Pageable pageable) throws Exception {
-        Page<Object[]> donorUserObjects = donationRepository.findTopDonorUser(pdUserId, pageable);
+    public Page<DonorData> getTopDonorsInfoV2(String pdUserId, String searchString, Pageable pageable) throws Exception {
+        Page<Object[]> donorUserObjects = donationRepository.findTopDonorUser(pdUserId, searchString, pageable);
 
         if (donorUserObjects.isEmpty()) {
             return Page.empty();
@@ -261,27 +261,27 @@ public class DonationService {
                 .map(row -> (String) row[0])
                 .collect(Collectors.toList());
 
-        List<PublicUserNet> publicUsers = userServiceNetworkManager
-                .getUsersListFlux(donorUserIds)
-                .collect(Collectors.toList())
-                .block();
+//        List<PublicUserNet> publicUsers = userServiceNetworkManager
+//                .getUsersListFlux(donorUserIds)
+//                .collect(Collectors.toList())
+//                .block();
 
-        for (PublicUserNet user : publicUsers) {
-            String profilePicture = null;
-            try {
-                if (user.getProfilePicture() != null) {
-                    profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8);
-                }
-            } catch (Exception e) {
-                pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
-                e.printStackTrace();
+//        for (PublicUserNet user : publicUsers) {
+//            String profilePicture = null;
+//            try {
+//                if (user.getProfilePicture() != null) {
+//                    profilePicture = tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8);
+//                }
+//            } catch (Exception e) {
+//                pdLogger.logException(PdLogger.EVENT.IMAGE_CDN_LINK, e);
+//                e.printStackTrace();
+//
+//            }
+//        }
 
-            }
-        }
 
-
-        Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
-                .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+//        Map<String, PublicUserNet> publicUserMap = publicUsers.stream()
+//                .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
 
 
         Page<DonorData> donorDataPage = donorUserObjects.map(objects -> {
@@ -300,10 +300,15 @@ public class DonationService {
                 donorData.setLastUsedDate(lastDonationDate.toLocalDateTime());
             }
 
-            donorData.setEmail(publicUserMap.get(donorData.getDonorUserId()).getEmail());
-            donorData.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath(publicUserMap.get(donorData.getDonorUserId()).getProfilePicture()), 8));
-            donorData.setNickname(publicUserMap.get(donorData.getDonorUserId()).getNickname());
-            donorData.setIsCreator(publicUserMap.get(donorData.getDonorUserId()).getIsCreator());
+//            donorData.setEmail(publicUserMap.get(donorData.getDonorUserId()).getEmail());
+//            donorData.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath(publicUserMap.get(donorData.getDonorUserId()).getProfilePicture()), 8));
+//            donorData.setNickname(publicUserMap.get(donorData.getDonorUserId()).getNickname());
+//            donorData.setIsCreator(publicUserMap.get(donorData.getDonorUserId()).getIsCreator());
+
+            donorData.setEmail((String) objects[5]);
+            donorData.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath((String) objects[6]), 8));
+            donorData.setNickname((String) objects[7]);
+            donorData.setIsCreator(objects[8] != null ? (Boolean) objects[8]: false);
 
             return donorData;
         });
