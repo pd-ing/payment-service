@@ -97,6 +97,11 @@ public class StripeClient {
         return Product.retrieve(productId);
     }
 
+    public Price getPrice(String priceId) throws StripeException {
+        Stripe.apiKey = secretKey;
+        return Price.retrieve(priceId);
+    }
+
     private String getPriceIdForProduct(String productId) throws StripeException {
         Stripe.apiKey = secretKey;
 

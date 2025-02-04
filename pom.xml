@@ -17,6 +17,11 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
+      <dependency>
+        <groupId>com.paypal.sdk</groupId>
+        <artifactId>paypal-server-sdk</artifactId>
+        <version>0.5.1</version>
+      </dependency>
         <dependency>
             <groupId>net.javacrumbs.shedlock</groupId>
             <artifactId>shedlock-spring</artifactId>

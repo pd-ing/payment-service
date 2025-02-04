@@ -97,6 +97,11 @@ spec:
     app: payment-service
   ports:
     - protocol: TCP
+      name: http
       port: 80
       targetPort: 80
+    - protocol: TCP
+      name: grpc
+      port: 8001
+      targetPort: 8001
   type: ClusterIP

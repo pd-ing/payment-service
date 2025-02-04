@@ -1,0 +1,66 @@
+{
+  "id": "WH-6FF038387U148804N-2D972683R9873421R",
+  "event_version": "1.0",
+  "create_time": "2025-01-12T16:46:26.021Z",
+  "resource_type": "refund",
+  "resource_version": "2.0",
+  "event_type": "PAYMENT.CAPTURE.REFUNDED",
+  "summary": "A $ 11.0 USD capture payment was refunded",
+  "resource": {
+    "seller_payable_breakdown": {
+      "total_refunded_amount": {
+        "value": "11.00",
+        "currency_code": "USD"
+      },
+      "paypal_fee": {
+        "value": "0.00",
+        "currency_code": "USD"
+      },
+      "gross_amount": {
+        "value": "11.00",
+        "currency_code": "USD"
+      },
+      "net_amount": {
+        "value": "11.00",
+        "currency_code": "USD"
+      }
+    },
+    "amount": {
+      "value": "11.00",
+      "currency_code": "USD"
+    },
+    "update_time": "2025-01-12T08:46:21-08:00",
+    "create_time": "2025-01-12T08:46:21-08:00",
+    "custom_id": "zbUfrwYb8iVPleUmr6Fhi0z9w8I2_100",
+    "links": [
+      {
+        "method": "GET",
+        "rel": "self",
+        "href": "https://api.sandbox.paypal.com/v2/payments/refunds/01H80791VG3951131"
+      },
+      {
+        "method": "GET",
+        "rel": "up",
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/5L3445414K691152B"
+      }
+    ],
+    "id": "01H80791VG3951131",
+    "payer": {
+      "email_address": "sb-47qzam34943783@business.example.com",
+      "merchant_id": "J3P4H27M594H4"
+    },
+    "status": "COMPLETED"
+  },
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-6FF038387U148804N-2D972683R9873421R",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-6FF038387U148804N-2D972683R9873421R/resend",
+      "rel": "resend",
+      "method": "POST"
+    }
+  ]
+}
