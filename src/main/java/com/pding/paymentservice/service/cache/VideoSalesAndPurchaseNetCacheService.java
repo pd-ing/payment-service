@@ -75,8 +75,9 @@ public class VideoSalesAndPurchaseNetCacheService {
         redisTemplate.opsForValue().set(key, value, expirationMinutes, TimeUnit.MINUTES);
     }
 
-    public void deleteCache(String videoId) {
+    public void refreshCacheByVideoId(String videoId) {
         String key = AppConstant.PREFIX_KEY_CACHE_VIDEO_SALE_AND_PURCHASE + videoId;
         this.redisTemplate.delete(key);
+        this.getVideoSaleAndPurchaseByVideoId(videoId);
     }
 }

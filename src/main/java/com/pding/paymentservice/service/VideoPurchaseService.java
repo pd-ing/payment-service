@@ -58,6 +58,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -151,6 +153,13 @@ public class VideoPurchaseService {
         earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
         log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                videoSalesAndPurchaseNetCacheService.refreshCacheByVideoId(videoId);
+            }
+        });
         return video;
     }
 
@@ -233,7 +242,6 @@ public class VideoPurchaseService {
             asyncOperationService.removeCachePattern("purchasedVideos::" + videoOwnerUserId + "," + userId + "*");
             asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + userId + "*");
             asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + videoOwnerUserId + "*");
-            videoSalesAndPurchaseNetCacheService.deleteCache(videoId);
 
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
