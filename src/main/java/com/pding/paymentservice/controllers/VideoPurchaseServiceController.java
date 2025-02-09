@@ -232,7 +232,7 @@ public class VideoPurchaseServiceController {
     }
 
     @PostMapping("/admin/refund-video-purchase")
-    public ResponseEntity<?> refundVideo(@RequestBody RefundVideoPurchaseRequest request) {
+    public ResponseEntity<?> refundVideo(@RequestBody RefundVideoPurchaseRequest request) throws Exception {
         return videoPurchaseService.refundVideoPurchase(request.getTransactionId());
     }
 

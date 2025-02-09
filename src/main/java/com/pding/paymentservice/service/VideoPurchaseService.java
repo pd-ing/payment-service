@@ -865,7 +865,12 @@ public class VideoPurchaseService {
     }
 
     @Transactional
-    public ResponseEntity<?> refundVideoPurchase(String transactionId) {
+    public ResponseEntity<?> refundVideoPurchase(String transactionId) throws Exception {
+
+        String userId = authHelper.getUserId();
+        if (!userServiceNetworkManager.isUserAdmin(userId).blockLast()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Only admin can refund transaction"));
+        }
         try {
             VideoPurchase videoPurchase = videoPurchaseRepository.findById(transactionId).orElse(null);
             if (videoPurchase == null) {

@@ -243,7 +243,13 @@ public class ExposureTicketPurchaseService {
     }
 
     @Transactional
-    public void refundTicket(String transactionId) {
+    public void refundTicket(String transactionId) throws Exception {
+        String userId = authHelper.getUserId();
+
+        if (!userServiceNetworkManager.isUserAdmin(userId).blockLast()) {
+            throw new IllegalArgumentException("Only admin can refund transaction");
+        }
+
         ExposureTicketPurchase purchase = exposureTicketPurchaseRepository.findById(transactionId).orElseThrow(() -> new IllegalArgumentException("Invalid transaction id"));
         if (purchase.getStatus() == ExposureTicketStatus.USED) {
             throw new IllegalArgumentException("Cannot refund used ticket");
