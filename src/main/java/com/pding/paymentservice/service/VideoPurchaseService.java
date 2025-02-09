@@ -879,6 +879,7 @@ public class VideoPurchaseService {
 //            }
 
             videoPurchase.setIsRefunded(true);
+            videoPurchase.setLastUpdateDate(LocalDateTime.now());
             videoPurchaseRepository.save(videoPurchase);
 
             walletService.addToWallet(videoPurchase.getUserId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
