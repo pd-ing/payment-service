@@ -28,15 +28,8 @@ public class UserServiceNetworkManager {
 
     @Value("${service.user.host}")
     private String userService;
-
-    @Value("${service.backend.host}")
-    private String backendHost;
-
     @Autowired
     private JwtUtils jwtUtils;
-
-    @Value("${service.user.host.admin}")
-    private String userServiceAdmin;
     private final OkHttpClient client;
     @Autowired
     private AuthHelper authHelper;
@@ -52,7 +45,7 @@ public class UserServiceNetworkManager {
 
         String param = userIds.stream().map(Object::toString).collect(Collectors.joining(","));
         return webClient.get()
-                .uri(userService + "/usersList?userIds=" + param)
+                .uri(userService + "/api/auth/usersList?userIds=" + param)
                 .retrieve()
                 .bodyToMono(GetUsersResponseNet.class)
                 .flatMapMany(resp -> {
@@ -84,7 +77,7 @@ public class UserServiceNetworkManager {
 
         String param = emails.stream().map(Object::toString).collect(Collectors.joining(","));
         return webClient.get()
-                .uri(userService + "/usersListByEmail?emails=" + param)
+                .uri(userService + "/api/auth/usersListByEmail?emails=" + param)
                 .retrieve()
                 .bodyToMono(GetUsersResponseNet.class)
                 .flatMapMany(resp -> {
@@ -104,7 +97,7 @@ public class UserServiceNetworkManager {
 
         String param = userIds.stream().map(Object::toString).collect(Collectors.joining(","));
         return webClient.get()
-                .uri(userService + "/usersList?userIds=" + param)
+                .uri(userService + "/api/auth/usersList?userIds=" + param)
                 .retrieve()
                 .bodyToMono(GetUsersResponseNet.class)
                 .flatMapMany(resp -> {
@@ -124,7 +117,7 @@ public class UserServiceNetworkManager {
 
         String param = userIds.stream().map(Object::toString).collect(Collectors.joining(","));
         return webClient.get()
-                .uri(userServiceAdmin + "/publicUserWithStripeId?userIds=" + param)
+                .uri(userService + "/api/admin/publicUserWithStripeId?userIds=" + param)
                 .retrieve()
                 .bodyToMono(GetUserWithStripeIdResponseNet.class)
                 .flatMapMany(resp -> {
@@ -138,7 +131,7 @@ public class UserServiceNetworkManager {
 
     public Mono<Boolean> isExchangeAllowedWithW8BenDocument() throws Exception {
         return webClient.get()
-                .uri(backendHost + "/api/user/w8ben/isExchangeAllowedWithW8BenDocument")
+                .uri(userService + "/api/user/w8ben/isExchangeAllowedWithW8BenDocument")
             .header("Authorization", "Bearer " + authHelper.getIdToken())
                 .retrieve()
                 .bodyToMono(Boolean.class);
