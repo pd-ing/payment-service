@@ -4,6 +4,7 @@ import com.pding.paymentservice.payload.net.GetUserWithStripeIdResponseNet;
 import com.pding.paymentservice.payload.net.GetUsersResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.PublicUserWithStripeIdNet;
+import com.pding.paymentservice.payload.response.IsUserAdminResponseNet;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.security.jwt.JwtUtils;
 import okhttp3.OkHttpClient;
@@ -38,6 +39,22 @@ public class UserServiceNetworkManager {
     public UserServiceNetworkManager(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
         this.client = new OkHttpClient();
+    }
+
+    public Flux<Boolean> isUserAdmin(String userId) throws Exception {
+        if (userId == null || userId.isEmpty()) return Flux.empty();
+
+        return webClient.get()
+            .uri(userService + "/api/user/internal/getUserState?userId=" + userId)
+            .retrieve()
+            .bodyToMono(IsUserAdminResponseNet.class)
+            .flatMapMany(resp -> {
+                if (resp.getIsAdmin() != null && resp.getIsAdmin() == true) {
+                    return Flux.just(true);
+                } else {
+                    return Flux.just(false);
+                }
+            });
     }
 
     public Flux<PublicUserNet> getUsersListFlux(List<String> userIds) throws Exception {

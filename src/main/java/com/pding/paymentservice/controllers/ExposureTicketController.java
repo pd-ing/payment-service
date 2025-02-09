@@ -82,7 +82,7 @@ public class ExposureTicketController {
     }
 
     @PostMapping("/admin/refund-ticket")
-    public ResponseEntity refundTicket(@RequestBody RefundExposureTicketRequest request) {
+    public ResponseEntity refundTicket(@RequestBody RefundExposureTicketRequest request) throws Exception {
         exposureTicketPurchaseService.refundTicket(request.getTransactionId());
         return ResponseEntity.ok(new GenericStringResponse(null, "Refund ticket success"));
     }
