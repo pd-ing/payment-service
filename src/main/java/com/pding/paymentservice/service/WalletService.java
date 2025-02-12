@@ -175,7 +175,8 @@ public class WalletService {
             Optional<Earning> earning = earningService.fetchEarningForUserId(userId);
             return ResponseEntity.ok().body(new WalletResponse(null, wallet.get(), earning.get()));
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.WALLET, e);
+//            pdLogger.logException(PdLogger.EVENT.WALLET, e);
+            log.error("Error while fetching wallet for userId " + userId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WalletResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
         }
     }
