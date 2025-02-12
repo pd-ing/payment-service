@@ -45,6 +45,11 @@ public class ExposureTicketController {
         return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.countUserTicketByType()));
     }
 
+    @GetMapping("/admin/count-pd-ticket")
+    public ResponseEntity getListPurchasedTicketCount(@RequestParam String pdId) {
+        return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.countUserTicketByType(pdId)));
+    }
+
     @PostMapping("/ticket/buy")
     public ResponseEntity buyTicket(@RequestBody BuyExposureTicketRequest request) {
         return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.buyTicket(request.getType())));
@@ -71,7 +76,7 @@ public class ExposureTicketController {
     }
 
     @PostMapping("/admin/force-release-ticket")
-    public ResponseEntity forceReleaseTicket(@RequestBody ForceReleaseExposureTicketRequest request) {
+    public ResponseEntity forceReleaseTicket(@RequestBody ForceReleaseExposureTicketRequest request) throws Exception {
         exposureTicketPurchaseService.forceReleaseTicket(request.getUserId());
         return ResponseEntity.ok(new GenericStringResponse(null, "Force release ticket success"));
     }
@@ -83,7 +88,7 @@ public class ExposureTicketController {
     }
 
     @PostMapping("admin/give-ticket")
-    public ResponseEntity giveTicket(@RequestBody GiveExposureTicketByAdminRequest request) {
+    public ResponseEntity giveTicket(@RequestBody GiveExposureTicketByAdminRequest request) throws Exception {
         return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.giveTicket(request.getUserId(), request.getType(), request.getNumberOfTicket())));
     }
 }

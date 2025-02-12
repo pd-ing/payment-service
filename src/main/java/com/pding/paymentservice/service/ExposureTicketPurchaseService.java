@@ -198,7 +198,10 @@ public class ExposureTicketPurchaseService {
     }
 
     @Transactional
-    public void forceReleaseTicket(String userId) {
+    public void forceReleaseTicket(String userId) throws Exception {
+        if (!userServiceNetworkManager.isUserAdmin(userId).blockLast()) {
+            throw new IllegalArgumentException("Only admin can force release ticket");
+        }
         Instant now = Instant.now();
         MExposureSlot slot = exposureSlotRepository.findByUserId(userId).orElseThrow(() -> new IllegalArgumentException("User does not have exposure slot"));
         MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
@@ -217,8 +220,12 @@ public class ExposureTicketPurchaseService {
 
     public List<CountUserTicketByType> countUserTicketByType() {
         String userId = authHelper.getUserId();
+        return countUserTicketByType(userId);
+    }
+
+    public List<CountUserTicketByType> countUserTicketByType(String pdId) {
         List<CountUserTicketByType> result = Arrays.stream(ExposureTicketType.values()).map(type -> {
-            Long count = exposureTicketPurchaseRepository.countByTypeAndUserIdAndStatus(type, userId, ExposureTicketStatus.UNUSED);
+            Long count = exposureTicketPurchaseRepository.countByTypeAndUserIdAndStatus(type, pdId, ExposureTicketStatus.UNUSED);
             return new CountUserTicketByType(type, count);
         }).collect(Collectors.toList());
         return result;
@@ -264,7 +271,11 @@ public class ExposureTicketPurchaseService {
         ledgerService.saveToLedger(purchase.getId(), purchase.getTreesConsumed(), new BigDecimal(0), TransactionType.REFUND_EXPOSURE_TICKET, purchase.getUserId());
     }
 
-    public List<ExposureTicketPurchase> giveTicket(String userId, ExposureTicketType type, Integer numberOfTicket) {
+    public List<ExposureTicketPurchase> giveTicket(String userId, ExposureTicketType type, Integer numberOfTicket) throws Exception {
+        if (!userServiceNetworkManager.isUserAdmin(userId).blockLast()) {
+            throw new IllegalArgumentException("Only admin can refund transaction");
+        }
+
 //        MExposureTicket ticket = exposureTicketRepository.findById(type).orElseThrow(() -> new IllegalArgumentException("Invalid ticket type"));
         BigDecimal ticketPrice = BigDecimal.ZERO;
 
