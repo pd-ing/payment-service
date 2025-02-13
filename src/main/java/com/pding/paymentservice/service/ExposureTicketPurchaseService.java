@@ -272,8 +272,10 @@ public class ExposureTicketPurchaseService {
     }
 
     public List<ExposureTicketPurchase> giveTicket(String userId, ExposureTicketType type, Integer numberOfTicket) throws Exception {
-        if (!userServiceNetworkManager.isUserAdmin(userId).blockLast()) {
-            throw new IllegalArgumentException("Only admin can refund transaction");
+        String loginUser = authHelper.getUserId();
+
+        if (!userServiceNetworkManager.isUserAdmin(loginUser).blockLast()) {
+            throw new IllegalArgumentException("Only admin can issue ticket");
         }
 
 //        MExposureTicket ticket = exposureTicketRepository.findById(type).orElseThrow(() -> new IllegalArgumentException("Invalid ticket type"));
