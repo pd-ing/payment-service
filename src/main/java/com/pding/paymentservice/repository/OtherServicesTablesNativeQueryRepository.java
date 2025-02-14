@@ -147,15 +147,15 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
 
 
     @Query( value =
-            " SELECT group_concat(rc.id)                         AS referralCommissionId," +
-            "        group_concat(rc.withdrawal_id)              AS withdrawalId," +
+            " SELECT group_concat(rc.id SEPARATOR ', ')                         AS referralCommissionId," +
+            "        group_concat(rc.withdrawal_id SEPARATOR ', ')              AS withdrawalId," +
             "        rc.referrer_pd_user_id                      AS referrerPdUserId," +
             "        rc.commission_percent                       AS referrerCommissionPercent," +
             "        sum(rc.commission_amount_in_trees)          AS referrerCommissionAmountInTrees," +
             "        sum(rc.commission_amount_in_leafs)          AS referrerCommissionAmountInLeafs," +
             "        date(rc.created_date)                       AS referrerCommissionCreatedDate," +
             "        date(rc.updated_date)                       AS referrerCommissionUpdatedDate," +
-            "        group_concat(rc.commission_transfer_status) AS referrerCommissionTransferStatus," +
+            "        group_concat(rc.commission_transfer_status SEPARATOR ', ') AS referrerCommissionTransferStatus," +
             "        COALESCE(u.nickname, '')                    AS referrerUserNickname," +
             "        COALESCE(u.email, '')                       AS referrerUserEmail," +
             "        COALESCE(u.pd_type, '')                     AS referrerPdType," +
