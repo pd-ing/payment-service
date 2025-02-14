@@ -27,7 +27,7 @@ public class ReferralCommissionHistory {
     private String pdAffiliated;
     private String referrerReferralGrade;
 
-    public static ReferralCommissionHistory fromObjectArray(Object[] objectArr) throws Exception {
+    public static ReferralCommissionHistory fromObjectArray(Object[] objectArr) {
 
         ReferralCommissionHistory referralCommissionHistory = new ReferralCommissionHistory();
 
