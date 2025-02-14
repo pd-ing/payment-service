@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -34,63 +35,24 @@ public class ReferenceTabService {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Object[]> pageObject = otherServicesTablesNativeQueryRepository.getReferralCommissionHistoryForAdminDashboard(pageable, searchString);
+        if (pageObject.isEmpty()) return new PageImpl<>(new ArrayList<>(), pageable, 0);
 
-        List<ReferralCommissionHistory> referralCommissionHistoryList = new ArrayList<>();
+        Integer totalPdReferredInTheSystem = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdInSystem();
+//        Integer pdCountReferredByCurrentPd = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdByCurrentPd(referralCommissionHistory.getReferrerPdUserId());
         List<ReferralCommissionHistory> referralCommissionHistoryListConcatenated = new ArrayList<>();
-        for (Object[] innerObject : pageObject.getContent()) {
-            ReferralCommissionHistory referralCommissionHistory = ReferralCommissionHistory.fromObjectArray(innerObject);
+        List<ReferralCommissionHistory> referralCommissionHistoryList =
+            pageObject.getContent().stream().map(ReferralCommissionHistory::fromObjectArray).collect(Collectors.toList());
 
-            // Show/Return the details of the referral commission only if the withdrawal request of the referredPD has been completed.
-            if (isReferredPdWithDrawalRequestComplete(referralCommissionHistory.getWithdrawalId())) {
-                Integer pdCountReferredByCurrentPd = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdByCurrentPd(referralCommissionHistory.getReferrerPdUserId());
-                Integer totalPdReferredInTheSystem = otherServicesTablesNativeQueryRepository.totalNumberOfReferredPdInSystem();
+        List<String> referrerPdUserIdList = referralCommissionHistoryList.stream().map(ReferralCommissionHistory::getReferrerPdUserId).collect(Collectors.toList());
+        //count the number of referred pd by each referrer
+        Map<String, Long> pdCountReferredByReferrer = otherServicesTablesNativeQueryRepository.getReferralCountsMap(referrerPdUserIdList);
 
-                String pdAffiliated = pdCountReferredByCurrentPd.toString() + " / " + totalPdReferredInTheSystem.toString();
-
-                referralCommissionHistory.setPdAffiliated(pdAffiliated);
-
-                referralCommissionHistoryList.add(referralCommissionHistory);
-            }
-        }
-
-        List<String> referrerPdIds = new ArrayList<>();
-
-        for (ReferralCommissionHistory item : referralCommissionHistoryList){
-            String referrerPdId = item.getReferrerPdUserId();
-
-            if(referrerPdIds.contains(referrerPdId))
-                continue;
-
-            referrerPdIds.add(referrerPdId);
-            List<ReferralCommissionHistory> filteredList = referralCommissionHistoryList.stream()
-                    .filter(obj -> obj.getReferrerPdUserId().equals(referrerPdId))
-                    .collect(Collectors.toList());
-
-            ReferralCommissionHistory refch = null;
-
-            for(ReferralCommissionHistory temp : filteredList){
-                if(refch == null) {
-                    // first object in te list
-                    refch = temp;
-                }
-                else {
-                    //concatenate results
-                    refch.setReferralCommissionId(refch.getReferralCommissionId() + ", " + temp.getReferralCommissionId());
-                    refch.setWithdrawalId(refch.getWithdrawalId() + ", " + temp.getWithdrawalId());
-                    refch.setReferrerCommissionAmountInTrees(new BigDecimal(refch.getReferrerCommissionAmountInTrees())
-                            .add(new BigDecimal(temp.getReferrerCommissionAmountInTrees()))
-                            .toString());
-                    refch.setReferrerCommissionAmountInLeafs(new BigDecimal(refch.getReferrerCommissionAmountInLeafs())
-                            .add(new BigDecimal(temp.getReferrerCommissionAmountInLeafs()))
-                            .toString());
-                    refch.setReferrerCommissionCreatedDate(refch.getReferrerCommissionCreatedDate() + ", " + temp.getReferrerCommissionCreatedDate());
-                    refch.setReferrerCommissionUpdatedDate(refch.getReferrerCommissionUpdatedDate() + ", " + temp.getReferrerCommissionUpdatedDate());
-                    refch.setReferrerCommissionTransferStatus(refch.getReferrerCommissionTransferStatus() + ", " + temp.getReferrerCommissionTransferStatus());
-                    refch.setReferredPdUserId(refch.getReferredPdUserId() + ", " + temp.getReferredPdUserId());
-                }
-            }
-            referralCommissionHistoryListConcatenated.add(refch);
-        }
+        referralCommissionHistoryListConcatenated = referralCommissionHistoryList.stream().map(referralCommissionHistory -> {
+            Long pdCountReferredByCurrentPd = pdCountReferredByReferrer.get(referralCommissionHistory.getReferrerPdUserId());
+            String pdAffiliated = pdCountReferredByCurrentPd.toString() + " / " + totalPdReferredInTheSystem.toString();
+            referralCommissionHistory.setPdAffiliated(pdAffiliated);
+            return referralCommissionHistory;
+        }).collect(Collectors.toList());
 
         return new PageImpl<>(referralCommissionHistoryListConcatenated, pageable, pageObject.getTotalElements());
     }

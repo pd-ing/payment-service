@@ -10,7 +10,9 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<VideoPurchase, String> {
     @Query(value = "SELECT id, COALESCE(email, '') AS email, COALESCE(referral_grade, '') AS referralGrade, COALESCE(nickname, '') AS nickname, COALESCE(linked_stripe_id, '') AS linkedStripeId FROM users WHERE id = :userId", nativeQuery = true)
@@ -144,38 +146,40 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     );
 
 
-    @Query(value = "SELECT rc.id AS referralCommissionId, " +
-            "rc.withdrawal_id AS withdrawalId, " +
-            "rc.referrer_pd_user_id AS referrerPdUserId, " +
-            "rc.commission_percent AS referrerCommissionPercent, " +
-            "rc.commission_amount_in_trees AS referrerCommissionAmountInTrees, " +
-            "rc.commission_amount_in_leafs AS referrerCommissionAmountInLeafs, " +
-            "rc.created_date AS referrerCommissionCreatedDate, " +
-            "rc.updated_date AS referrerCommissionUpdatedDate, " +
-            "rc.commission_transfer_status AS referrerCommissionTransferStatus, " +
-            "COALESCE(u.nickname, '') AS referrerUserNickname, " +
-            "COALESCE(u.email, '') AS referrerUserEmail, " +
-            "COALESCE(u.pd_type, '') AS referrerPdType, " +
-            "COALESCE(u.linked_stripe_id, '') AS linkedStripeId, " +
-            "w.pd_user_id AS referredPdUserId, " +
-            "COALESCE(rc.referrer_referral_grade, '') AS referrerReferralGrade " +
-            "FROM referral_commission rc " +
-            "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
-            "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
-            "WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)" +
-            "AND (:searchString IS NULL " +
-            "       OR u.email LIKE %:searchString% " +
-            "       OR u.nickname LIKE %:searchString%) " +
-            "ORDER BY " +
-            "CASE WHEN rc.commission_transfer_status = 'TRANSFER_PENDING' THEN 0 ELSE 1 END, " +
-            "rc.updated_date ASC",
-            countQuery = "SELECT COUNT(*) FROM referral_commission rc " +
-                    "INNER JOIN users u ON rc.referrer_pd_user_id = u.id " +
-                    "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
-                    "WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) " +
-                    "AND (:searchString IS NULL " +
-                    "       OR u.email LIKE %:searchString% " +
-                    "       OR u.nickname LIKE %:searchString%)",
+    @Query( value =
+            " SELECT group_concat(rc.id)                         AS referralCommissionId," +
+            "        group_concat(rc.withdrawal_id)              AS withdrawalId," +
+            "        rc.referrer_pd_user_id                      AS referrerPdUserId," +
+            "        rc.commission_percent                       AS referrerCommissionPercent," +
+            "        sum(rc.commission_amount_in_trees)          AS referrerCommissionAmountInTrees," +
+            "        sum(rc.commission_amount_in_leafs)          AS referrerCommissionAmountInLeafs," +
+            "        date(rc.created_date)                       AS referrerCommissionCreatedDate," +
+            "        date(rc.updated_date)                       AS referrerCommissionUpdatedDate," +
+            "        group_concat(rc.commission_transfer_status) AS referrerCommissionTransferStatus," +
+            "        COALESCE(u.nickname, '')                    AS referrerUserNickname," +
+            "        COALESCE(u.email, '')                       AS referrerUserEmail," +
+            "        COALESCE(u.pd_type, '')                     AS referrerPdType," +
+            "        COALESCE(u.linked_stripe_id, '')            AS linkedStripeId," +
+            "        group_concat(w.pd_user_id)                  AS referredPdUserId," +
+            "        COALESCE(rc.referrer_referral_grade, '')    AS referrerReferralGrade" +
+            " FROM referral_commission rc" +
+            "          INNER JOIN users u ON rc.referrer_pd_user_id = u.id" +
+            "          INNER JOIN withdrawals w ON rc.withdrawal_id = w.id" +
+            " WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) " +
+            "   and w.status = 'COMPLETE' " +
+            "   AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%')) " +
+            " group by rc.referrer_pd_user_id;",
+            countQuery =
+                " select count(*)" +
+                " from (SELECT rc.referrer_pd_user_id" +
+                "       FROM referral_commission rc" +
+                "                INNER JOIN users u ON rc.referrer_pd_user_id = u.id" +
+                "                INNER JOIN withdrawals w ON rc.withdrawal_id = w.id" +
+                "       WHERE DATE(w.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)" +
+                "         and w.status = 'COMPLETE'" +
+                "         AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR" +
+                "              u.nickname LIKE CONCAT(:searchString, '%'))" +
+                "       group by rc.referrer_pd_user_id) as count",
             nativeQuery = true)
     Page<Object[]> getReferralCommissionHistoryForAdminDashboard(
             Pageable pageable,
@@ -187,6 +191,17 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
 
     @Query(value = "SELECT COUNT(DISTINCT referred_pd_user_id) FROM referrals", nativeQuery = true)
     Integer totalNumberOfReferredPdInSystem();
+
+    @Query(value = "SELECT referrer_pd_user_id, COUNT(*) FROM referrals where referrer_pd_user_id in :userIdList GROUP BY referrer_pd_user_id", nativeQuery = true)
+    List<Object[]> getReferralCounts(List<String> userIdList);
+
+    default Map<String, Long> getReferralCountsMap(List<String> userIdList) {
+        return getReferralCounts(userIdList).stream()
+                .collect(Collectors.toMap(
+                        obj -> (String) obj[0],
+                        obj -> (Long) obj[1]
+                ));
+    }
 
     @Query(value = "SELECT \n" +
             "    COALESCE(u.id, '') AS referredPdUserId, \n" +
