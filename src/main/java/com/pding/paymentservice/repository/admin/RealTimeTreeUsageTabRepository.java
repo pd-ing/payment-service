@@ -86,7 +86,9 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "  WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate)" +
         "    AND (:endDate IS NULL OR vp.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL) OR" +
-        "         (u.email LIKE concat('%', :searchString, '%') OR pd.nickname LIKE concat('%', :searchString, '%'))))" +
+        "         (u.email LIKE concat('%', :searchString, '%') OR pd.nickname LIKE concat('%', :searchString, '%')))" +
+        "    AND (:transactionType IS NULL OR :transactionType = 'VIDEO')" +
+        " )" +
         " UNION ALL" +
         " (SELECT COALESCE(u.email, '')," +
         "         COALESCE(u.id, '')," +
@@ -107,7 +109,9 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR d.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL)" +
         "      OR (u.email LIKE concat('%', :searchString, '%')" +
-        "          OR pd_don.nickname LIKE concat('%', :searchString, '%'))))" +
+        "          OR pd_don.nickname LIKE concat('%', :searchString, '%')))" +
+        "    AND (:transactionType IS NULL OR :transactionType = 'DONATION')" +
+        " )" +
         " UNION ALL" +
         " (select COALESCE(u.email, '')," +
         "         COALESCE(u.id, '')," +
@@ -126,7 +130,9 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR ticket.purchased_date <= :endDate)" +
         "    AND ((:searchString IS NULL)" +
         "      OR (u.email LIKE concat('%', :searchString, '%')" +
-        "          OR u.nickname LIKE concat('%', :searchString, '%'))))",
+        "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
+        "    AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
+        ")",
             countQuery = "" +
                 " select count(*) " +
                 " from ((SELECT COALESCE(u.email, ''), " +
@@ -143,7 +149,9 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "       WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                 "         AND (:endDate IS NULL OR vp.last_update_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) OR " +
-                "              (u.email LIKE concat('%', :searchString, '%') OR pd.nickname LIKE concat('%', :searchString, '%')))) " +
+                "              (u.email LIKE concat('%', :searchString, '%') OR pd.nickname LIKE concat('%', :searchString, '%')))" +
+                "         AND (:transactionType IS NULL OR :transactionType = 'VIDEO')" +
+                " ) " +
                 "      UNION ALL " +
                 "      (SELECT COALESCE(u.email, ''), " +
                 "              COALESCE(u.id, ''), " +
@@ -163,7 +171,9 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "           OR d.last_update_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) " +
                 "           OR (u.email LIKE concat('%', :searchString, '%') " +
-                "               OR pd_don.nickname LIKE concat('%', :searchString, '%')))) " +
+                "               OR pd_don.nickname LIKE concat('%', :searchString, '%')))" +
+                "         AND (:transactionType IS NULL OR :transactionType = 'DONATION')" +
+                ") " +
                 "      UNION ALL " +
                 "      (select COALESCE(u.email, ''), " +
                 "              COALESCE(u.id, ''), " +
@@ -181,9 +191,15 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "           OR ticket.purchased_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) " +
                 "           OR (u.email LIKE concat('%', :searchString, '%') " +
-                "               OR u.nickname LIKE concat('%', :searchString, '%'))))) as total_count",
+                "               OR u.nickname LIKE concat('%', :searchString, '%')))" +
+                "         AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
+                ")) as total_count",
             nativeQuery = true)
-    Page<Object[]> getRealTimeTreeUsage(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString, Pageable pageable);
+    Page<Object[]> getRealTimeTreeUsage(@Param("startDate") LocalDate startDate,
+                                        @Param("endDate") LocalDate endDate,
+                                        @Param("transactionType") String transactionType,
+                                        @Param("searchString") String searchString,
+                                        Pageable pageable);
 
 
     @Query(value = "SELECT  COALESCE(SUM(trees_consumed), 0) " +

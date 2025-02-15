@@ -203,31 +203,32 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
                 ));
     }
 
-    @Query(value = "SELECT \n" +
-            "    COALESCE(u.id, '') AS referredPdUserId, \n" +
-            "    COALESCE(u.email, '') AS referredPdUserEmail, \n" +
-            "    COALESCE(u.nickname, '') AS referredPdUserNickname, \n" +
-            "    COALESCE(e.trees_earned, 0) AS treesEarned, \n" +
-            "    COALESCE(w.trees, 0) AS treesExchangedLatest, \n" +
-            "    COALESCE(w.leafs, 0) AS leavesExchangedLatest, \n" +
-            "    COALESCE(e.leafs_earned, 0) AS leavesEarned \n" +
-            "FROM \n" +
-            "    referrals r \n" +
-            "JOIN \n" +
-            "    users u ON r.referred_pd_user_id = u.id \n" +
-            "LEFT JOIN \n" +
-            "    earning e ON e.user_id = u.id \n" +
-            "LEFT JOIN \n" +
-            "    ( \n" +
-            "        SELECT \n" +
-            "            wd.pd_user_id, \n" +
-            "            SUM(wd.trees) AS trees, \n" +
-            "            SUM(wd.leafs) AS leafs, \n" +
-            "            wd.created_date AS latest_withdrawal_date \n" +
-            "        FROM \n" +
-            "            withdrawals wd \n" +
-            "            WHERE DATE(wd.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) \n" +
-            "            GROUP BY  wd.pd_user_id, wd.created_date \n" +
+    @Query(value =
+            "SELECT " +
+            "    COALESCE(u.id, '') AS referredPdUserId, " +
+            "    COALESCE(u.email, '') AS referredPdUserEmail, " +
+            "    COALESCE(u.nickname, '') AS referredPdUserNickname, " +
+            "    COALESCE(e.trees_earned, 0) AS treesEarned, " +
+            "    COALESCE(w.trees, 0) AS treesExchangedLatest, " +
+            "    COALESCE(w.leafs, 0) AS leavesExchangedLatest, " +
+            "    COALESCE(e.leafs_earned, 0) AS leavesEarned " +
+            "FROM " +
+            "    referrals r " +
+            "JOIN " +
+            "    users u ON r.referred_pd_user_id = u.id " +
+            "LEFT JOIN " +
+            "    earning e ON e.user_id = u.id " +
+            "LEFT JOIN " +
+            "    ( " +
+            "        SELECT " +
+            "            wd.pd_user_id, " +
+            "            SUM(wd.trees) AS trees, " +
+            "            SUM(wd.leafs) AS leafs, " +
+            "            wd.created_date AS latest_withdrawal_date " +
+            "        FROM " +
+            "            withdrawals wd " +
+            "            WHERE DATE(wd.created_date) = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) " +
+            "            GROUP BY  wd.pd_user_id, wd.created_date " +
             "    ) w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = e.user_id " +
             " WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",
             countQuery = "SELECT COUNT(*) " +

@@ -27,10 +27,10 @@ public class RealTimeTreeUsageTabService {
     TokenSigner tokenSigner;
 
 
-    public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
+    public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String transactionType, String searchString, int page, int size) {
         RealTimeTreeTransactionHistory result = new RealTimeTreeTransactionHistory();
         Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").descending());
-        Page<Object[]> transaction = realTimeTreeUsageTabRepository.getRealTimeTreeUsage(startDate, endDate, searchString, pageable);
+        Page<Object[]> transaction = realTimeTreeUsageTabRepository.getRealTimeTreeUsage(startDate, endDate, transactionType, searchString, pageable);
         List<TransactionHistoryForAdminDashboard> transactionList = createTreeUsageSummaryList(transaction.getContent());
         result.setTransactionHistoryForAdminDashboards(new PageImpl<>(transactionList, pageable, transaction.getTotalElements()));
         return result;
