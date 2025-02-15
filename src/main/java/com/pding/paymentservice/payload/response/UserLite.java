@@ -25,12 +25,10 @@ public class UserLite {
 
     public static UserLite fromPublicUserNet(PublicUserNet src, TokenSigner tokenSigner) {
         String displayName = src.getId();
-        if (src.getProfileId() != null && !src.getProfileId().isEmpty()) {
-            displayName = src.getProfileId();
-        } else if (src.getNickname() != null && !src.getNickname().isEmpty()) {
+         if (src.getNickname() != null && !src.getNickname().isEmpty()) {
             displayName = src.getNickname();
-        } else if (src.getEmail() != null && !src.getEmail().isEmpty()) {
-            displayName = src.getEmail();
+        } else if (src.getProfileId() != null && !src.getProfileId().isEmpty()) {
+            displayName = src.getProfileId();
         }
 
         String profilePicture = null;
