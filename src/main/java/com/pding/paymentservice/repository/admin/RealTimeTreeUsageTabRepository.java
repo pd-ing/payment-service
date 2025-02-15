@@ -13,63 +13,6 @@ import java.time.LocalDateTime;
 
 public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurchase, String> {
 
-    //    @Query(value = "(" +
-//            " SELECT COALESCE(u.email, ''), COALESCE(vp.last_update_date, '') AS last_update_date,  COALESCE(vp.trees_consumed, 0), " +
-//            " 'VIDEO', COALESCE(pd.nickname, ''), COALESCE(pd.id, '') " +
-//            " FROM video_purchase vp " +
-//            " LEFT JOIN users u ON vp.user_id = u.id " +
-//            " LEFT JOIN users pd ON vp.video_owner_user_id = pd.id " +
-//            " WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
-//            " AND (:endDate IS NULL OR  vp.last_update_date <= :endDate) " +
-//            " AND ((:searchString IS NULL) OR (u.email LIKE %:searchString% OR pd.nickname LIKE %:searchString%)) " +
-//            " ) " +
-//            " UNION ALL " +
-//            " (" +
-//            " SELECT COALESCE(u.email, ''), COALESCE(d.last_update_date, '')  AS last_update_date,  COALESCE(d.donated_trees, 0), " +
-//            " 'DONATION', COALESCE(pd_don.nickname, ''), COALESCE(pd_don.id, '') " +
-//            " FROM donation d " +
-//            " LEFT JOIN users u ON d.donor_user_id = u.id " +
-//            " LEFT JOIN users pd_don ON d.pd_user_id = pd_don.id " +
-//            " WHERE (:startDate IS NULL OR d.last_update_date >= :startDate) " +
-//            " AND (:endDate IS NULL OR  d.last_update_date <= :endDate) " +
-//            " AND ((:searchString IS NULL) OR (u.email LIKE %:searchString% OR pd_don.nickname LIKE %:searchString%)) " +
-//            " )",
-//            countQuery = "SELECT COUNT(*) FROM \n" +
-//                    "( \n" +
-//                    "    (SELECT * FROM (\n" +
-//                    "        SELECT COALESCE(u.email, '') AS email, \n" +
-//                    "               COALESCE(vp.last_update_date, '') AS last_update_date,  \n" +
-//                    "               COALESCE(vp.trees_consumed, 0) AS trees_consumed, \n" +
-//                    "               'VIDEO' AS transaction_type, \n" +
-//                    "               COALESCE(pd.nickname, '') AS nickname, \n" +
-//                    "               COALESCE(pd.id, '') AS user_id \n" +
-//                    "        FROM video_purchase vp \n" +
-//                    "        LEFT JOIN users u ON vp.user_id = u.id \n" +
-//                    "        LEFT JOIN users pd ON vp.video_owner_user_id = pd.id \n" +
-//                    "        WHERE  (:startDate IS NULL OR vp.last_update_date >= :startDate) \n" +
-//                    "         AND (:endDate IS NULL OR vp.last_update_date <= :endDate) \n" +
-//                    "         AND ((:searchString IS NULL) OR (u.email LIKE %:searchString% OR pd.nickname LIKE %:searchString%)) \n" +
-//                    "    ) AS t )\n" +
-//                    "    \n" +
-//                    "    UNION ALL \n" +
-//                    "    \n" +
-//                    "    (\n" +
-//                    "    SELECT * FROM ( \n" +
-//                    "        SELECT COALESCE(u.email, '') AS email, \n" +
-//                    "               COALESCE(d.last_update_date, '') AS last_update_date,  \n" +
-//                    "               COALESCE(d.donated_trees, 0) AS trees_consumed, \n" +
-//                    "               'DONATION' AS transaction_type, \n" +
-//                    "               COALESCE(pd_don.nickname, '') AS nickname, \n" +
-//                    "               COALESCE(pd_don.id, '') AS user_id \n" +
-//                    "        FROM donation d \n" +
-//                    "        LEFT JOIN users u ON d.donor_user_id = u.id \n" +
-//                    "        LEFT JOIN users pd_don ON d.pd_user_id = pd_don.id \n" +
-//                    "        WHERE (:startDate IS NULL OR d.last_update_date >= :startDate) \n" +
-//                    "         AND (:endDate IS NULL OR d.last_update_date <= :endDate) \n" +
-//                    "         AND ((:searchString IS NULL) OR (u.email LIKE %:searchString% OR pd_don.nickname LIKE %:searchString%)) \n" +
-//                    "    ) AS t2 )\n" +
-//                    ") AS total_count",
-//            nativeQuery = true)
     @Query(value =
         " (SELECT COALESCE(u.email, '')," +
         "         COALESCE(u.id, '')," +
@@ -86,8 +29,9 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "  WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate)" +
         "    AND (:endDate IS NULL OR vp.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL) OR" +
-        "         (u.email LIKE concat('%', :searchString, '%') OR pd.nickname LIKE concat('%', :searchString, '%')))" +
+        "         (u.email LIKE concat(:searchString, '%') OR pd.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'VIDEO')" +
+        "    order by last_update_date desc" +
         " )" +
         " UNION ALL" +
         " (SELECT COALESCE(u.email, '')," +
@@ -108,9 +52,10 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "    AND (:endDate IS NULL" +
         "      OR d.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL)" +
-        "      OR (u.email LIKE concat('%', :searchString, '%')" +
-        "          OR pd_don.nickname LIKE concat('%', :searchString, '%')))" +
+        "      OR (u.email LIKE concat(:searchString, '%')" +
+        "          OR pd_don.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'DONATION')" +
+        "    order by last_update_date desc" +
         " )" +
         " UNION ALL" +
         " (select COALESCE(u.email, '')," +
@@ -129,9 +74,10 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "    and (:endDate IS NULL" +
         "      OR ticket.purchased_date <= :endDate)" +
         "    AND ((:searchString IS NULL)" +
-        "      OR (u.email LIKE concat('%', :searchString, '%')" +
-        "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
+        "      OR (u.email LIKE concat(:searchString, '%')" +
+        "          OR u.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
+        "    order by ticket.purchased_date desc" +
         " )" +
         " union all" +
         " (select COALESCE(u.email, '')," +
@@ -152,37 +98,24 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "    and (:endDate IS NULL" +
         "      OR mp.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL)" +
-        "      OR (u.email LIKE concat('%', :searchString, '%')" +
-        "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
-        "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))"
+        "      OR (u.email LIKE concat(:searchString, '%')" +
+        "          OR u.nickname LIKE concat(:searchString, '%')))" +
+        "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))" +
+        "    order by mp.last_update_date desc"
         ,countQuery =
                 " select count(*) " +
-                " from ((SELECT COALESCE(u.email, ''), " +
-                "              COALESCE(u.id, ''), " +
-                "              COALESCE(vp.last_update_date, '') AS last_update_date, " +
-                "              COALESCE(vp.trees_consumed, 0), " +
-                "              'VIDEO'                           as transaction_type, " +
-                "              COALESCE(pd.nickname, ''), " +
-                "              COALESCE(pd.id, ''), " +
-                "              vp.id " +
+                " from ((SELECT vp.id " +
                 "       FROM video_purchase vp " +
                 "                LEFT JOIN users u ON vp.user_id = u.id " +
                 "                LEFT JOIN users pd ON vp.video_owner_user_id = pd.id " +
                 "       WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                 "         AND (:endDate IS NULL OR vp.last_update_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) OR " +
-                "              (u.email LIKE concat('%', :searchString, '%') OR pd.nickname LIKE concat('%', :searchString, '%')))" +
+                "              (u.email LIKE concat(:searchString, '%') OR pd.nickname LIKE concat(:searchString, '%')))" +
                 "         AND (:transactionType IS NULL OR :transactionType = 'VIDEO')" +
                 " ) " +
                 "      UNION ALL " +
-                "      (SELECT COALESCE(u.email, ''), " +
-                "              COALESCE(u.id, ''), " +
-                "              COALESCE(d.last_update_date, '') AS last_update_date, " +
-                "              COALESCE(d.donated_trees, 0), " +
-                "              'DONATION'                       as transaction_type, " +
-                "              COALESCE(pd_don.nickname, ''), " +
-                "              COALESCE(pd_don.id, ''), " +
-                "              d.id " +
+                "      (SELECT d.id " +
                 "       FROM donation d " +
                 "                LEFT JOIN users u " +
                 "                          ON d.donor_user_id = u.id " +
@@ -192,19 +125,12 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "         AND (:endDate IS NULL " +
                 "           OR d.last_update_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) " +
-                "           OR (u.email LIKE concat('%', :searchString, '%') " +
-                "               OR pd_don.nickname LIKE concat('%', :searchString, '%')))" +
+                "           OR (u.email LIKE concat(:searchString, '%') " +
+                "               OR pd_don.nickname LIKE concat(:searchString, '%')))" +
                 "         AND (:transactionType IS NULL OR :transactionType = 'DONATION')" +
                 ") " +
                 "      UNION ALL " +
-                "      (select COALESCE(u.email, ''), " +
-                "              COALESCE(u.id, ''), " +
-                "              COALESCE(ticket.purchased_date, '') AS last_update_date, " +
-                "              COALESCE(ticket.trees_consumed, 0), " +
-                "              'EXPOSURE_TICKET'                   as transaction_type, " +
-                "              '', " +
-                "              '', " +
-                "              ticket.id " +
+                "      (select ticket.id " +
                 "       from exposure_ticket_purchase ticket " +
                 "                left join users u on ticket.user_id = u.id " +
                 "       where ticket.is_give_by_admin is not true and (:startDate IS NULL " +
@@ -212,19 +138,12 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "         and (:endDate IS NULL " +
                 "           OR ticket.purchased_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) " +
-                "           OR (u.email LIKE concat('%', :searchString, '%') " +
-                "               OR u.nickname LIKE concat('%', :searchString, '%')))" +
+                "           OR (u.email LIKE concat(:searchString, '%') " +
+                "               OR u.nickname LIKE concat(:searchString, '%')))" +
                 "         AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
                 ")" +
                 " union all" +
-                " (select COALESCE(u.email, '')," +
-                "         COALESCE(u.id, '')," +
-                "         COALESCE(mp.last_update_date, '') AS last_update_date," +
-                "         COALESCE(mp.trees_transacted, 0)," +
-                "         'MESSAGE'                         as transaction_type," +
-                "         pd.nickname," +
-                "         mp.pd_userid," +
-                "         mp.id" +
+                " (select mp.id " +
                 "  from message_purchase mp" +
                 "           left join users u on mp.user_id = u.id" +
                 "           left join users pd on mp.pd_userid = pd.id" +
@@ -234,8 +153,8 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "    and (:endDate IS NULL" +
                 "      OR mp.last_update_date <= :endDate)" +
                 "    AND ((:searchString IS NULL)" +
-                "      OR (u.email LIKE concat('%', :searchString, '%')" +
-                "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
+                "      OR (u.email LIKE concat(:searchString, '%')" +
+                "          OR u.nickname LIKE concat( :searchString, '%')))" +
                 "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))" +
                 ") as total_count",
             nativeQuery = true)
