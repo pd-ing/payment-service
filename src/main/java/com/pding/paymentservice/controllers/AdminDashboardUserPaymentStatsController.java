@@ -338,6 +338,7 @@ public class AdminDashboardUserPaymentStatsController {
     public ResponseEntity<?> getRealTimeTreeUsageHistoryDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                                                           @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                                                                           @RequestParam(required = false) String searchString,
+                                                                          @RequestParam(required = false) String transactionType,
                                                                           @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
                                                                           @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) int size) {
         RealTimeTreeTransactionHistory realTimeTransactionHistory = null;
@@ -349,7 +350,7 @@ public class AdminDashboardUserPaymentStatsController {
             if (endDate != null) {
                 endDate = endDate.plusDays(1L);
             }
-            realTimeTransactionHistory = adminDashboardUserPaymentStatsService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
+            realTimeTransactionHistory = adminDashboardUserPaymentStatsService.getRealTimeTreeUsage(startDate, endDate, transactionType, searchString, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, realTimeTransactionHistory));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), realTimeTransactionHistory));

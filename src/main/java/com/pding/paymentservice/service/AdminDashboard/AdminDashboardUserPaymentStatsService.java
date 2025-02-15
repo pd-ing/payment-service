@@ -238,8 +238,8 @@ public class AdminDashboardUserPaymentStatsService {
         return treeSummaryTabService.getTreesSummaryForPd(pdUserId);
     }
 
-    public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
-        return realTimeTreeUsageTabService.getRealTimeTreeUsage(startDate, endDate, searchString, page, size);
+    public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String transactionType, String searchString, int page, int size) {
+        return realTimeTreeUsageTabService.getRealTimeTreeUsage(startDate, endDate, transactionType, searchString, page, size);
     }
 
     public TotalTreeUsageSummary getTotalTreeUsageSummary(LocalDate startDate, LocalDate endDate) {
