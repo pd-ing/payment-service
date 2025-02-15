@@ -55,7 +55,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR pd_don.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'DONATION')" +
-        "    order by last_update_date desc" +
+        "    order by d.last_update_date desc" +
         " )" +
         " UNION ALL" +
         " (select COALESCE(u.email, '')," +
@@ -100,8 +100,8 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "    AND ((:searchString IS NULL)" +
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR u.nickname LIKE concat(:searchString, '%')))" +
-        "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))" +
-        "    order by mp.last_update_date desc"
+        "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE')" +
+        "    order by mp.last_update_date desc)"
         ,countQuery =
                 " select count(*) " +
                 " from ((SELECT vp.id " +
