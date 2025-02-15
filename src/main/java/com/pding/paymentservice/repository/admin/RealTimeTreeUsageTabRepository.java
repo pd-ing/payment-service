@@ -132,8 +132,30 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat('%', :searchString, '%')" +
         "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
-        ")",
-            countQuery = "" +
+        " )" +
+        " union all" +
+        " (select COALESCE(u.email, '')," +
+        "         COALESCE(u.id, '')," +
+        "         COALESCE(mp.last_update_date, '') AS last_update_date," +
+        "         COALESCE(mp.trees_transacted, 0)," +
+        "         'MESSAGE'                         as transaction_type," +
+        "         pd.nickname," +
+        "         mp.pd_userid," +
+        "         mp.id," +
+        "         'COMPLETED'                       as status" +
+        "  from message_purchase mp" +
+        "           left join users u on mp.user_id = u.id" +
+        "           left join users pd on mp.pd_userid = pd.id" +
+        "  where mp.trees_transacted > 0" +
+        "    and (:startDate IS NULL" +
+        "      OR mp.last_update_date >= :startDate)" +
+        "    and (:endDate IS NULL" +
+        "      OR mp.last_update_date <= :endDate)" +
+        "    AND ((:searchString IS NULL)" +
+        "      OR (u.email LIKE concat('%', :searchString, '%')" +
+        "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
+        "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))"
+        ,countQuery =
                 " select count(*) " +
                 " from ((SELECT COALESCE(u.email, ''), " +
                 "              COALESCE(u.id, ''), " +
@@ -193,7 +215,29 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "           OR (u.email LIKE concat('%', :searchString, '%') " +
                 "               OR u.nickname LIKE concat('%', :searchString, '%')))" +
                 "         AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
-                ")) as total_count",
+                ")" +
+                " union all" +
+                " (select COALESCE(u.email, '')," +
+                "         COALESCE(u.id, '')," +
+                "         COALESCE(mp.last_update_date, '') AS last_update_date," +
+                "         COALESCE(mp.trees_transacted, 0)," +
+                "         'MESSAGE'                         as transaction_type," +
+                "         pd.nickname," +
+                "         mp.pd_userid," +
+                "         mp.id" +
+                "  from message_purchase mp" +
+                "           left join users u on mp.user_id = u.id" +
+                "           left join users pd on mp.pd_userid = pd.id" +
+                "  where mp.trees_transacted > 0" +
+                "    and (:startDate IS NULL" +
+                "      OR mp.last_update_date >= :startDate)" +
+                "    and (:endDate IS NULL" +
+                "      OR mp.last_update_date <= :endDate)" +
+                "    AND ((:searchString IS NULL)" +
+                "      OR (u.email LIKE concat('%', :searchString, '%')" +
+                "          OR u.nickname LIKE concat('%', :searchString, '%')))" +
+                "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))" +
+                ") as total_count",
             nativeQuery = true)
     Page<Object[]> getRealTimeTreeUsage(@Param("startDate") LocalDate startDate,
                                         @Param("endDate") LocalDate endDate,
