@@ -90,6 +90,11 @@ public class WithdrawalService {
             throw new IllegalArgumentException("You already have an ongoing withdrawal request.");
         }
 
+        List<Withdrawal> todayWithdrawalList = withdrawalRepository.findTodayWithdrawalByPdUserId(pdUserId);
+        if (!todayWithdrawalList.isEmpty()) {
+            throw new IllegalArgumentException("You only can make one withdrawal request per day.");
+        }
+
         earningService.deductTreesAndLeafs(pdUserId, trees, leafs);
 
         Withdrawal withdrawal = new Withdrawal(pdUserId, trees, leafs, WithdrawalStatus.PENDING);

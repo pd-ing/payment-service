@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface WithdrawalRepository extends JpaRepository<Withdrawal, String> {
     List<Withdrawal> findByPdUserIdAndStatus(String pdUserId, WithdrawalStatus status);
 
+    @Query("SELECT w FROM Withdrawal w WHERE w.pdUserId = :pdUserId and date(w.createdDate) = current_date")
+    List<Withdrawal> findTodayWithdrawalByPdUserId(String pdUserId);
+
     List<Withdrawal> findByStatus(WithdrawalStatus status);
 
     List<Withdrawal> findByPdUserId(String pdUserId);
