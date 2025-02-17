@@ -350,6 +350,9 @@ public class AdminDashboardUserPaymentStatsController {
             if (endDate != null) {
                 endDate = endDate.plusDays(1L);
             }
+            if(transactionType == null || transactionType.isEmpty()) {
+                transactionType = null;
+            }
             realTimeTransactionHistory = adminDashboardUserPaymentStatsService.getRealTimeTreeUsage(startDate, endDate, transactionType, searchString, page, size);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, realTimeTransactionHistory));
         } catch (Exception e) {
