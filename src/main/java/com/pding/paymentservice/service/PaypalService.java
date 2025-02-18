@@ -97,4 +97,8 @@ public class PaypalService {
     public void refund(String transactionId) {
         paymentService.completeRefundTreesByTransactionId(transactionId);
     }
+
+    public void calculateTreesAndRollback(String transactionId, BigDecimal refundedAmount, String refundId) {
+        paymentService.caculateTreesAndRollback(transactionId, refundedAmount, refundId);
+    }
 }

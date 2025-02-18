@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -584,4 +585,79 @@ public class PaymentService {
 
     }
 
+    /**
+     * Calculates the number of trees based on the refund amount.
+     * <p>
+     * Formula:
+     * T = S / (1.1 * 0.8 * 0.1)
+     * = S / 0.088
+     * <p>
+     * Where:
+     * - T is the number of trees.
+     * - S is the refund amount (in USD).
+     * - 1.1 accounts for the 10% VAT.
+     * - 0.8 accounts for the 20% refund fee deduction.
+     * - 0.1 represents the 10% refund percentage.
+     */
+    private BigDecimal countRollbackTrees(BigDecimal refundedAmount) {
+        return refundedAmount.divide(new BigDecimal("0.088"), 0, RoundingMode.UP);
+    }
+
+    public String caculateTreesAndRollback(String transactionId, BigDecimal refundedAmount, String refundId) {
+        BigDecimal treesToRefund = countRollbackTrees(refundedAmount);
+        WalletHistory walletHistory = walletHistoryService.findByTransactionId(transactionId).orElseThrow(
+            () -> new RuntimeException("Refund failed because record not found in wallet history for transactionId:" + transactionId)
+        );
+
+        BigDecimal purchasedTree = walletHistory.getPurchasedTrees();
+        BigDecimal originAmount = walletHistory.getAmount();
+
+        //Check if refund is already done for this TxnId
+
+        if(walletHistoryService.findByRefundId(refundId).isPresent()) {
+            log.info("Refund is already done for the given transactionId {}, refundId {}", transactionId, refundId);
+            return "Refund is already done for the given transactionId";
+        }
+
+        String txnIdPattern = "_trees_refunded_for_" + transactionId;
+        List<WalletHistory> lstRefundTxn =  walletHistoryService.findByTransactionIdWithPattern(txnIdPattern);
+        BigDecimal totalRefundedAmount = lstRefundTxn.stream().map(WalletHistory::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if(totalRefundedAmount.compareTo(originAmount) >= 0) {
+            log.info("Refund is already done for the given transactionId {}, refundId {}, totalRefundedAmount {}", transactionId, refundId, totalRefundedAmount);
+            return "Refund is already done for the given transactionId";
+        }
+
+
+        if (treesToRefund.compareTo(new BigDecimal("0")) <= 0) {
+            log.error("Cannot complete the refund request, because invalid leafsToRefund amount in walletHistory , For transactionId : {}", LogSanitizer.sanitizeForLog(walletHistory.getUserId()));
+            throw new RuntimeException("Cannot complete the refund request");
+        }
+        Wallet userWallet = walletService.fetchWalletByUserId(walletHistory.getUserId()).get();
+
+        if (userWallet.getTrees().compareTo(treesToRefund) < 0) {
+            // deduct total trees from wallet
+            treesToRefund = userWallet.getTrees();
+        }
+
+        String refundTransactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
+
+        walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
+            walletHistory.getUserId(),
+            new BigDecimal(0),
+            treesToRefund,
+            LocalDateTime.now(),
+            refundTransactionId,
+            TransactionType.REFUND_COMPLETED.getDisplayName(),
+            walletHistory.getAmount(),
+            "Refunded tree through backend",
+            walletHistory.getCurrency(),
+            "Refund completed successfully",
+            walletHistory.getIpAddress(),
+            refundId
+        );
+        ledgerService.saveToLedger(walletHistory.getWalletId(), treesToRefund, BigDecimal.ZERO, TransactionType.REFUND_COMPLETED, walletHistory.getUserId());
+        walletService.deductTreesFromWallet(walletHistory.getUserId(), treesToRefund);
+        log.info("Refund completed successFully for the transactionId : {}, UserId :{}, treesToRefund: {}, amount {}", transactionId, walletHistory.getUserId(), treesToRefund, refundedAmount);
+        return "Refund completed successFully for the transactionId : " + transactionId + " , UserId :" + walletHistory.getUserId() + ", treesToRefund:" + treesToRefund;
+    }
 }
