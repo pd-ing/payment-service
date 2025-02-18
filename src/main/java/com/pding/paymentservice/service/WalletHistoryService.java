@@ -47,6 +47,16 @@ public class WalletHistoryService {
         log.info("Wallet history saved for walletID: {}", LogSanitizer.sanitizeForLog(walletId));
     }
 
+    public void recordRefundHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
+                                      LocalDateTime purchasedDate,
+                                      String transactionID, String transactionStatus, BigDecimal amount, String paymentMethod,
+                                      String currency, String description, String ipAddress, String refundId) {
+        WalletHistory walletHistory = new WalletHistory(walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
+                amount, paymentMethod, currency, description, ipAddress, refundId);
+        walletHistoryRepository.save(walletHistory);
+        log.info("Wallet history saved for walletID: {}", LogSanitizer.sanitizeForLog(walletId));
+    }
+
     public List<WalletHistory> fetchWalletHistoryByWalletID(String walletId) {
         return walletHistoryRepository.findByWalletId(walletId);
     }
@@ -89,9 +99,22 @@ public class WalletHistoryService {
                 amount, paymentMethod, currency, description, ipAddress);
     }
 
+    public void createWalletHistoryEntry(String walletID, String userId,
+                                         BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
+                                         String transactionID, String transactionStatus, BigDecimal amount,
+                                         String paymentMethod, String currency,
+                                         String description, String ipAddress, String refundId) {
+        recordRefundHistory(walletID, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
+                amount, paymentMethod, currency, description, ipAddress, refundId);
+    }
+
 
     public void save(WalletHistory walletHistory) {
         walletHistoryRepository.save(walletHistory);
+    }
+
+    public Optional<WalletHistory> findByRefundId(String transactionId) {
+        return walletHistoryRepository.findByRefundId(transactionId);
     }
 
 

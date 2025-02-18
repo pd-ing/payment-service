@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("api/payment/paypal")
@@ -31,6 +33,9 @@ public class PaypalController {
         if(eventType.equalsIgnoreCase("PAYMENT.CAPTURE.REFUNDED") || eventType.equalsIgnoreCase("PAYMENT.CAPTURE.REVERSED")) {
             ObjectNode resource = (ObjectNode) json.get("resource");
             ArrayNode links = (ArrayNode) resource.get("links");
+            ObjectNode amount  = (ObjectNode) resource.get("amount");
+            BigDecimal refundAmount = new BigDecimal(amount.get("value").asText());
+            String refundId = resource.get("id").asText();
 
             //get rel up link (parrent transaction of refund)
             String upLink = null;
@@ -45,7 +50,7 @@ public class PaypalController {
             if(upLink != null) {
                 //get transaction id from up link
                 String transactionId = upLink.substring(upLink.lastIndexOf('/') + 1);
-                paypalService.refund(transactionId);
+                paypalService.calculateTreesAndRollback(transactionId, refundAmount, refundId);
             }
         }
     }

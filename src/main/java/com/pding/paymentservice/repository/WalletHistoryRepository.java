@@ -48,4 +48,6 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, St
             Pageable pageable
     );
 
+    Optional<WalletHistory> findByRefundId(String refundId);
+
 }
