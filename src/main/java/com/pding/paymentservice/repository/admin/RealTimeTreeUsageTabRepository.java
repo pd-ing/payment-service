@@ -31,7 +31,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "    AND ((:searchString IS NULL) OR" +
         "         (u.email LIKE concat(:searchString, '%') OR pd.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'VIDEO')" +
-        "    order by last_update_date desc" +
+//        "    order by vp.last_update_date desc" +
         " )" +
         " UNION ALL" +
         " (SELECT COALESCE(u.email, '')," +
@@ -55,7 +55,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR pd_don.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'DONATION')" +
-        "    order by d.last_update_date desc" +
+//        "    order by d.last_update_date desc" +
         " )" +
         " UNION ALL" +
         " (select COALESCE(u.email, '')," +
@@ -77,7 +77,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR u.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
-        "    order by ticket.purchased_date desc" +
+//        "    order by ticket.purchased_date desc" +
         " )" +
         " union all" +
         " (select COALESCE(u.email, '')," +
@@ -101,7 +101,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR u.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE')" +
-        "    order by mp.last_update_date desc)"
+        "    )"
         ,countQuery =
                 " select count(*) " +
                 " from ((SELECT vp.id " +
