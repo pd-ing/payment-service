@@ -50,4 +50,6 @@ public interface WalletHistoryRepository extends JpaRepository<WalletHistory, St
 
     Optional<WalletHistory> findByRefundId(String refundId);
 
+    List<WalletHistory> findByUserIdAndTransactionStatusIn(String userId, List<String> statuses);
+
 }
