@@ -157,6 +157,8 @@ public class PaymentService {
         walletHistory.setTransactionId(paymentIntentId);
         walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
         walletHistoryService.save(walletHistory);
+
+        affiliateTrackingService.trackTreePurchase(walletHistory.getUserId(), walletHistory);
         return "Payment completed successfully for paymentIntentId " + paymentIntentId;
     }
 
