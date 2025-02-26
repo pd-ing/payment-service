@@ -7,6 +7,7 @@ import com.pding.paymentservice.payload.net.PublicUserWithStripeIdNet;
 import com.pding.paymentservice.payload.response.IsUserAdminResponseNet;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.security.jwt.JwtUtils;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class UserServiceNetworkManager {
 
     private final WebClient webClient;
@@ -152,5 +154,18 @@ public class UserServiceNetworkManager {
             .header("Authorization", "Bearer " + authHelper.getIdToken())
                 .retrieve()
                 .bodyToMono(Boolean.class);
+    }
+
+    public void saveAffiliateTracking(String userId, String event) {
+        try {
+            webClient.post()
+                .uri(userService + "/api/affiliate-tracking")
+                .bodyValue(Map.of("userId", userId, "event", event))
+                .retrieve()
+                .toBodilessEntity()
+                .subscribe();
+        } catch (Exception e) {
+            log.error("Failed to save affiliate tracking for user: {}", userId, e);
+        }
     }
 }

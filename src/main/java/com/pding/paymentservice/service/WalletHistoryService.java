@@ -37,14 +37,15 @@ public class WalletHistoryService {
     @Autowired
     WalletRepository walletRepository;
 
-    public void recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
+    public WalletHistory recordPurchaseHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
                                       LocalDateTime purchasedDate,
                                       String transactionID, String transactionStatus, BigDecimal amount, String paymentMethod,
                                       String currency, String description, String ipAddress) {
         WalletHistory walletHistory = new WalletHistory(walletId, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
-        walletHistoryRepository.save(walletHistory);
+        walletHistory =  walletHistoryRepository.save(walletHistory);
         log.info("Wallet history saved for walletID: {}", LogSanitizer.sanitizeForLog(walletId));
+        return walletHistory;
     }
 
     public void recordRefundHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
@@ -90,12 +91,12 @@ public class WalletHistoryService {
         return walletHistoryRepository.findByTransactionIdPattern(pattern);
     }
 
-    public void createWalletHistoryEntry(String walletID, String userId,
+    public WalletHistory createWalletHistoryEntry(String walletID, String userId,
                                          BigDecimal purchasedTrees, BigDecimal purchasedLeafs, LocalDateTime purchasedDate,
                                          String transactionID, String transactionStatus, BigDecimal amount,
                                          String paymentMethod, String currency,
                                          String description, String ipAddress) {
-        recordPurchaseHistory(walletID, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
+        return recordPurchaseHistory(walletID, userId, purchasedTrees, purchasedLeafs, purchasedDate, transactionID, transactionStatus,
                 amount, paymentMethod, currency, description, ipAddress);
     }
 
