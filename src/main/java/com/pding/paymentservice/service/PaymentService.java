@@ -52,6 +52,9 @@ public class PaymentService {
     @Autowired
     AuthHelper authHelper;
 
+    @Autowired
+    AffiliateTrackingService affiliateTrackingService;
+
 
     @Transactional
     @Deprecated
@@ -408,10 +411,12 @@ public class PaymentService {
                                                   String description, String ipAddress) {
         log.info("Start add tree transaction via paypal for userId: {}", userId);
         Wallet wallet = walletService.updateWalletForUser(userId, purchasedTrees, new BigDecimal(0), purchasedDate);
-        walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, new BigDecimal(0), purchasedDate, transactionID, transactionStatus,
+        WalletHistory walletHistory = walletHistoryService.createWalletHistoryEntry(wallet.getId(), userId, purchasedTrees, new BigDecimal(0), purchasedDate, transactionID, transactionStatus,
             amount, paymentMethod, currency, description, ipAddress);
 
         ledgerService.saveToLedger(wallet.getId(), purchasedTrees, new BigDecimal(0), TransactionType.TREE_PURCHASE, userId);
+
+        affiliateTrackingService.trackTreePurchase(userId, walletHistory);
         log.info("tree transaction via paypal completed successfully for userId: {}", userId);
         return "Tree added successfully for user";
     }
