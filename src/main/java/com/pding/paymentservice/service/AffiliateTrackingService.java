@@ -27,7 +27,7 @@ public class AffiliateTrackingService {
         try {
             List<WalletHistory> walletHistories = walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, Arrays.asList("COMPLETED", "success", "paymentCompleted"));
             if (walletHistories.size() == 1) {
-                userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE");
+                userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees());
                 return;
             }
 
@@ -40,9 +40,9 @@ public class AffiliateTrackingService {
             }
 
             if (walletHistory.getPurchaseDate().isBefore(firstPurchase.getPurchaseDate().plusHours(24))) {
-                userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE");
+                userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees());
             } else {
-                userServiceNetworkManager.saveAffiliateTracking(userId, "REPEAT_PURCHASE");
+                userServiceNetworkManager.saveAffiliateTracking(userId, "REPEAT_PURCHASE", walletHistory.getPurchasedTrees());
             }
         } catch (Exception e) {
             log.error("Failed to track tree purchase for user: {}", userId, e);

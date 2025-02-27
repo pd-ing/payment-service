@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -156,11 +157,11 @@ public class UserServiceNetworkManager {
                 .bodyToMono(Boolean.class);
     }
 
-    public void saveAffiliateTracking(String userId, String event) {
+    public void saveAffiliateTracking(String userId, String event, BigDecimal treeAmount) {
         try {
             webClient.post()
                 .uri(userService + "/api/affiliate-tracking")
-                .bodyValue(Map.of("userId", userId, "event", event))
+                .bodyValue(Map.of("userId", userId, "event", event, "treeAmount", treeAmount))
                 .retrieve()
                 .toBodilessEntity()
                 .subscribe();
