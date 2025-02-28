@@ -157,11 +157,11 @@ public class UserServiceNetworkManager {
                 .bodyToMono(Boolean.class);
     }
 
-    public void saveAffiliateTracking(String userId, String event, BigDecimal treeAmount) {
+    public void saveAffiliateTracking(String userId, String event, BigDecimal treeAmount, BigDecimal amount) {
         try {
             webClient.post()
                 .uri(userService + "/api/affiliate-tracking")
-                .bodyValue(Map.of("userId", userId, "event", event, "treeAmount", treeAmount))
+                .bodyValue(Map.of("userId", userId, "event", event, "treeAmount", treeAmount, "amount", amount))
                 .retrieve()
                 .toBodilessEntity()
                 .subscribe();
