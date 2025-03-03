@@ -34,6 +34,7 @@ public class AffiliateTrackingService {
         try {
             List<WalletHistory> walletHistories = walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, Arrays.asList("COMPLETED", "success", "paymentCompleted"));
             if (walletHistories.size() == 1) {
+                log.info("save affiliate tracking FIRST_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
                 return;
             }
@@ -47,8 +48,10 @@ public class AffiliateTrackingService {
             }
 
             if (walletHistory.getPurchaseDate().isBefore(firstPurchase.getPurchaseDate().plusHours(24))) {
+                log.info("save affiliate tracking FIRST_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
             } else {
+                log.info("save affiliate tracking REPEAT_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "REPEAT_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
             }
         } catch (Exception e) {
