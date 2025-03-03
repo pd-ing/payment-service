@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Log4j2
@@ -38,7 +39,7 @@ public class AffiliateTrackingService {
             }
 
             WalletHistory firstPurchase = walletHistories.stream()
-                .filter(wl -> wl.getId() != walletHistory.getId())
+                .filter(wl -> !Objects.equals(wl.getId(), walletHistory.getId()))
                 .min(Comparator.comparing(WalletHistory::getPurchaseDate)).orElse(null);
 
             if (firstPurchase == null) {
