@@ -54,6 +54,8 @@ public class WalletHistory {
 
     private String refundId;
 
+    private Boolean isFirstPurchase;
+
     public WalletHistory(String walletId, String userId, BigDecimal purchasedTrees, BigDecimal purchasedLeafs,
                          LocalDateTime purchaseDate, String transactionId, String transactionStatus,
                          BigDecimal amount, String paymentMethod, String currency, String description,
