@@ -33,6 +33,8 @@ public class AffiliateTrackingService {
 
         try {
             List<WalletHistory> walletHistories = walletHistoryRepository.findByUserIdAndTransactionStatusIn(userId, Arrays.asList("COMPLETED", "success", "paymentCompleted"));
+            walletHistory.setIsFirstPurchase(walletHistories.size() == 1);
+            walletHistoryRepository.save(walletHistory);
             if (walletHistories.size() == 1) {
                 log.info("save affiliate tracking FIRST_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
