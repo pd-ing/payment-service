@@ -60,6 +60,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
@@ -125,6 +127,9 @@ public class VideoPurchaseService {
     @Autowired
     EmailSenderService emailSenderService;
 
+    @Autowired
+    VideoPurchaseServiceProxy self;
+
     @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
         log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
@@ -140,21 +145,7 @@ public class VideoPurchaseService {
         return video;
     }
 
-    @Transactional
-    public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, BigDecimal treesToConsumed, String duration) {
-        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
-        walletService.deductTreesFromWallet(userId, treesToConsumed);
 
-        VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, duration,
-                VideoPurchaseDuration.valueOf(duration).getExpiryDate());
-
-        VideoPurchase video = videoPurchaseRepository.save(transaction);
-
-        earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
-        ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
-        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
-        return video;
-    }
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
         return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
@@ -182,6 +173,7 @@ public class VideoPurchaseService {
     public Map<String, VideoEarningsAndSales> getVideoStats(List<String> videoId) {
         return videoPurchaseRepository.getTotalTreesEarnedAndSalesCountMapForVideoIds(videoId);
     }
+
 
     public ResponseEntity<?> buyVideoV3(String videoId, String duration) {
         if (videoId == null || videoId.isEmpty()) {
@@ -220,15 +212,7 @@ public class VideoPurchaseService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "This duration is not enabled"), null));
             }
 
-
-            List<VideoPurchase> videoPurchases = videoPurchaseRepository.findByUserIdAndVideoId(userId, videoId);
-
-            //check if video with duration not expired and already purchased
-            if (videoPurchases.stream().anyMatch(vp -> vp.getExpiryDate() == null || vp.getExpiryDate().isAfter(LocalDateTime.now()))) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Video already purchased"), null));
-            }
-
-            VideoPurchase video = createVideoTransaction(userId, videoId, videoOwnerUserId, price.getTrees(), price.getDuration());
+            VideoPurchase video = self.createVideoTransaction(userId, videoId, videoOwnerUserId, price.getTrees(), price.getDuration());
 
             sendNotificationService.sendBuyVideoNotification(video);
 
@@ -301,6 +285,7 @@ public class VideoPurchaseService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> isVideoPurchasedV2(String userId, String videoId) {
         try {
             List<VideoPurchase> videoPurchases = videoPurchaseRepository.findByUserIdAndVideoId(userId, videoId);

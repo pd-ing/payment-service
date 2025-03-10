@@ -2,12 +2,17 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,6 +31,10 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query("SELECT SUM(vt.treesConsumed) FROM VideoPurchase vt WHERE vt.videoOwnerUserId = :videoOwnerUserId and vt.isRefunded != true")
     BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoId = :videoId and vp.isRefunded != true")
+    List<VideoPurchase> findByUserIdAndVideoIdSelectForUpdate(String userId, String videoId);
 
     @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoId = :videoId and vp.isRefunded != true")
     List<VideoPurchase> findByUserIdAndVideoId(String userId, String videoId);
