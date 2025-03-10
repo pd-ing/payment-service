@@ -140,7 +140,7 @@ public class VideoPurchaseService {
         return video;
     }
 
-//    @Transactional
+    @Transactional
     public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, BigDecimal treesToConsumed, String duration) {
         log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
         walletService.deductTreesFromWallet(userId, treesToConsumed);
@@ -183,7 +183,6 @@ public class VideoPurchaseService {
         return videoPurchaseRepository.getTotalTreesEarnedAndSalesCountMapForVideoIds(videoId);
     }
 
-    @Transactional
     public ResponseEntity<?> buyVideoV3(String videoId, String duration) {
         if (videoId == null || videoId.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
