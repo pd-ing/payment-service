@@ -2,26 +2,23 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.request.StatisticTopSellPDRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.PdPurchaseResponse;
+import com.pding.paymentservice.payload.response.StatisticTopSellPDResponse;
 import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.TreeSpentHistory.TreeSpentHistoryRecord;
-import com.pding.paymentservice.repository.TreesRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.TreesService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -68,6 +65,18 @@ public class TreesController {
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TreeSpentHistoryResponse(errorResponse, new BigDecimal(0), null));
         }
+    }
+
+    @PostMapping(value = "/internal/statistic-top-trees")
+    public ResponseEntity<List<StatisticTopSellPDResponse>> statisticTopTreeByPDIds(
+                                                @Valid @RequestBody StatisticTopSellPDRequest statisticTopSellPDRequest) {
+        return ResponseEntity.ok().body(treesService.statisticTopTreeByPDIds(statisticTopSellPDRequest));
+    }
+
+    @PostMapping(value = "/internal/find-pd-purchase-by-user-ids")
+    public ResponseEntity<List<PdPurchaseResponse>> findPdPurchaseByUserIds(
+            @Valid @RequestBody List<String> userIds) {
+        return ResponseEntity.ok().body(treesService.findPdPurchaseByUserIds(userIds));
     }
 
     // Handle MissingServletRequestParameterException --

@@ -184,4 +184,6 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             nativeQuery = true)
     List<Object[]> findTopDonorUserByDateRanger(String pdUserId, LocalDate startDate, LocalDate endDate);
 
+    @Query(value = "SELECT d.donorUserId FROM Donation d WHERE d.lastUpdateDate >= :fromDateTime")
+    List<String> findUsersPurchaseFromLastUpdate(@Param("fromDateTime") LocalDateTime fromDateTime);
 }

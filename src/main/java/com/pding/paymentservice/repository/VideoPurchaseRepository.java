@@ -5,6 +5,7 @@ import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.pding.paymentservice.payload.response.StatisticTopSellPDResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -175,4 +176,18 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.isRefunded != true and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
+
+
+    @Query(value = "SELECT vp.userId from VideoPurchase vp where vp.lastUpdateDate >= :fromDateTime")
+    List<String> findUsersPurchaseFromDateTime(@Param("fromDateTime") LocalDateTime fromDateTime);
+
+    @Query("SELECT new com.pding.paymentservice.payload.response.StatisticTopSellPDResponse(vp.videoOwnerUserId, SUM(vp.treesConsumed)) " +
+        "FROM VideoPurchase vp " +
+        "WHERE (vp.isReplacementOfDeletedVideo = false OR vp.isReplacementOfDeletedVideo IS NULL) " +
+        "AND vp.lastUpdateDate >= :fromDateTime AND vp.videoOwnerUserId IN :pdIds " +
+        "GROUP BY vp.videoOwnerUserId")
+    List<StatisticTopSellPDResponse> statisticTopSellPDs(@Param("pdIds") List<String> pdIds, @Param("fromDateTime") LocalDateTime fromDateTime);
+
+    @Query(value = "SELECT distinct vp.user_id, vp.video_owner_user_id FROM video_purchase vp WHERE vp.user_id IN :userIds", nativeQuery = true)
+    List<Object[]> findPdPurchaseByUserIds(@Param("userIds") List<String> userIds);
 }
