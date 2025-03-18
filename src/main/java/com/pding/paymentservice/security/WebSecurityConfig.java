@@ -34,6 +34,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 //.requestMatchers("/api/payment/charge").authenticated()
                                 .requestMatchers("/api/payment/ticket-prices").authenticated()
                                 .requestMatchers("/api/payment/purchased-ticket").authenticated()
+                                .requestMatchers("/api/payment/admin/purchased-ticket-history").authenticated()
                                 .requestMatchers("/api/payment/purchased-ticket/count").authenticated()
                                 .requestMatchers("/api/payment/admin/count-pd-ticket").authenticated()
                                 .requestMatchers("/api/payment/ticket/buy").authenticated()

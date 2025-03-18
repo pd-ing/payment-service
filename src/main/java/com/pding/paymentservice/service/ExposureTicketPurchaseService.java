@@ -10,6 +10,7 @@ import com.pding.paymentservice.models.enums.ExposureTicketStatus;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.dto.UserTicketCountDTO;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.CountUserTicketByType;
 import com.pding.paymentservice.payload.response.SlotOverviewResponse;
@@ -91,6 +92,10 @@ public class ExposureTicketPurchaseService {
         String userId = authHelper.getUserId();
         PageRequest pageRequest = PageRequest.of(0,  Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "purchasedDate"));
         return exposureTicketPurchaseRepository.findByUserId(userId, pageRequest);
+    }
+
+    public Page<UserTicketCountDTO> getPurchasedTicketOfUser(String userId, String ticketType, Pageable pageable) {
+        return exposureTicketPurchaseRepository.countUserTicketByDate(userId, ticketType, pageable);
     }
 
     @Transactional
