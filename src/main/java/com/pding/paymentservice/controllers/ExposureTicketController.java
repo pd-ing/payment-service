@@ -40,6 +40,11 @@ public class ExposureTicketController {
         return ResponseEntity.ok(new GenericPageResponse<>(null, exposureTicketPurchaseService.getPurchasedTicketOfUser(pageable)));
     }
 
+    @GetMapping("/admin/purchased-ticket-history")
+    public ResponseEntity getListPurchasedTicket(@RequestParam String userId, @RequestParam String ticketType, Pageable pageable) {
+        return ResponseEntity.ok(new GenericPageResponse<>(null, exposureTicketPurchaseService.getPurchasedTicketOfUser(userId, ticketType, pageable)));
+    }
+
     @GetMapping("/purchased-ticket/count")
     public ResponseEntity getListPurchasedTicketCount() {
         return ResponseEntity.ok(new GenericListDataResponse<>(null, exposureTicketPurchaseService.countUserTicketByType()));
