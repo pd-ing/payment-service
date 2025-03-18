@@ -305,4 +305,11 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
 
     @Query(value = "SELECT email FROM users WHERE id = :userId", nativeQuery = true)
     Optional<String> findEmailByUserId(@Param("userId") String userId);
+
+    @Query(
+        value =
+        " SELECT COUNT(*) > 0 AS is_exist" +
+        " FROM user_followings" +
+        " WHERE follower = :userId and is_deleted = false", nativeQuery = true)
+    Long isFollowingExists(String userId);
 }
