@@ -14,10 +14,7 @@ import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.CountUserTicketByType;
 import com.pding.paymentservice.payload.response.SlotOverviewResponse;
 import com.pding.paymentservice.payload.response.UserLite;
-import com.pding.paymentservice.repository.ExposureSlotHistoryRepository;
-import com.pding.paymentservice.repository.ExposureSlotRepository;
-import com.pding.paymentservice.repository.ExposureTicketPurchaseRepository;
-import com.pding.paymentservice.repository.ExposureTicketRepository;
+import com.pding.paymentservice.repository.*;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
@@ -34,13 +31,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,6 +48,7 @@ public class ExposureTicketPurchaseService {
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final TokenSigner tokenSigner;
     private final SendNotificationSqsMessage sendNotificationSqsMessage;
+    private final OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
     private static final Map<String, ZoneId> ZONEID_MAP = Map.of(
         "kr", ZoneId.of("Asia/Seoul"),
@@ -170,24 +162,16 @@ public class ExposureTicketPurchaseService {
     }
 
     public List<UserLite> getTopExposurePds() throws Exception {
-        List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
 
-        //check if any slot is expired
+        try {
+            String userId = authHelper.getUserId();
+            if(otherServicesTablesNativeQueryRepository.isFollowingExists(userId) != 1) {
+                return new ArrayList<>();
+            }
+        } catch (Exception ignore) {}
+
+        List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
         Instant now = Instant.now();
-//        List<MExposureSlot> expiredSlots = exposureSlots.stream().filter(s -> s.getEndTime().isBefore(now)).collect(Collectors.toList());
-//        for (MExposureSlot slot : expiredSlots) {
-//            try {
-//                MExposureSlotHistory history = exposureSlotHistoryRepository.findById(slot.getId())
-//                    .orElse(new MExposureSlotHistory(slot.getId(), slot.getUserId(), slot.getStartTime(), slot.getEndTime(), slot.getSlotNumber().toString(), now, false, slot.getTicketType().toString()));
-//                history.setReleasedTime(now);
-//                history.setIsForcedRelease(false);
-//                exposureSlotHistoryRepository.save(history);
-//
-//                //release the slot
-//                exposureSlotRepository.delete(slot);
-//            } catch (Exception ignored) {
-//            }
-//        }
 
         Set<String> userIds = exposureSlots.stream().filter(s -> s.getEndTime().isAfter(now)).map(MExposureSlot::getUserId).collect(Collectors.toSet());
         if(userIds.isEmpty()) {
