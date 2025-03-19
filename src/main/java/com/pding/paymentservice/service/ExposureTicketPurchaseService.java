@@ -169,12 +169,13 @@ public class ExposureTicketPurchaseService {
     public List<UserLite> getTopExposurePds() throws Exception {
 
         String userId = authHelper.getUserId();
-        if (otherServicesTablesNativeQueryRepository.isFollowingExists(userId) != 1) {
-            return new ArrayList<>();
-        }
 
         List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
         Instant now = Instant.now();
+
+        if (otherServicesTablesNativeQueryRepository.isFollowingExists(userId) != 1 && !exposureSlots.contains(userId)) {
+            return new ArrayList<>();
+        }
 
         Set<String> userIds = exposureSlots.stream().filter(s -> s.getEndTime().isAfter(now)).map(MExposureSlot::getUserId).collect(Collectors.toSet());
         if(userIds.isEmpty()) {
@@ -182,6 +183,7 @@ public class ExposureTicketPurchaseService {
         }
 
         List<String> alreadyFollowOrUnFollow = otherServicesTablesNativeQueryRepository.findFollowingByListPd(userId, userIds);
+        alreadyFollowOrUnFollow.remove(userId);
         Set<String> finalUserIds = userIds.stream().filter(uId -> !alreadyFollowOrUnFollow.contains(uId)).collect(Collectors.toSet());
 
         if(finalUserIds.isEmpty()) {
