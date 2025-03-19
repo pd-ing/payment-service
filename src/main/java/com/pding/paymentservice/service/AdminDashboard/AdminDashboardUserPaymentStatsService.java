@@ -271,8 +271,8 @@ public class AdminDashboardUserPaymentStatsService {
         return referralCommissionService.listReferrerPdDetails(referredPdUserId, startDate, endDate, searchString, page, size);
     }
 
-    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, int page, int size) {
-        return referralCommissionService.listReferredPdDetails(referrerPdUserId, page, size);
+    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, String searchString, int page, int size) {
+        return referralCommissionService.listReferredPdDetails(referrerPdUserId, searchString, page, size);
     }
 
     public String updateReferralCommissionEntryToCompletedState(String referralCommissionId) throws Exception {

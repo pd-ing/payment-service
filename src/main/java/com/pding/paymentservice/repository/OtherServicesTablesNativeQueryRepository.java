@@ -77,43 +77,47 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     Page<Object[]> getListOfAllTheReferredPdsEOL(String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
 
 
-    @Query(value = "SELECT \n" +
-            "    COALESCE(u.nickname, ' ') AS nickname, \n" +
-            "    COALESCE(u.email, ' ') AS email, \n" +
-            "    COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, \n" +
-            "    COALESCE(u.pd_type, ' ') AS pd_type,\n" +
-            "    COALESCE(ew.trees_earned, 0.00) AS trees_earned, \n" +
-            "    COALESCE(w.latest_withdrawal_date, ' ') AS withdrawal_date, \n" +
-            "    COALESCE(w.trees, 0.00) AS trees_exchanged, \n" +
-            "    COALESCE(w.leafs, 0.00) AS leaves_exchanged, \n" +
-            "    COALESCE(ew.leafs_earned, 0.00) AS leafs_earned, \n" +
-            "    COALESCE(r.referred_pd_user_id, ' ') AS userId \n" +
-            "FROM referrals r \n" +
-            "INNER JOIN users u ON u.id = r.referred_pd_user_id \n" +
-            "LEFT JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referred_pd_user_id \n" +
-            "LEFT JOIN (\n" +
-            "    SELECT \n" +
-            "        wd.pd_user_id,\n" +
-            "        wd.trees,\n" +
-            "        wd.leafs,\n" +
-            "        wd.created_date AS latest_withdrawal_date\n" +
-            "    FROM withdrawals wd\n" +
-            "    INNER JOIN (\n" +
-            "        SELECT \n" +
-            "            pd_user_id, \n" +
-            "            MAX(created_date) AS latest_withdrawal_date\n" +
-            "        FROM withdrawals\n" +
-            "        GROUP BY pd_user_id\n" +
-            "    ) latest_wd ON wd.pd_user_id = latest_wd.pd_user_id AND wd.created_date = latest_wd.latest_withdrawal_date\n" +
-            ") w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = ew.user_id\n" +
-            "WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",
-            countQuery = "SELECT COUNT(*) FROM  referrals r \n" +
-                    "INNER JOIN  users u ON u.id = r.referred_pd_user_id \n" +
-                    "LEFT JOIN  earning ew ON ew.user_id = u.id  and ew.user_id = r.referred_pd_user_id \n" +
-                    "LEFT JOIN  withdrawals w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id  = u.id AND w.pd_user_id  = ew.user_id\n" +
-                    "where r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId",
+    @Query(value =
+            " SELECT " +
+            "     COALESCE(u.nickname, ' ') AS nickname, " +
+            "     COALESCE(u.email, ' ') AS email, " +
+            "     COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, " +
+            "     COALESCE(u.pd_type, ' ') AS pd_type," +
+            "     COALESCE(ew.trees_earned, 0.00) AS trees_earned, " +
+            "     COALESCE(w.latest_withdrawal_date, ' ') AS withdrawal_date, " +
+            "     COALESCE(w.trees, 0.00) AS trees_exchanged, " +
+            "     COALESCE(w.leafs, 0.00) AS leaves_exchanged, " +
+            "     COALESCE(ew.leafs_earned, 0.00) AS leafs_earned, " +
+            "     COALESCE(r.referred_pd_user_id, ' ') AS userId " +
+            " FROM referrals r " +
+            " INNER JOIN users u ON u.id = r.referred_pd_user_id " +
+            " LEFT JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referred_pd_user_id " +
+            " LEFT JOIN (" +
+            "     SELECT " +
+            "         wd.pd_user_id," +
+            "         wd.trees," +
+            "         wd.leafs," +
+            "         wd.created_date AS latest_withdrawal_date" +
+            "     FROM withdrawals wd" +
+            "     INNER JOIN (" +
+            "         SELECT " +
+            "             pd_user_id, " +
+            "             MAX(created_date) AS latest_withdrawal_date" +
+            "         FROM withdrawals" +
+            "         GROUP BY pd_user_id" +
+            "     ) latest_wd ON wd.pd_user_id = latest_wd.pd_user_id AND wd.created_date = latest_wd.latest_withdrawal_date" +
+            " ) w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id = u.id AND w.pd_user_id = ew.user_id" +
+            " WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId" +
+            " AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))",
+            countQuery =
+                    " SELECT COUNT(*) FROM  referrals r " +
+                    " INNER JOIN  users u ON u.id = r.referred_pd_user_id " +
+                    " LEFT JOIN  earning ew ON ew.user_id = u.id  and ew.user_id = r.referred_pd_user_id " +
+                    " LEFT JOIN  withdrawals w ON w.pd_user_id = r.referred_pd_user_id AND w.pd_user_id  = u.id AND w.pd_user_id  = ew.user_id" +
+                    " where r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :referrerPdUserId" +
+                    " AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))",
             nativeQuery = true)
-    Page<Object[]> getListOfAllTheReferredPds(String referrerPdUserId, Pageable pageable);
+    Page<Object[]> getListOfAllTheReferredPds(String referrerPdUserId, String searchString, Pageable pageable);
 
     @Query(value = "SELECT rc.id as referralCommissionId, rc.withdrawal_id as withdrawalId, rc.referrer_pd_user_id as referrerPdUserId, " +
             "rc.commission_percent as commissionPercent, rc.commission_amount_in_trees as commissionAmountInTrees, " +
@@ -242,26 +246,28 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     Page<Object[]> getReferredPdDetails(@Param("referrerPdUserId") String referrerPdUserId, Pageable pageable);
 
 
-    @Query(value = "SELECT DISTINCT u.id,COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, \n" +
-            "COALESCE(ew.trees_earned, 0.00) AS trees_earned, \n" +
-            "COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, \n" +
-            "ref_code.referral_code, COALESCE(u.referral_grade, 'GENERAL') \n" +
-            "FROM referrals r \n" +
-            "INNER JOIN users u ON u.id = r.referrer_pd_user_id \n" +
-            "INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id \n" +
-            "LEFT JOIN (SELECT COALESCE(referral_code, '') AS referral_code, id FROM users) AS ref_code ON ref_code.id = u.id \n" +
-            "WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) \n" +
-            "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
-            "AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
-            "AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
-            countQuery = "SELECT COUNT(*) \n" +
-                    "FROM referrals r \n" +
-                    "INNER JOIN users u ON u.id = r.referrer_pd_user_id \n" +
-                    "INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id \n" +
-                    "WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) \n" +
-                    "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
-                    "AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
-                    "AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+    @Query(value =
+            " SELECT DISTINCT u.id,COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, " +
+            " COALESCE(ew.trees_earned, 0.00) AS trees_earned, " +
+            " COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, " +
+            " ref_code.referral_code, COALESCE(u.referral_grade, 'GENERAL') " +
+            " FROM referrals r " +
+            " INNER JOIN users u ON u.id = r.referrer_pd_user_id " +
+            " INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id " +
+            " LEFT JOIN (SELECT COALESCE(referral_code, '') AS referral_code, id FROM users) AS ref_code ON ref_code.id = u.id " +
+            " WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) " +
+            " AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) " +
+            " AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) " +
+            " AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))",
+            countQuery =
+                    " SELECT COUNT(*) " +
+                    " FROM referrals r " +
+                    " INNER JOIN users u ON u.id = r.referrer_pd_user_id " +
+                    " INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id " +
+                    " WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) " +
+                    " AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) " +
+                    " AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) " +
+                    " AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))",
             nativeQuery = true)
     Page<Object[]> getListOfAllTheReferrerPds(String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
 

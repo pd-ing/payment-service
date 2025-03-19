@@ -145,9 +145,9 @@ public class ReferralCommissionService {
     }
 
     @Transactional
-    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, int page, int size) {
+    public Page<ReferredPDDetailsRecord> listReferredPdDetails(String referrerPdUserId, String searchString, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferredPds(referrerPdUserId, pageable);
+        Page<Object[]> referredPdDetailsPage = otherServicesTablesNativeQueryRepository.getListOfAllTheReferredPds(referrerPdUserId, searchString, pageable);
 
         List<ReferredPDDetailsRecord> referredPDDetailsRecords = new ArrayList<>();
         for (Object[] referredPdObj : referredPdDetailsPage.getContent()) {
