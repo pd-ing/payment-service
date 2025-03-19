@@ -168,12 +168,10 @@ public class ExposureTicketPurchaseService {
 
     public List<UserLite> getTopExposurePds() throws Exception {
 
-        try {
-            String userId = authHelper.getUserId();
-            if(otherServicesTablesNativeQueryRepository.isFollowingExists(userId) != 1) {
-                return new ArrayList<>();
-            }
-        } catch (Exception ignore) {}
+        String userId = authHelper.getUserId();
+        if (otherServicesTablesNativeQueryRepository.isFollowingExists(userId) != 1) {
+            return new ArrayList<>();
+        }
 
         List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
         Instant now = Instant.now();
@@ -182,7 +180,14 @@ public class ExposureTicketPurchaseService {
         if(userIds.isEmpty()) {
             return List.of();
         }
-        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
+
+        List<String> alreadyFollowOrUnFollow = otherServicesTablesNativeQueryRepository.findFollowingByListPd(userId, userIds);
+        Set<String> finalUserIds = userIds.stream().filter(uId -> !alreadyFollowOrUnFollow.contains(uId)).collect(Collectors.toSet());
+
+        if(finalUserIds.isEmpty()) {
+            return List.of();
+        }
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(finalUserIds).blockFirst();
         return usersFlux.stream().map(user -> UserLite.fromPublicUserNet(user, tokenSigner)).collect(Collectors.toList());
     }
 

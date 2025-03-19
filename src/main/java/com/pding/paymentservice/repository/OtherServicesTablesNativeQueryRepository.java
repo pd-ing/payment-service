@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<VideoPurchase, String> {
@@ -312,4 +313,11 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
         " FROM user_followings" +
         " WHERE follower = :userId and is_deleted = false", nativeQuery = true)
     Long isFollowingExists(String userId);
+
+    @Query(value =
+        " SELECT following" +
+        " FROM user_followings" +
+        " WHERE follower = :userId" +
+        "   and following in :pdIds", nativeQuery = true)
+    List<String> findFollowingByListPd(String userId, Set<String> pdIds);
 }
