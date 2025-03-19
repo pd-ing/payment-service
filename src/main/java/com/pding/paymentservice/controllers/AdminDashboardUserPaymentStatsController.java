@@ -498,12 +498,14 @@ public class AdminDashboardUserPaymentStatsController {
     }
 
     @GetMapping("/listReferredPds")
-    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "referrerPdUserId") String referrerPdUserId, @RequestParam(defaultValue = "0") @Min(0) int page,
-                                                         @RequestParam(defaultValue = "10") @Min(1) int size) {
+    ResponseEntity<?> getWithdrawalHistoryForReferredPds(@RequestParam(value = "referrerPdUserId") String referrerPdUserId,
+                                                         @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                         @RequestParam(defaultValue = "10") @Min(1) int size,
+                                                         @RequestParam(required = false, name = "searchText") String searchString
+                                                         ) {
 
         try {
-            // String referrerPdUserId = authHelper.getUserId();
-            Page<ReferredPDDetailsRecord> referredPDWithdrawalRecords = adminDashboardUserPaymentStatsService.listReferredPdDetails(referrerPdUserId, page, size);
+            Page<ReferredPDDetailsRecord> referredPDWithdrawalRecords = adminDashboardUserPaymentStatsService.listReferredPdDetails(referrerPdUserId, searchString,  page, size);
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, referredPDWithdrawalRecords));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new GenericPageResponse<>(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
