@@ -195,7 +195,8 @@ public class ExposureTicketPurchaseService {
 
     @Transactional
     public void forceReleaseTicket(String userId) throws Exception {
-        if (!userServiceNetworkManager.isUserAdmin(userId).blockLast()) {
+        String loginUser = authHelper.getUserId();
+        if (!userServiceNetworkManager.isUserAdmin(loginUser).blockLast()) {
             throw new IllegalArgumentException("Only admin can force release ticket");
         }
         Instant now = Instant.now();
