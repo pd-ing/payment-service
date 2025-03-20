@@ -321,7 +321,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     Long isFollowingExists(String userId);
 
     @Query(value =
-        " SELECT following" +
+        " SELECT distinct following" +
         " FROM user_followings" +
         " WHERE follower = :userId" +
         "   and following in :pdIds", nativeQuery = true)
