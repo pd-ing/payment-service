@@ -258,16 +258,19 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             " WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) " +
             " AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) " +
             " AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) " +
-            " AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))",
+            " AND (:searchString IS NULL OR :searchString = '' OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))" +
+            "",
             countQuery =
-                    " SELECT COUNT(*) " +
+                    " select count(*) from (SELECT DISTINCT u.id,COALESCE(u.nickname, ' ') AS nickname, COALESCE(u.email, ' ') AS email, COALESCE(ew.trees_earned, 0.00) AS trees_earned, COALESCE(FROM_UNIXTIME(u.created_date), ' ') AS created_date, ref_code.referral_code, COALESCE(u.referral_grade, 'GENERAL')" +
                     " FROM referrals r " +
                     " INNER JOIN users u ON u.id = r.referrer_pd_user_id " +
                     " INNER JOIN earning ew ON ew.user_id = u.id AND ew.user_id = r.referrer_pd_user_id " +
+                    " LEFT JOIN (SELECT COALESCE(referral_code, '') AS referral_code, id FROM users) AS ref_code ON ref_code.id = u.id " +
                     " WHERE (:pdUserId IS NULL OR r.referred_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId) " +
                     " AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) " +
                     " AND (:endDate IS NULL OR FROM_UNIXTIME(u.created_date) <= :endDate) " +
-                    " AND (:searchString IS NULL OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))",
+                    " AND (:searchString IS NULL OR :searchString = '' OR u.email LIKE CONCAT(:searchString, '%') OR u.nickname LIKE CONCAT(:searchString, '%'))"+
+                    ") as temp",
             nativeQuery = true)
     Page<Object[]> getListOfAllTheReferrerPds(String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
 
