@@ -3,17 +3,18 @@ package com.pding.paymentservice.repository;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import jakarta.persistence.LockModeType;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.pding.paymentservice.payload.response.StatisticTopSellPDResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -190,4 +191,22 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT distinct vp.user_id, vp.video_owner_user_id FROM video_purchase vp WHERE vp.user_id IN :userIds", nativeQuery = true)
     List<Object[]> findPdPurchaseByUserIds(@Param("userIds") List<String> userIds);
+
+    @Query(nativeQuery = true, value =
+            " insert IGNORE into user_to_send_crm_email(email, send_date, user_id)" +
+            " select u.email, CURDATE(), u.id" +
+            " from users u" +
+            "          left join video_purchase vp on u.id = vp.user_id" +
+            " where u.is_creator = false and u.email is not null" +
+            "  and (u.is_deleted = false or u.is_deleted is null)" +
+            "  and (u.is_banned = false or u.is_banned is null)" +
+            "  and (u.is_admin = false or u.is_admin is null)" +
+            "  and (u.is_support_account = false or u.is_support_account is null)" +
+            "  and (u.is_chat_agency = false or u.is_support_account is null)" +
+            " group by u.id" +
+            " having max(vp.last_update_date) is null or max(vp.last_update_date) <= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+    )
+    @Modifying
+    @Transactional
+    void saveEmailToSendCRMEmail();
 }
