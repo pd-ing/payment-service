@@ -148,6 +148,14 @@ public class VideoPurchaseServiceController {
         return videoPurchaseService.getAllPdUserIdWhoseVideosArePurchasedByUser(size, page);
     }
 
+    @GetMapping(value = "/getAllPdWhoseVideosAreExpiredByUser")
+    public ResponseEntity<?> getAllPdWhoseVideosAreExpiredByUser(
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "page", defaultValue = "0") int page
+    ) {
+        return videoPurchaseService.getAllPdWhoseVideosAreExpiredByUser(size, page);
+    }
+
     @GetMapping(value = "/videoSalesHistoryOfPd")
     public ResponseEntity<?> getVideoSalesHistoryOfUser(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,

@@ -561,6 +561,39 @@ public class VideoPurchaseService {
         }
     }
 
+    public ResponseEntity<?> getAllPdWhoseVideosAreExpiredByUser(int size, int page) {
+        try {
+            String userId = authHelper.getUserId();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Authenticated request. Invalid user"));
+            }
+            Pageable pageable = PageRequest.of(page, size);
+            Page<String> userIdsPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosAreExpiredByUser(userId, pageable);
+
+            if (userIdsPage.isEmpty()) {
+                Page<UserLite> resData = new PageImpl<>(List.of(), pageable, userIdsPage.getTotalElements());
+                return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+            }
+
+            List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIdsPage.toSet()).blockFirst();
+            if (usersFlux == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
+            }
+
+            List<UserLite> users = usersFlux.stream().map(userObj -> {
+                return UserLite.fromPublicUserNet(userObj, tokenSigner);
+            }).toList();
+
+            Page<UserLite> resData = new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
+
+            return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+
+        } catch (Exception ex) {
+            pdLogger.logException(ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
     public ResponseEntity<?> getVideoPurchaseTimeRemaining(String userId, Set<String> videoIds) {
         try {
             List<VideoPurchase> videoPurchases;

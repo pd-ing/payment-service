@@ -125,8 +125,12 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR) and vp.is_refunded is not true", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
-    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.isRefunded != true")
+    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.isRefunded != true and vp.expiryDate > current_time ")
     Page<String> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, Pageable pageable);
+
+
+    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.expiryDate < current_time and vp.isRefunded = false group by vp.videoId having max(vp.expiryDate) < current_time ")
+    Page<String> getAllPdUserIdWhoseVideosAreExpiredByUser(String userId, Pageable pageable);
 
     @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoId in :videoIds and vp.isRefunded != true")
     List<VideoPurchase> findByUserIdAndVideoIdIn(String userId, Set<String> videoIds);

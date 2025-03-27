@@ -77,6 +77,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/videoEarningAndSales").permitAll()
 //                                .requestMatchers("/api/payment/videoPurchaseReplacement").permitAll()
                                 .requestMatchers("/api/payment/getAllPdWhoseVideosArePurchasedByUser").authenticated()
+                                .requestMatchers("/api/payment/getAllPdWhoseVideosAreExpiredByUser").authenticated()
                                 .requestMatchers("/api/payment/buyCallOrMessage").authenticated()
                                 .requestMatchers("/api/payment/addBuyCallOrMessageEntryInRealTimeDb").authenticated()
                                 .requestMatchers("/api/payment/callHistoryForPd").authenticated()
