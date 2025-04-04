@@ -146,7 +146,6 @@ public class VideoPurchaseService {
     }
 
 
-
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
         return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
     }
@@ -300,8 +299,8 @@ public class VideoPurchaseService {
             }
 
             Optional<VideoPurchase> videoPurchase = videoPurchases.stream()
-                    .filter(vp -> vp.getExpiryDate() != null && vp.getExpiryDate().isAfter(LocalDateTime.now()))
-                    .findFirst();
+                .filter(vp -> vp.getExpiryDate() != null && vp.getExpiryDate().isAfter(LocalDateTime.now()))
+                .findFirst();
 
             if (videoPurchase.isPresent()) {
                 Boolean isPermanent = VideoPurchaseDuration.PERMANENT.name().equalsIgnoreCase(videoPurchase.get().getDuration());
@@ -309,9 +308,9 @@ public class VideoPurchaseService {
             } else {
                 //get latest expiry date
                 LocalDateTime latestExpiryDate = videoPurchases.stream()
-                        .map(VideoPurchase::getExpiryDate)
-                        .max(LocalDateTime::compareTo)
-                        .orElse(null);
+                    .map(VideoPurchase::getExpiryDate)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
 
                 return ResponseEntity.ok().body(new IsVideoPurchasedByUserResponseV2(videoId, false, latestExpiryDate, false));
             }
@@ -379,7 +378,7 @@ public class VideoPurchaseService {
         }
         try {
             List<String> videoIdsList = Arrays.stream(videoIds.split(","))
-                    .toList();
+                .toList();
             Map<String, VideoEarningsAndSales> videoStats = getVideoStats(videoIdsList);
             return ResponseEntity.ok().body(new VideoEarningsAndSalesResponse(null, videoStats));
         } catch (Exception e) {
@@ -415,11 +414,11 @@ public class VideoPurchaseService {
 
         if (usersFlux == null) {
             return new PaginationInfoWithGenericList<>(
-                    dataList.getNumber(),
-                    dataList.getSize(),
-                    dataList.getTotalElements(),
-                    dataList.getTotalPages(),
-                    List.of()
+                dataList.getNumber(),
+                dataList.getSize(),
+                dataList.getTotalElements(),
+                dataList.getTotalPages(),
+                List.of()
             );
         }
 
@@ -436,11 +435,11 @@ public class VideoPurchaseService {
         });
 
         return new PaginationInfoWithGenericList<>(
-                dataList.getNumber(),
-                dataList.getSize(),
-                dataList.getTotalElements(),
-                dataList.getTotalPages(),
-                res
+            dataList.getNumber(),
+            dataList.getSize(),
+            dataList.getTotalElements(),
+            dataList.getTotalPages(),
+            res
         );
     }
 
@@ -604,22 +603,22 @@ public class VideoPurchaseService {
             }
             Map<String, List<VideoPurchase>> videoPurchasesMap = videoPurchases.stream().collect(Collectors.groupingBy(VideoPurchase::getVideoId, Collectors.toList()));
             List<VideoPurchaseTimeRemainingResponse> videoPurchaseTimeRemainingList =
-                    videoPurchasesMap.entrySet().stream().map(entry -> {
-                        VideoPurchase vp;
-                        Optional<VideoPurchase> vpOptional = entry.getValue().stream().filter(v -> v.getExpiryDate() == null).findAny();
-                        if (vpOptional.isPresent()) vp = vpOptional.get();
-                        else {
-                            vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
-                        }
+                videoPurchasesMap.entrySet().stream().map(entry -> {
+                    VideoPurchase vp;
+                    Optional<VideoPurchase> vpOptional = entry.getValue().stream().filter(v -> v.getExpiryDate() == null).findAny();
+                    if (vpOptional.isPresent()) vp = vpOptional.get();
+                    else {
+                        vp = entry.getValue().stream().max(Comparator.comparing(VideoPurchase::getExpiryDate)).get();
+                    }
 
-                        VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
-                        vpTimeRemaining.setVideoId(entry.getKey());
-                        vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
-                        vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
-                        vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
-                        vpTimeRemaining.setNumberOfDaysRemaining(vp.getExpiryDate() != null ? ChronoUnit.DAYS.between(LocalDateTime.now(), vp.getExpiryDate()) : null);
-                        return vpTimeRemaining;
-                    }).collect(Collectors.toList());
+                    VideoPurchaseTimeRemainingResponse vpTimeRemaining = new VideoPurchaseTimeRemainingResponse();
+                    vpTimeRemaining.setVideoId(entry.getKey());
+                    vpTimeRemaining.setExpiryDate(vp.getExpiryDate());
+                    vpTimeRemaining.setIsPermanent(vp.getExpiryDate() == null || vp.getDuration() == null || vp.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
+                    vpTimeRemaining.setIsExpirated(vp.getExpiryDate() != null && vp.getExpiryDate().isBefore(LocalDateTime.now()));
+                    vpTimeRemaining.setNumberOfDaysRemaining(vp.getExpiryDate() != null ? ChronoUnit.DAYS.between(LocalDateTime.now(), vp.getExpiryDate()) : null);
+                    return vpTimeRemaining;
+                }).collect(Collectors.toList());
 
 
             return ResponseEntity.ok().body(new GenericListDataResponse<>(null, videoPurchaseTimeRemainingList));
@@ -645,37 +644,36 @@ public class VideoPurchaseService {
 
     public Page<VideoSaleHistory> getVideoPurchaseHistory(String videoId, Pageable pageable) {
         return videoPurchaseRepository.getSaleHistoryByVideoId(videoId, pageable)
-                .map(objects -> {
-                    String vId = (String) objects[0];
-                    String videoOwnerUserId = (String) objects[1];
-                    String userEmail = (String) objects[2];
-                    String userId = (String) objects[3];
-                    Integer totalSales = (Integer) objects[4];
-                    List<String> purchaseDateStrList = Arrays.asList(((String) objects[5]).split(","));
-                    List<String> durationList = Arrays.asList(((String) objects[6]).split(","));
-                    List<String> expiryDateList = Arrays.asList(((String) objects[7]).split(","));
-                    List<BigDecimal> treesConsumedList = Arrays.asList(((String) objects[8]).split(",")).stream().map(BigDecimal::new).collect(Collectors.toList());
+            .map(objects -> {
+                String vId = (String) objects[0];
+                String videoOwnerUserId = (String) objects[1];
+                String userEmail = (String) objects[2];
+                String userId = (String) objects[3];
+                Integer totalSales = (Integer) objects[4];
+                List<String> purchaseDateStrList = Arrays.asList(((String) objects[5]).split(","));
+                List<String> durationList = Arrays.asList(((String) objects[6]).split(","));
+                List<String> expiryDateList = Arrays.asList(((String) objects[7]).split(","));
+                List<BigDecimal> treesConsumedList = Arrays.asList(((String) objects[8]).split(",")).stream().map(BigDecimal::new).collect(Collectors.toList());
 
-                    List<LocalDateTime> purchaseDateList = purchaseDateStrList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
-                    List<LocalDateTime> expiryDateListLocalDateTime = expiryDateList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
+                List<LocalDateTime> purchaseDateList = purchaseDateStrList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
+                List<LocalDateTime> expiryDateListLocalDateTime = expiryDateList.stream().map(s -> LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))).collect(Collectors.toList());
 
-                    List<VideoPurchaseLiteDTO> purchaseLiteDTOList = new ArrayList<>();
-                    for (int i = 0; i < totalSales; i++) {
-                        purchaseLiteDTOList.add(new VideoPurchaseLiteDTO(durationList.get(i), treesConsumedList.get(i), purchaseDateList.get(i), expiryDateListLocalDateTime.get(i)));
-                    }
+                List<VideoPurchaseLiteDTO> purchaseLiteDTOList = new ArrayList<>();
+                for (int i = 0; i < totalSales; i++) {
+                    purchaseLiteDTOList.add(new VideoPurchaseLiteDTO(durationList.get(i), treesConsumedList.get(i), purchaseDateList.get(i), expiryDateListLocalDateTime.get(i)));
+                }
 
-                    return new VideoSaleHistory(vId, videoOwnerUserId, userEmail, userId, totalSales, purchaseLiteDTOList);
-                });
+                return new VideoSaleHistory(vId, videoOwnerUserId, userEmail, userId, totalSales, purchaseLiteDTOList);
+            });
     }
 
 
     private SalesHistoryData getAllSalesHistoryByDate(
-            String userId,
-            String email,
-            String searchString,
-            LocalDate startDate,
-            LocalDate endDate,
-            int sort
+        String userId,
+        String searchString,
+        LocalDate startDate,
+        LocalDate endDate,
+        int sort
     ) {
         if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
             throw new IllegalArgumentException("Both start date and end date should either be null or have a value");
@@ -691,18 +689,7 @@ public class VideoPurchaseService {
         String sortSaleHistory = sort == 0 ? "ASC" : "DESC";
         // Fetch paginated sales history
         List<Object[]> shPage;
-        if (userId == null) {
-            if (email != null) {
-                String id = otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
-                shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, id, startDate, endDate, sortSaleHistory);
-
-            } else {
-                throw new IllegalArgumentException("UserId null; cannot get video sales history.");
-            }
-
-        } else {
-            shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, sortSaleHistory);
-        }
+        shPage = videoPurchaseRepository.getAllSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, sortSaleHistory);
 
         // Transform database records into a list of DTOs
         List<VideoSalesHistoryRecord> shList = getSaleHistoryData(shPage);
@@ -711,11 +698,12 @@ public class VideoPurchaseService {
         Long totalTreesEarned = Optional.ofNullable(videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate)).orElse(0L);
         List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
         String nickname = "";
+        String email = "";
         if (userInfo != null) {
             for (Object user : userInfo) {
                 Object[] dataUser = (Object[]) user;
-                email = dataUser!=null? dataUser[0].toString():"";
-                nickname = dataUser!=null? dataUser[1].toString():"";
+                email = dataUser != null ? dataUser[0].toString() : "";
+                nickname = dataUser != null ? dataUser[1].toString() : "";
             }
         }
         return new SalesHistoryData(null, totalTreesEarned, userId, email, nickname, shList);
@@ -738,108 +726,121 @@ public class VideoPurchaseService {
         return shList;
     }
 
-    public Flux<GenerateReportEvent> salesHistoryDownloadPreparing(String pdUserId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sortOrder) {
+//    public Flux<GenerateReportEvent> salesHistoryDownloadPreparing(String pdUserId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sortOrder) {
+//        String reportId = UUID.randomUUID().toString();
+//        Flux<GenerateReportEvent> reportGenerationEvents;
+//        // Start generate report event
+//        reportGenerationEvents = salesHistoryListStream(reportId, email, pdUserId, startDate, endDate, searchString, sortOrder);
+//
+//        return reportGenerationEvents
+//            .doOnNext(event -> {
+//                // handle event
+//                if (event instanceof ReportGenerationStartedEvent) {
+//                    log.info("Report generation started: " + event.getReportId());
+//                } else if (event instanceof ReportGenerationInProgressEvent) {
+//                    log.info("Report is in progress: " + event.getReportId());
+//                } else if (event instanceof ReportGenerationCompletedEvent) {
+//                    log.info("Report generation completed: " + event.getReportId());
+//                } else if (event instanceof ReportGenerationFailedEvent) {
+//                    log.error("Report generation failed: " + event.getReportId());
+//                }
+//            });
+//    }
+
+//    private Flux<GenerateReportEvent> salesHistoryListStream(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, int sortOrder) {
+//        return Flux.<GenerateReportEvent>create(emitter -> {
+//                try {
+//                    // Step 1: Report Generation Started
+//                    emitter.next(ReportGenerationStartedEvent.builder()
+//                        .reportId(reportId)
+//                        .reportType("Sales History Report")
+//                        .parameters(Map.of("startDate", startDate, "endDate", endDate))
+//                        .timestamp(System.currentTimeMillis())
+//                        .build());
+//
+//                // Determine the user ID
+//                String userId = pdUserId != null ? pdUserId : otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
+//                if (userId == null) {
+//                    emitter.next(ReportGenerationFailedEvent.builder()
+//                            .reportId(reportId)
+//                            .errorCode("ERROR-001")
+//                            .errorMessage("User ID or email must be provided.")
+//                            .failureStep("INITIALIZATION")
+//                            .timestamp(System.currentTimeMillis())
+//                            .build());
+//                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User ID or email must be provided."));
+//                    return;
+//                }
+//
+//                    SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sortOrder);
+//                    if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
+//                        emitter.next(ReportGenerationFailedEvent.builder()
+//                            .reportId(reportId)
+//                            .errorCode("ERROR-002")
+//                            .errorMessage("No sales history data available for the selected period.")
+//                            .failureStep("INITIALIZATION")
+//                            .timestamp(System.currentTimeMillis())
+//                            .build());
+//                        emitter.complete();
+//                        return;
+//                    }
+//
+//
+//                    ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
+//                    try {
+//                        pdfService.cachePdfContent(reportId, pdfContent.toByteArray());
+//                    } catch (IOException e) {
+//                        emitter.next(ReportGenerationFailedEvent.builder()
+//                            .reportId(reportId)
+//                            .errorCode("ERROR-003")
+//                            .errorMessage(e.getMessage())
+//                            .failureStep("INITIALIZATION")
+//                            .errorDetails(Map.of("exception", e.getClass().getName()))
+//                            .timestamp(System.currentTimeMillis())
+//                            .build());
+//                        emitter.complete();
+//                        return;
+//                    }
+//                    emitter.next(ReportGenerationCompletedEvent.builder()
+//                        .reportId(reportId)
+//                        .reportTitle("Sales History Report")
+//                        .metadata(Map.of("message", "The report has been successfully generated and is ready for download.",
+//                            "startDate", startDate, "endDate", endDate))
+//                        .timestamp(System.currentTimeMillis())
+//                        .build());
+//
+//                    emitter.complete();
+//
+//                } catch (Exception e) {
+//                    // Emit error if initialization fails
+//                    emitter.next(ReportGenerationFailedEvent.builder()
+//                        .reportId(reportId)
+//                        .errorCode("GEN-002")
+//                        .errorMessage(e.getMessage())
+//                        .failureStep("INITIALIZATION")
+//                        .timestamp(System.currentTimeMillis())
+//                        .errorDetails(Map.of("exception", e.getClass().getName()))
+//                        .build());
+//                    emitter.complete();
+//                }
+//            }, FluxSink.OverflowStrategy.BUFFER)
+//            .subscribeOn(Schedulers.boundedElastic())
+//            .onErrorResume(e -> Flux.empty());
+//    }
+
+
+    public ResponseEntity<Map<String, String>> salesHistoryDownloadPDF(String pdUserId,
+                                                                       String searchString,
+                                                                       LocalDate startDate,
+                                                                       LocalDate endDate,
+                                                                       int sortOrder, Boolean isSendEmail, HttpServletResponse response) throws IOException {
         String reportId = UUID.randomUUID().toString();
-        Flux<GenerateReportEvent> reportGenerationEvents;
-        // Start generate report event
-        reportGenerationEvents = salesHistoryListStream(reportId, email, pdUserId, startDate, endDate, searchString, sortOrder);
+        SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, searchString, startDate, endDate, sortOrder);
 
-        return reportGenerationEvents
-                .doOnNext(event -> {
-                    // handle event
-                    if (event instanceof ReportGenerationStartedEvent) {
-                        log.info("Report generation started: " + event.getReportId());
-                    } else if (event instanceof ReportGenerationInProgressEvent) {
-                        log.info("Report is in progress: " + event.getReportId());
-                    } else if (event instanceof ReportGenerationCompletedEvent) {
-                        log.info("Report generation completed: " + event.getReportId());
-                    } else if (event instanceof ReportGenerationFailedEvent) {
-                        log.error("Report generation failed: " + event.getReportId());
-                    }
-                });
-    }
-
-    private Flux<GenerateReportEvent> salesHistoryListStream(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, int sortOrder) {
-        return Flux.<GenerateReportEvent>create(emitter -> {
-            try {
-                // Step 1: Report Generation Started
-                emitter.next(ReportGenerationStartedEvent.builder()
-                        .reportId(reportId)
-                        .reportType("Sales History Report")
-                        .parameters(Map.of("startDate", startDate, "endDate", endDate))
-                        .timestamp(System.currentTimeMillis())
-                        .build());
-
-                // Determine the user ID
-                String userId = pdUserId != null ? pdUserId : otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
-                if (userId == null) {
-                    emitter.next(ReportGenerationFailedEvent.builder()
-                            .reportId(reportId)
-                            .errorCode("ERROR-001")
-                            .errorMessage("User ID or email must be provided.")
-                            .failureStep("INITIALIZATION")
-                            .timestamp(System.currentTimeMillis())
-                            .build());
-                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User ID or email must be provided."));
-                    return;
-                }
-
-                SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sortOrder);
-                if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
-                    emitter.next(ReportGenerationFailedEvent.builder()
-                            .reportId(reportId)
-                            .errorCode("ERROR-002")
-                            .errorMessage("No sales history data available for the selected period.")
-                            .failureStep("INITIALIZATION")
-                            .timestamp(System.currentTimeMillis())
-                            .build());
-                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No sales history data available for the selected period."));
-                    return;
-                }
+        ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
+        pdfService.cachePdfContent(reportId, pdfContent.toByteArray());
 
 
-                ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
-                try {
-                    pdfService.cachePdfContent(reportId,pdfContent.toByteArray());
-                } catch (IOException e) {
-                    emitter.next(ReportGenerationFailedEvent.builder()
-                            .reportId(reportId)
-                            .errorCode("ERROR-003")
-                            .errorMessage(e.getMessage())
-                            .failureStep("INITIALIZATION")
-                            .errorDetails(Map.of("exception", e.getClass().getName()))
-                            .timestamp(System.currentTimeMillis())
-                            .build());
-                    emitter.error(new RuntimeException(e));
-                    return;
-                }
-                emitter.next(ReportGenerationCompletedEvent.builder()
-                        .reportId(reportId)
-                        .reportTitle("Sales History Report")
-                        .metadata(Map.of("message", "The report has been successfully generated and is ready for download.",
-                                "startDate", startDate, "endDate", endDate))
-                        .timestamp(System.currentTimeMillis())
-                        .build());
-
-                emitter.complete();
-
-            } catch (Exception e) {
-                // Emit error if initialization fails
-                emitter.next(ReportGenerationFailedEvent.builder()
-                        .reportId(reportId)
-                        .errorCode("GEN-002")
-                        .errorMessage(e.getMessage())
-                        .failureStep("INITIALIZATION")
-                        .timestamp(System.currentTimeMillis())
-                        .errorDetails(Map.of("exception", e.getClass().getName()))
-                        .build());
-                emitter.error(e);
-            }
-        }, FluxSink.OverflowStrategy.BUFFER).subscribeOn(Schedulers.boundedElastic());
-    }
-
-
-    public ResponseEntity<Map<String, String>> salesHistoryDownloadPDF(String reportId, Boolean isSendEmail,HttpServletResponse response) {
         boolean isPdfFetched = false;
         try {
             // Fetch the PDF from storage
@@ -850,23 +851,17 @@ public class VideoPurchaseService {
             }
             isPdfFetched = true;
             String dateTimeNow = DateTimeUtil.getCurrentTimeNow();
-            String fileName = "top_sales_history_report_"+dateTimeNow+".pdf";
-            if (Boolean.TRUE.equals(isSendEmail)){
-                String userId = authHelper.getUserId();
-                Optional<String> email = otherServicesTablesNativeQueryRepository.findEmailByUserId(userId);
-                if (email.isEmpty()) {
-                    Map<String, String> responseMap = new HashMap<>();
-                    responseMap.put("Error", "Email is required when sending via email.");
-                    return ResponseEntity.badRequest().body(responseMap);
-                }
-                emailSenderService.sendEmailWithAttachmentBytes(email.get(),"Your requested Sales History Report is ready for download.", "PDF Report",fileName,pdfBytes);
+            String fileName = "top_sales_history_report_" + dateTimeNow + ".pdf";
+            if (Boolean.TRUE.equals(isSendEmail)) {
+                Optional<String> email = otherServicesTablesNativeQueryRepository.findEmailByUserId(pdUserId);
+                emailSenderService.sendEmailWithAttachmentBytes(email.get(), "Your requested Sales History Report is ready for download.", "PDF Report", fileName, pdfBytes);
                 Map<String, String> responseMap = new HashMap<>();
                 responseMap.put("message", "PDF has been sent to the email address.");
                 return ResponseEntity.ok(responseMap);
-            }else{
+            } else {
                 // Return the PDF as a downloadable response
                 response.setContentType("application/pdf");
-                response.setHeader("Content-Disposition", "attachment; filename="+fileName);
+                response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
                 response.setContentLength(pdfBytes.length);
 
                 response.getOutputStream().write(pdfBytes);
@@ -878,7 +873,7 @@ public class VideoPurchaseService {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "PDF not found for reportId: " + reportId, e);
         } finally {
-            if(isPdfFetched) pdfService.deletePDF(reportId);
+            if (isPdfFetched) pdfService.deletePDF(reportId);
         }
     }
 
@@ -894,7 +889,7 @@ public class VideoPurchaseService {
             if (videoPurchase == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Transaction not found"));
             }
-            if(videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()){
+            if (videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction already refunded"));
             }
 //            if (videoPurchase.getExpiryDate() != null && videoPurchase.getExpiryDate().isBefore(LocalDateTime.now())) {
@@ -907,13 +902,12 @@ public class VideoPurchaseService {
 
             walletService.addToWallet(videoPurchase.getUserId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
             earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), videoPurchase.getTreesConsumed());
-            ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO,  TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
+            ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Transaction refunded successfully"));
         } catch (InsufficientTreesException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Cannot deduct trees from PD wallet,  Insufficient trees"));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
