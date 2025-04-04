@@ -198,34 +198,38 @@ public class VideoPurchaseServiceController {
         return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Required request parameter '" + paramName + "' is missing or invalid."));
     }
 
-    @GetMapping(value = "/salesHistoryDownloadPreparing")
-    public Flux<ServerSentEvent<GenerateReportEvent>> salesHistoryDownloadPreparing(
-            @RequestParam(required = false, value = "email") String email,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
-            @RequestParam(value = "searchString", required = false) String searchString
-    ){
-        // Call service to process export
-        String pdUserId = authHelper.getUserId();
-        return videoPurchaseService.salesHistoryDownloadPreparing(pdUserId, email, searchString, startDate, endDate, sortOrder)
-                .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
-                        .id(event.getReportId())
-                        .event(event.getEventType())
-                        .data(event)
-                        .build())
-                .doOnNext(sse -> pdLogger.logInfo("Emitting SSE: {}", sse.event()))
-                .doOnError(error -> pdLogger.logInfo("Error in report generation", error.toString()));
-    }
+//    @GetMapping(value = "/salesHistoryDownloadPreparing")
+//    public Flux<ServerSentEvent<GenerateReportEvent>> salesHistoryDownloadPreparing(
+//            @RequestParam(required = false, value = "email") String email,
+//            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+//            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+//            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+//            @RequestParam(value = "searchString", required = false) String searchString
+//    ){
+//        // Call service to process export
+//        String pdUserId = authHelper.getUserId();
+//        return videoPurchaseService.salesHistoryDownloadPreparing(pdUserId, email, searchString, startDate, endDate, sortOrder)
+//                .map(event -> ServerSentEvent.<GenerateReportEvent>builder()
+//                        .id(event.getReportId())
+//                        .event(event.getEventType())
+//                        .data(event)
+//                        .build())
+//                .doOnNext(sse -> pdLogger.logInfo("Emitting SSE: {}", sse.event()))
+//                .doOnError(error -> pdLogger.logInfo("Error in report generation", error.toString()));
+//    }
 
     @GetMapping(value = "/salesHistoryDownload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> salesHistoryDownload(
-            @RequestParam String reportId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+            @RequestParam(value = "searchString", required = false) String searchString,
             @RequestParam(required = false, value = "isSendEmail", defaultValue = "false") Boolean isSendEmail,
             HttpServletResponse httpServletResponse
     ){
         try {
-            return videoPurchaseService.salesHistoryDownloadPDF(reportId,isSendEmail,httpServletResponse);
+            String pdUserId = authHelper.getUserId();
+            return videoPurchaseService.salesHistoryDownloadPDF(pdUserId, searchString, startDate, endDate, sortOrder, isSendEmail,httpServletResponse);
         } catch (ResponseStatusException e) {
             Map<String, String> responseMap = new HashMap<>();
             responseMap.put("message", e.getReason());
