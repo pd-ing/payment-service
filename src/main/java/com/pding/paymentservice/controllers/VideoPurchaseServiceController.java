@@ -143,17 +143,19 @@ public class VideoPurchaseServiceController {
     @GetMapping(value = "/getAllPdWhoseVideosArePurchasedByUser")
     public ResponseEntity<?> getAllPdUserIdWhoseVideosArePurchasedByUser(
             @RequestParam(value = "size", defaultValue = "20") int size,
-            @RequestParam(value = "page", defaultValue = "0") int page
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false) String searchString
     ) {
-        return videoPurchaseService.getAllPdUserIdWhoseVideosArePurchasedByUser(size, page);
+        return videoPurchaseService.getAllPdUserIdWhoseVideosArePurchasedByUser(searchString, size, page);
     }
 
     @GetMapping(value = "/getAllPdWhoseVideosAreExpiredByUser")
     public ResponseEntity<?> getAllPdWhoseVideosAreExpiredByUser(
             @RequestParam(value = "size", defaultValue = "20") int size,
-            @RequestParam(value = "page", defaultValue = "0") int page
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false) String searchString
     ) {
-        return videoPurchaseService.getAllPdWhoseVideosAreExpiredByUser(size, page);
+        return videoPurchaseService.getAllPdWhoseVideosAreExpiredByUser(searchString, size, page);
     }
 
     @GetMapping(value = "/videoSalesHistoryOfPd")

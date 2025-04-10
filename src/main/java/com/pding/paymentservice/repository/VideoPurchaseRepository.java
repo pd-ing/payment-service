@@ -2,6 +2,7 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
+import com.pding.paymentservice.payload.projection.UserProjection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -127,6 +128,40 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.isRefunded != true and vp.expiryDate > current_time ")
     Page<String> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, Pageable pageable);
+
+    @Query(value =
+        " select pd.id," +
+        "        pd.nickname        as displayName," +
+        "        pd.description," +
+        "        pd.profile_picture as profilePicture," +
+        "        pd.profile_id      as profileId," +
+        "        pd.pd_category     as pdCategory" +
+        " from video_purchase vp" +
+        "          left join users pd on vp.video_owner_user_id = pd.id" +
+        " where vp.user_id = :userId" +
+        "   and vp.is_refunded = false" +
+        "   and vp.expiry_date > now()" +
+        "   and (:searchString is null or pd.nickname like CONCAT(:searchString, '%'))" +
+        " group by pd.id", nativeQuery = true)
+    Page<UserProjection> getAllPdUserIdWhoseVideosArePurchasedByUserWithSearch(@Param("userId") String userId, @Param("searchString") String searchString, Pageable pageable);
+
+    @Query(value =
+            " select pd.id," +
+            "        pd.nickname        as displayName," +
+            "        pd.description," +
+            "        pd.profile_picture as profilePicture," +
+            "        pd.profile_id      as profileId," +
+            "        pd.pd_category     as pdCategory" +
+            " from video_purchase vp" +
+            "          left join users pd on vp.video_owner_user_id = pd.id" +
+            " where vp.user_id = :userId" +
+            "   and vp.is_refunded = false" +
+            "   and vp.expiry_date < now()" +
+            "   and (:searchString is null or pd.nickname like CONCAT(:searchString, '%'))" +
+            " group by pd.id" +
+            " having max(vp.expiry_date) < now()"
+        , nativeQuery = true)
+    Page<UserProjection> getAllPdUserIdWhoseVideosAreExpiredByUserWithSearch(@Param("userId") String userId, @Param("searchString") String searchString, Pageable pageable);
 
 
     @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.expiryDate < current_time and vp.isRefunded = false group by vp.videoId having max(vp.expiryDate) < current_time ")

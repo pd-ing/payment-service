@@ -21,6 +21,7 @@ import com.pding.paymentservice.payload.dto.VideoSaleHistory;
 import com.pding.paymentservice.payload.dto.VideoSaleHistorySummary;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
+import com.pding.paymentservice.payload.projection.UserProjection;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -527,30 +528,31 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> getAllPdUserIdWhoseVideosArePurchasedByUser(int size, int page) {
+    public ResponseEntity<?> getAllPdUserIdWhoseVideosArePurchasedByUser(String searchString, int size, int page) {
         try {
             String userId = authHelper.getUserId();
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Authenticated request. Invalid user"));
             }
+            if(searchString == null || searchString.isEmpty()) {
+                searchString = null;
+            }
             Pageable pageable = PageRequest.of(page, size);
-            Page<String> userIdsPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosArePurchasedByUser(userId, pageable);
+            Page<UserProjection> userPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosArePurchasedByUserWithSearch(userId, searchString, pageable);
+            List<UserProjection> users = userPage.getContent();
 
-            if (userIdsPage.isEmpty()) {
-                Page<UserLite> resData = new PageImpl<>(List.of(), pageable, userIdsPage.getTotalElements());
-                return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
-            }
-
-            List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIdsPage.toSet()).blockFirst();
-            if (usersFlux == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
-            }
-
-            List<UserLite> users = usersFlux.stream().map(userObj -> {
-                return UserLite.fromPublicUserNet(userObj, tokenSigner);
+            List<UserLite> results = users.stream().map(userObj -> {
+                UserLite userLite = new UserLite();
+                userLite.setId(userObj.getId());
+                userLite.setDisplayName(userObj.getDisplayName());
+                userLite.setDescription(userObj.getDescription());
+                userLite.setProfilePicture(tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(userObj.getProfilePicture())));
+                userLite.setProfileId(userObj.getProfileId());
+                userLite.setPdCategory(userObj.getPdCategory());
+                return userLite;
             }).toList();
 
-            Page<UserLite> resData = new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
+            Page<UserLite> resData = new PageImpl<>(results, pageable, userPage.getTotalElements());
 
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
 
@@ -560,30 +562,30 @@ public class VideoPurchaseService {
         }
     }
 
-    public ResponseEntity<?> getAllPdWhoseVideosAreExpiredByUser(int size, int page) {
+    public ResponseEntity<?> getAllPdWhoseVideosAreExpiredByUser(String searchString, int size, int page) {
         try {
             String userId = authHelper.getUserId();
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Authenticated request. Invalid user"));
             }
+            if(searchString == null || searchString.isEmpty()) {
+                searchString = null;
+            }
             Pageable pageable = PageRequest.of(page, size);
-            Page<String> userIdsPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosAreExpiredByUser(userId, pageable);
+            Page<UserProjection> userPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosAreExpiredByUserWithSearch(userId, searchString , pageable);
 
-            if (userIdsPage.isEmpty()) {
-                Page<UserLite> resData = new PageImpl<>(List.of(), pageable, userIdsPage.getTotalElements());
-                return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
-            }
-
-            List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIdsPage.toSet()).blockFirst();
-            if (usersFlux == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "error getting user details from user service."));
-            }
-
-            List<UserLite> users = usersFlux.stream().map(userObj -> {
-                return UserLite.fromPublicUserNet(userObj, tokenSigner);
+            List<UserLite> users = userPage.getContent().stream().map(userObj -> {
+                UserLite userLite = new UserLite();
+                userLite.setId(userObj.getId());
+                userLite.setDisplayName(userObj.getDisplayName());
+                userLite.setDescription(userObj.getDescription());
+                userLite.setProfilePicture(tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(userObj.getProfilePicture())));
+                userLite.setProfileId(userObj.getProfileId());
+                userLite.setPdCategory(userObj.getPdCategory());
+                return userLite;
             }).toList();
 
-            Page<UserLite> resData = new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
+            Page<UserLite> resData = new PageImpl<>(users, pageable, userPage.getTotalElements());
 
             return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
 
