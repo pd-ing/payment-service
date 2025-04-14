@@ -1,6 +1,7 @@
 package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.payload.projection.VideoProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -294,8 +295,8 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     Optional<String> getNicknameByUserId(@Param("userId") String userId);
 
 
-    @Query(value = "SELECT user_id FROM videos WHERE video_id = :videoId", nativeQuery = true)
-    Optional<String> findUserIdByVideoId(@Param("videoId") String videoId);
+    @Query(value = "SELECT video_id as videoId, user_id as userId, drm_enable as drmEnable FROM videos WHERE video_id = :videoId", nativeQuery = true)
+    Optional<VideoProjection> findUserIdByVideoId(@Param("videoId") String videoId);
 
     @Query(value = "select video_id, duration, trees, enabled from video_duration_price where video_id = :videoId", nativeQuery = true)
     List<Object[]> findPricesByVideoId(@Param("videoId") String videoId);

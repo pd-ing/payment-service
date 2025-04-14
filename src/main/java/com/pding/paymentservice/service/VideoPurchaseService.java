@@ -22,6 +22,7 @@ import com.pding.paymentservice.payload.dto.VideoSaleHistorySummary;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.projection.UserProjection;
+import com.pding.paymentservice.payload.projection.VideoProjection;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -185,9 +186,11 @@ public class VideoPurchaseService {
 
         try {
             String userId = authHelper.getUserId();
-            String videoOwnerUserId = otherServicesTablesNativeQueryRepository.findUserIdByVideoId(videoId).orElse(null);
+            VideoProjection videoData = otherServicesTablesNativeQueryRepository.findUserIdByVideoId(videoId).orElseThrow(
+                () -> new IllegalArgumentException("Video ID invalid")
+            );
 
-            if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
+            if (videoData.getUserId() == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), " VideoOwnerUserID is null or empty for the videoId provided"), null));
             }
 
@@ -212,13 +215,13 @@ public class VideoPurchaseService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "This duration is not enabled"), null));
             }
 
-            VideoPurchase video = self.createVideoTransaction(userId, videoId, videoOwnerUserId, price.getTrees(), price.getDuration());
+            VideoPurchase video = self.createVideoTransaction(userId, videoId, videoData.getUserId(), videoData.getDrmEnable() != null && videoData.getDrmEnable(), price.getTrees(), price.getDuration());
 
             sendNotificationService.sendBuyVideoNotification(video);
 
-            asyncOperationService.removeCachePattern("purchasedVideos::" + videoOwnerUserId + "," + userId + "*");
-            asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + userId + "*");
-            asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + videoOwnerUserId + "*");
+            asyncOperationService.removeCachePattern("purchasedVideos::" + videoData.getUserId() + "," + userId + "*");
+            asyncOperationService.removeCachePattern("videos::" + videoData.getUserId() + "," + userId + "*");
+            asyncOperationService.removeCachePattern("videos::" + videoData.getUserId() + "," + videoData.getUserId() + "*");
 
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
@@ -727,108 +730,6 @@ public class VideoPurchaseService {
         }
         return shList;
     }
-
-//    public Flux<GenerateReportEvent> salesHistoryDownloadPreparing(String pdUserId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sortOrder) {
-//        String reportId = UUID.randomUUID().toString();
-//        Flux<GenerateReportEvent> reportGenerationEvents;
-//        // Start generate report event
-//        reportGenerationEvents = salesHistoryListStream(reportId, email, pdUserId, startDate, endDate, searchString, sortOrder);
-//
-//        return reportGenerationEvents
-//            .doOnNext(event -> {
-//                // handle event
-//                if (event instanceof ReportGenerationStartedEvent) {
-//                    log.info("Report generation started: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationInProgressEvent) {
-//                    log.info("Report is in progress: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationCompletedEvent) {
-//                    log.info("Report generation completed: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationFailedEvent) {
-//                    log.error("Report generation failed: " + event.getReportId());
-//                }
-//            });
-//    }
-
-//    private Flux<GenerateReportEvent> salesHistoryListStream(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, int sortOrder) {
-//        return Flux.<GenerateReportEvent>create(emitter -> {
-//                try {
-//                    // Step 1: Report Generation Started
-//                    emitter.next(ReportGenerationStartedEvent.builder()
-//                        .reportId(reportId)
-//                        .reportType("Sales History Report")
-//                        .parameters(Map.of("startDate", startDate, "endDate", endDate))
-//                        .timestamp(System.currentTimeMillis())
-//                        .build());
-//
-//                // Determine the user ID
-//                String userId = pdUserId != null ? pdUserId : otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
-//                if (userId == null) {
-//                    emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-001")
-//                            .errorMessage("User ID or email must be provided.")
-//                            .failureStep("INITIALIZATION")
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User ID or email must be provided."));
-//                    return;
-//                }
-//
-//                    SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sortOrder);
-//                    if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
-//                        emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-002")
-//                            .errorMessage("No sales history data available for the selected period.")
-//                            .failureStep("INITIALIZATION")
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                        emitter.complete();
-//                        return;
-//                    }
-//
-//
-//                    ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
-//                    try {
-//                        pdfService.cachePdfContent(reportId, pdfContent.toByteArray());
-//                    } catch (IOException e) {
-//                        emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-003")
-//                            .errorMessage(e.getMessage())
-//                            .failureStep("INITIALIZATION")
-//                            .errorDetails(Map.of("exception", e.getClass().getName()))
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                        emitter.complete();
-//                        return;
-//                    }
-//                    emitter.next(ReportGenerationCompletedEvent.builder()
-//                        .reportId(reportId)
-//                        .reportTitle("Sales History Report")
-//                        .metadata(Map.of("message", "The report has been successfully generated and is ready for download.",
-//                            "startDate", startDate, "endDate", endDate))
-//                        .timestamp(System.currentTimeMillis())
-//                        .build());
-//
-//                    emitter.complete();
-//
-//                } catch (Exception e) {
-//                    // Emit error if initialization fails
-//                    emitter.next(ReportGenerationFailedEvent.builder()
-//                        .reportId(reportId)
-//                        .errorCode("GEN-002")
-//                        .errorMessage(e.getMessage())
-//                        .failureStep("INITIALIZATION")
-//                        .timestamp(System.currentTimeMillis())
-//                        .errorDetails(Map.of("exception", e.getClass().getName()))
-//                        .build());
-//                    emitter.complete();
-//                }
-//            }, FluxSink.OverflowStrategy.BUFFER)
-//            .subscribeOn(Schedulers.boundedElastic())
-//            .onErrorResume(e -> Flux.empty());
-//    }
 
 
     public ResponseEntity<Map<String, String>> salesHistoryDownloadPDF(String pdUserId,

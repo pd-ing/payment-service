@@ -5,8 +5,10 @@ import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.util.LogSanitizer;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +33,11 @@ public class VideoPurchaseServiceProxy {
     @Autowired
     LedgerService ledgerService;
 
+    @Value("${video.purchase.drm.fee}")
+    private BigDecimal drmFee;
+
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, BigDecimal treesToConsumed, String duration) {
+    public VideoPurchase createVideoTransaction(String userId, String videoId, String videoOwnerUserId, @NonNull Boolean drmEnable, BigDecimal treesToConsumed, String duration) {
         log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
         List<VideoPurchase> videoPurchases = videoPurchaseRepository.findByUserIdAndVideoIdSelectForUpdate(userId, videoId);
         //check if video with duration not expired and already purchased
@@ -43,11 +48,11 @@ public class VideoPurchaseServiceProxy {
         walletService.deductTreesFromWallet(userId, treesToConsumed);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, duration,
-            VideoPurchaseDuration.valueOf(duration).getExpiryDate());
+            VideoPurchaseDuration.valueOf(duration).getExpiryDate(), drmEnable ? drmFee : BigDecimal.ZERO);
 
         VideoPurchase video = videoPurchaseRepository.save(transaction);
 
-        earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
+        earningService.addTreesToEarning(videoOwnerUserId, drmEnable ? treesToConsumed.subtract(drmFee) : treesToConsumed);
         ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
         log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}, duration : {}", LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(videoId), LogSanitizer.sanitizeForLog(treesToConsumed), LogSanitizer.sanitizeForLog(videoOwnerUserId), LogSanitizer.sanitizeForLog(duration));
         return video;

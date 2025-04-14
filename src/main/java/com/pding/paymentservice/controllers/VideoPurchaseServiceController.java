@@ -50,15 +50,6 @@ public class VideoPurchaseServiceController {
     VideoPurchaseService videoPurchaseService;
     @Autowired
     PdLogger pdLogger;
-//    @PostMapping(value = "/buyVideo")
-//    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
-//        return videoPurchaseService.buyVideo(authHelper.getUserId(), videoId, trees, videoOwnerUserId);
-//    }
-
-//    @PostMapping(value = "/v2/buyVideo")
-//    public ResponseEntity<?> buyVideoV2(@RequestParam(value = "videoId") String videoId) {
-//        return videoPurchaseService.buyVideoV2(videoId);
-//    }
 
     @PostMapping(value = "/v3/buyVideo")
     public ResponseEntity<?> buyVideoV3(@RequestParam(value = "videoId") String videoId, @RequestParam("duration") String duration) {
