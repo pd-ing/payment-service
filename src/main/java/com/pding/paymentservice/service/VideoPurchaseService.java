@@ -132,28 +132,9 @@ public class VideoPurchaseService {
     @Autowired
     VideoPurchaseServiceProxy self;
 
-    @Transactional
-    public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
-        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
-        walletService.deductTreesFromWallet(userId, treesToConsumed);
-
-        VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
-        VideoPurchase video = videoPurchaseRepository.save(transaction);
-        log.info("Video purchase record created with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
-
-        earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
-        ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
-        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
-        return video;
-    }
-
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
         return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
-    }
-
-    public BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserID) {
-        return videoPurchaseRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
     }
 
     public BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserID, LocalDateTime endDateTime) {
@@ -260,18 +241,6 @@ public class VideoPurchaseService {
 
     }
 
-    public ResponseEntity<?> getTreesEarned(String videoOwnerUserId) {
-        if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserID parameter is required."));
-        }
-        try {
-            BigDecimal videoTransactions = getTotalTreesEarnedByVideoOwner(videoOwnerUserId);
-            return ResponseEntity.ok().body(new TotalTreesEarnedResponse(null, videoTransactions));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TotalTreesEarnedResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
-    }
-
     public ResponseEntity<?> isVideoPurchased(String userId, String videoId) {
         if (userId == null || userId.isEmpty()) {
             return ResponseEntity.badRequest().body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), false));
@@ -323,36 +292,6 @@ public class VideoPurchaseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
         }
     }
-
-//    public ResponseEntity<?> getPaidUnpaidFollowerList(String userId) {
-//        if (userId == null || userId.isEmpty()) {
-//            return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
-//        }
-//        try {
-//            String paidUsers = "";
-//            String unpaidUsers = "";
-//
-//            List<Object[]> followerList = videoPurchaseRepository.getFollowersList(userId);
-//            for (Object[] followerRecord : followerList) {
-//                if(followerRecord[1] == null)
-//                    unpaidUsers = unpaidUsers.trim() + followerRecord[0].toString() + ", ";
-//                else
-//                    paidUsers = paidUsers.trim() + followerRecord[0].toString() + ", ";
-//            }
-//
-//            // Remove the trailing comma and space if they exist
-//            if (paidUsers.length() > 0) {
-//                paidUsers = paidUsers.substring(0, paidUsers.length() - 2);
-//            }
-//            if (unpaidUsers.length() > 0) {
-//                unpaidUsers = unpaidUsers.substring(0, unpaidUsers.length() - 2);
-//            }
-//
-//            return ResponseEntity.ok().body(new PaidUnpaidFollowerResponse(null, paidUsers, unpaidUsers));
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
-//        }
-//    }
 
     public ResponseEntity<?> getPaidUnpaidFollowerCount(String userId) {
         if (userId == null || userId.isEmpty()) {
@@ -795,9 +734,6 @@ public class VideoPurchaseService {
             if (videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction already refunded"));
             }
-//            if (videoPurchase.getExpiryDate() != null && videoPurchase.getExpiryDate().isBefore(LocalDateTime.now())) {
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction is expired"));
-//            }
 
             videoPurchase.setIsRefunded(true);
             videoPurchaseRepository.save(videoPurchase);
