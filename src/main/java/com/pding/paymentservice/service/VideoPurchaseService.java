@@ -738,8 +738,15 @@ public class VideoPurchaseService {
             videoPurchase.setIsRefunded(true);
             videoPurchaseRepository.save(videoPurchase);
 
+            BigDecimal treeDeductFromPdWallet;
+            if(videoPurchase.getDrmFee() != null && videoPurchase.getDrmFee().compareTo(BigDecimal.ZERO) > 0) {
+                treeDeductFromPdWallet = videoPurchase.getTreesConsumed().subtract(videoPurchase.getDrmFee());
+            } else {
+                treeDeductFromPdWallet = videoPurchase.getTreesConsumed();
+            }
+
             walletService.addToWallet(videoPurchase.getUserId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
-            earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), videoPurchase.getTreesConsumed());
+            earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), treeDeductFromPdWallet);
             ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Transaction refunded successfully"));
