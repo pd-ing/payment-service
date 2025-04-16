@@ -25,6 +25,7 @@ import java.util.Set;
 
 @Repository
 public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, String> {
+    boolean existsByVideoId(String videoId);
 
     List<VideoPurchase> getVideoPurchaseByUserId(String userId);
 
