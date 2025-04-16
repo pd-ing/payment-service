@@ -4,5 +4,6 @@ public interface VideoProjection {
     String getVideoId();
     String getUserId();
     Boolean getDrmEnable();
+    String getVideoLibraryId();
 
 }

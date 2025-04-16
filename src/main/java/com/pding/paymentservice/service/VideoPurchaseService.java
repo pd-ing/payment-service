@@ -5,6 +5,7 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
+import com.pding.paymentservice.listener.event.VideoPurchaseEvent;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
@@ -54,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -132,6 +134,9 @@ public class VideoPurchaseService {
     @Autowired
     VideoPurchaseServiceProxy self;
 
+    @Autowired
+    ApplicationEventPublisher applicationEventPublisher;
+
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
         return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
@@ -197,13 +202,7 @@ public class VideoPurchaseService {
             }
 
             VideoPurchase video = self.createVideoTransaction(userId, videoId, videoData.getUserId(), videoData.getDrmEnable() != null && videoData.getDrmEnable(), price.getTrees(), price.getDuration());
-
-            sendNotificationService.sendBuyVideoNotification(video);
-
-            asyncOperationService.removeCachePattern("purchasedVideos::" + videoData.getUserId() + "," + userId + "*");
-            asyncOperationService.removeCachePattern("videos::" + videoData.getUserId() + "," + userId + "*");
-            asyncOperationService.removeCachePattern("videos::" + videoData.getUserId() + "," + videoData.getUserId() + "*");
-
+            applicationEventPublisher.publishEvent(new VideoPurchaseEvent(video, videoData));
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
