@@ -203,7 +203,7 @@ public class VideoPurchaseService {
             }
 
             VideoPurchase video = self.createVideoTransaction(userId, videoId, videoData.getUserId(), videoData.getDrmEnable() != null && videoData.getDrmEnable(), price.getTrees(), price.getDuration());
-            applicationEventPublisher.publishEvent(new VideoPurchaseEvent(video, videoData));
+            applicationEventPublisher.publishEvent(new VideoPurchaseEvent(this, video, videoData));
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
