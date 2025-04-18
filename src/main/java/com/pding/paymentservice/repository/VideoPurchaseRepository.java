@@ -2,6 +2,7 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
+import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import com.pding.paymentservice.payload.projection.UserProjection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -203,4 +204,16 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.isRefunded = false and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query(nativeQuery = true, value =
+        " SELECT DATE_FORMAT(vp.last_update_date, '%Y-%m') AS month," +
+            "        COALESCE(SUM(vp.trees_consumed), 0)                    as revenue" +
+            " FROM video_purchase vp" +
+            " WHERE vp.video_owner_user_id = :pdId" +
+//            "   AND vp.last_update_date >= DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH)" +
+            " GROUP BY DATE_FORMAT(vp.last_update_date, '%Y-%m')" +
+            " ORDER BY month DESC" +
+            " LIMIT :limit"
+    )
+    List<MonthlyRevenueProjection> getMonthlyRevenueFromVideoPurchaseByUserId(@Param("pdId") String pdId, @Param("limit") Integer limit);
 }

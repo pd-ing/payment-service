@@ -1,6 +1,7 @@
 package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.Donation;
+import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -183,5 +184,18 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
                     "           and vp.last_update_date <= :endDate) > 0",
             nativeQuery = true)
     List<Object[]> findTopDonorUserByDateRanger(String pdUserId, LocalDate startDate, LocalDate endDate);
+
+
+    @Query(nativeQuery = true, value =
+            " SELECT DATE_FORMAT(d.last_update_date, '%Y-%m') AS month," +
+            "        COALESCE(SUM(d.donated_trees), 0)                     as revenue" +
+            " FROM donation d" +
+            " WHERE d.pd_user_id = :pdId" +
+//            "   AND d.last_update_date >= DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH)" +
+            " GROUP BY DATE_FORMAT(d.last_update_date, '%Y-%m')" +
+            " ORDER BY month DESC" +
+            " LIMIT :limit"
+    )
+    List<MonthlyRevenueProjection> getMonthlyRevenueFromDonationByUserId(String pdId,  Integer limit);
 
 }

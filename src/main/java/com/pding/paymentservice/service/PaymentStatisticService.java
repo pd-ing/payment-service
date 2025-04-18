@@ -10,8 +10,10 @@ import com.pding.paymentservice.payload.dto.LeafGiftHistoryDTO;
 import com.pding.paymentservice.payload.dto.PdSummaryDTO;
 import com.pding.paymentservice.payload.dto.PurchasedLeafHistoryDTO;
 import com.pding.paymentservice.payload.dto.PurchasedLeafHistorySummaryDTO;
+import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import com.pding.paymentservice.repository.DonationRepository;
 import com.pding.paymentservice.repository.EarningRepository;
+import com.pding.paymentservice.repository.MessagePurchaseRepository;
 import com.pding.paymentservice.repository.PaymentStatisticRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import reactor.core.scheduler.Schedulers;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +42,7 @@ public class PaymentStatisticService {
     private final EarningRepository earningRepository;
     private final VideoPurchaseRepository videoPurchaseRepository;
     private final DonationRepository donationRepository;
+    private final MessagePurchaseRepository messagePurchaseRepository;
 
     public Page<LeafEarningInCallingHistoryDTO> leafsEarningHistory(String pdId, String startDate, String endDate, Pageable pageable) {
         return paymentStatisticRepository.getLeafEarningInCallingHistory(pdId, startDate, endDate, pageable);
@@ -187,4 +191,31 @@ public class PaymentStatisticService {
 
         return new GrossRevenueByDateRangeGraph(fromDate, toDate, grossRevenue, sortedMap);
     }
+
+    public Map<String, BigDecimal> getMonthlyRevenue(String pdUserId, Integer noOfMonths) {
+
+        List<MonthlyRevenueProjection> messageRevenue = messagePurchaseRepository
+            .getMonthlyRevenueFromMessagePurchaseByUserId(pdUserId, noOfMonths);
+
+        List<MonthlyRevenueProjection> videoRevenue = videoPurchaseRepository
+            .getMonthlyRevenueFromVideoPurchaseByUserId(pdUserId, noOfMonths);
+
+        List<MonthlyRevenueProjection> donationRevenue = donationRepository
+            .getMonthlyRevenueFromDonationByUserId(pdUserId, noOfMonths);
+
+        Map<String, BigDecimal> consolidatedRevenue = new TreeMap<>(Collections.reverseOrder());
+
+
+        messageRevenue.forEach(mr ->
+            consolidatedRevenue.merge(mr.getMonth(), mr.getRevenue(), BigDecimal::add));
+
+        videoRevenue.forEach(vr ->
+            consolidatedRevenue.merge(vr.getMonth(), vr.getRevenue(), BigDecimal::add));
+
+        donationRevenue.forEach(dr ->
+            consolidatedRevenue.merge(dr.getMonth(), dr.getRevenue(), BigDecimal::add));
+
+        return consolidatedRevenue;
+    }
+
 }
