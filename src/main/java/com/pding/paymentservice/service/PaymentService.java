@@ -650,8 +650,8 @@ public class PaymentService {
 
         walletHistoryService.createWalletHistoryEntry(walletHistory.getWalletId(),
             walletHistory.getUserId(),
-            new BigDecimal(0),
             treesToRefund,
+            new BigDecimal(0),
             LocalDateTime.now(),
             refundTransactionId,
             TransactionType.REFUND_COMPLETED.getDisplayName(),
