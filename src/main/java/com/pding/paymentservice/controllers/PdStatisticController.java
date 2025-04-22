@@ -18,19 +18,25 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class PdStatisticController {
     private final PaymentStatisticService paymentStatisticService;
-    private final AuthHelper authHelper;
 
     @GetMapping("/gross-revenue-graph")
-    public ResponseEntity getGrossRevenueGraph(@RequestParam LocalDate date) {
-        String userId = authHelper.getUserId();
-
-        return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraph(userId, date));
+    public ResponseEntity getGrossRevenueGraph(@RequestParam LocalDate date, @RequestParam(required = false) String pdId) {
+        if(pdId == null || pdId.isEmpty()) {
+            return ResponseEntity.ok(paymentStatisticService.getMyGrossRevenueGraphByDateRange(date));
+        } else {
+            return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraphByAdmin(pdId, date));
+        }
     }
 
     @GetMapping("/gross-revenue-graph-by-date-range")
     public ResponseEntity getGrossRevenueGraph(@RequestParam LocalDate fromDate,
-                                               @RequestParam LocalDate toDate) {
-        String userId = authHelper.getUserId();
-        return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraph(userId, fromDate, toDate));
+                                               @RequestParam LocalDate toDate,
+                                               @RequestParam(required = false) String pdId
+                                               ) {
+
+        if(pdId == null || pdId.isEmpty()) {
+            return ResponseEntity.ok(paymentStatisticService.getMyGrossRevenueGraphByDateRange(fromDate, toDate));
+        }
+        return ResponseEntity.ok(paymentStatisticService.getGrossRevenueGraphByDateRangeByAdmin(pdId, fromDate, toDate));
     }
 }

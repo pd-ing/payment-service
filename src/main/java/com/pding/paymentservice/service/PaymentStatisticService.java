@@ -16,9 +16,11 @@ import com.pding.paymentservice.repository.EarningRepository;
 import com.pding.paymentservice.repository.MessagePurchaseRepository;
 import com.pding.paymentservice.repository.PaymentStatisticRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -43,7 +45,7 @@ public class PaymentStatisticService {
     private final VideoPurchaseRepository videoPurchaseRepository;
     private final DonationRepository donationRepository;
     private final MessagePurchaseRepository messagePurchaseRepository;
-
+    private final AuthHelper authHelper;
     public Page<LeafEarningInCallingHistoryDTO> leafsEarningHistory(String pdId, String startDate, String endDate, Pageable pageable) {
         return paymentStatisticRepository.getLeafEarningInCallingHistory(pdId, startDate, endDate, pageable);
     }
@@ -116,7 +118,7 @@ public class PaymentStatisticService {
             }).block();
     }
 
-    public GrossRevenueByDateGraph getGrossRevenueGraph(String pdId, LocalDate selectedDate) {
+    private GrossRevenueByDateGraph getGrossRevenueGraphByDateRange(String pdId, LocalDate selectedDate) {
         LocalDateTime startOfSelectedDate = selectedDate.atStartOfDay();
         LocalDateTime endOfSelectedDate = selectedDate.atTime(23, 59, 59);
         List<VideoPurchase> videoPurchases = videoPurchaseRepository.getVideoPurchasesByVideoOwnerUserIdAndDates(pdId, startOfSelectedDate, endOfSelectedDate);
@@ -154,8 +156,11 @@ public class PaymentStatisticService {
             grossRevenue,  new TreeMap<>(mergedMap));
     }
 
+    public GrossRevenueByDateRangeGraph getMyGrossRevenueGraphByDateRange(LocalDate fromDate, LocalDate toDate) {
+        return getGrossRevenueGraphByDateRange(authHelper.getUserId(), fromDate, toDate);
+    }
 
-    public Object getGrossRevenueGraph(String pdId, LocalDate fromDate, LocalDate toDate) {
+    private GrossRevenueByDateRangeGraph getGrossRevenueGraphByDateRange(String pdId, LocalDate fromDate, LocalDate toDate) {
         LocalDateTime startOfSelectedDate = fromDate.atStartOfDay();
         LocalDateTime endOfSelectedDate = toDate.atTime(23, 59, 59);
 
@@ -218,4 +223,18 @@ public class PaymentStatisticService {
         return consolidatedRevenue;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public GrossRevenueByDateGraph getGrossRevenueGraphByAdmin(String pdId, LocalDate date) {
+        return getGrossRevenueGraphByDateRange(pdId, date);
+    }
+
+    public GrossRevenueByDateGraph getMyGrossRevenueGraphByDateRange(LocalDate date) {
+        String userId = authHelper.getUserId();
+        return getGrossRevenueGraphByDateRange(userId, date);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public GrossRevenueByDateRangeGraph getGrossRevenueGraphByDateRangeByAdmin(String userId, LocalDate fromDate, LocalDate toDate) {
+        return getGrossRevenueGraphByDateRange(userId, fromDate, toDate);
+    }
 }
