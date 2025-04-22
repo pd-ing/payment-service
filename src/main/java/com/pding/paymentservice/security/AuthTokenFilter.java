@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -95,6 +97,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String userId;
             String email = null;
             Boolean emailVerified = null;
+            Boolean isAdmin = false;
             if (serverToken != null && !serverToken.isEmpty()) {
                 userId = getUidFromServerToken(serverToken);
             } else if (idToken != null && !idToken.isEmpty()) {
@@ -102,6 +105,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 userId = firebaseToken.getUid();
                 email = firebaseToken.getEmail();
                 emailVerified = firebaseToken.isEmailVerified();
+                isAdmin = Boolean.TRUE.equals(firebaseToken.getClaims().get("admin"));
             } else {
                 userId = null;
             }
@@ -114,11 +118,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     .request(request)
                     .build();
 
+            List<SimpleGrantedAuthority> authorities = isAdmin ?
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")) :
+                Collections.emptyList();
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             holder,
                             null,
-                            null
+                        authorities
                     );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
