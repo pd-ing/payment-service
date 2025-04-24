@@ -2,11 +2,9 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.payload.request.RefundVideoPurchaseRequest;
-import com.pding.paymentservice.payload.request.VideoPurchaseTimeRemainingRequest;
+import com.pding.paymentservice.payload.request.VideoPurchaseStatusRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
-import com.pding.paymentservice.payload.response.SalesHistoryData;
-import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +17,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,10 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -50,15 +44,6 @@ public class VideoPurchaseServiceController {
     VideoPurchaseService videoPurchaseService;
     @Autowired
     PdLogger pdLogger;
-//    @PostMapping(value = "/buyVideo")
-//    public ResponseEntity<?> buyVideo(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "videoOwnerUserId") String videoOwnerUserId, HttpServletRequest request) {
-//        return videoPurchaseService.buyVideo(authHelper.getUserId(), videoId, trees, videoOwnerUserId);
-//    }
-
-//    @PostMapping(value = "/v2/buyVideo")
-//    public ResponseEntity<?> buyVideoV2(@RequestParam(value = "videoId") String videoId) {
-//        return videoPurchaseService.buyVideoV2(videoId);
-//    }
 
     @PostMapping(value = "/v3/buyVideo")
     public ResponseEntity<?> buyVideoV3(@RequestParam(value = "videoId") String videoId, @RequestParam("duration") String duration) {
@@ -66,7 +51,7 @@ public class VideoPurchaseServiceController {
     }
 
     @PostMapping(value = "/videoPurchaseTimeRemaining")
-    public ResponseEntity<?> getVideoPurchaseTimeRemaining(@RequestBody VideoPurchaseTimeRemainingRequest request) {
+    public ResponseEntity<?> getVideoPurchaseTimeRemaining(@RequestBody VideoPurchaseStatusRequest request) {
         return videoPurchaseService.getVideoPurchaseTimeRemaining(request.getUserId(), request.getVideoIds());
     }
 
@@ -98,11 +83,6 @@ public class VideoPurchaseServiceController {
         return ResponseEntity.ok().body(result);
     }
 
-//    @GetMapping(value = "/treesEarned")
-//    public ResponseEntity<?> getTotalTreesEarnedByVideoOwner(@RequestParam(value = "videoOwnerUserId") String videoOwnerUserId) {
-//        return videoPurchaseService.getTreesEarned(videoOwnerUserId);
-//    }
-
     @GetMapping(value = "/isVideoPurchased")
     public ResponseEntity<?> isVideoPurchasedByUser(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "videoId") String videoId) {
         return videoPurchaseService.isVideoPurchased(authHelper.getUserId(), videoId);
@@ -112,12 +92,6 @@ public class VideoPurchaseServiceController {
     public ResponseEntity<?> getVideoPurchasedStatus(@RequestParam(value = "videoId") String videoId) {
         return videoPurchaseService.isVideoPurchasedV2(authHelper.getUserId(), videoId);
     }
-
-//    @GetMapping(value = "/paidUnpaidFollowerList")
-//    public ResponseEntity<?> getPaidUnpaidFollowerList(@RequestParam(value = "userId", required = false) String userId)
-//    {
-//        return videoPurchaseService.getPaidUnpaidFollowerList(authHelper.getUserId());
-//    }
 
     @GetMapping(value = "/paidUnpaidFollowerCount")
     public ResponseEntity<?> getPaidUnpaidFollowerCount(@RequestParam(value = "userId", required = false) String userId)

@@ -10,9 +10,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,8 +21,6 @@ import java.util.Set;
 
 @Repository
 public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, String> {
-
-    //VideoPurchase save(VideoPurchase transaction);
 
     List<VideoPurchase> getVideoPurchaseByUserId(String userId);
 
@@ -179,4 +174,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.isRefunded != true and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
+
+
+    //TODO check if is_refunded is set default to false
+    @Query(value = "SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded = false and vp.videoId in :videoId and vp.duration = 'PERMANENT'")
+    List<VideoPurchase> getPermanentVideoPurchasesByUserIdAndVideoId(@Param("userId") String userId, @Param("videoId") Set<String> videoId);
 }

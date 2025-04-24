@@ -1,6 +1,5 @@
 package com.pding.paymentservice.service;
 
-import com.google.common.io.Files;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
@@ -8,12 +7,7 @@ import com.pding.paymentservice.exception.WalletNotFoundException;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
-import com.pding.paymentservice.models.other.services.tables.dto.DonorData;
 import com.pding.paymentservice.models.other.services.tables.dto.VideoDurationPriceDTO;
-import com.pding.paymentservice.models.report.ReportGenerationCompletedEvent;
-import com.pding.paymentservice.models.report.ReportGenerationFailedEvent;
-import com.pding.paymentservice.models.report.ReportGenerationInProgressEvent;
-import com.pding.paymentservice.models.report.ReportGenerationStartedEvent;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.dto.VideoPurchaseLiteDTO;
@@ -28,11 +22,11 @@ import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponse;
 import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponseV2;
 import com.pding.paymentservice.payload.response.PaidUnpaidFollowerCountResponse;
 import com.pding.paymentservice.payload.response.PaidUnpaidFollowerResponse;
+import com.pding.paymentservice.payload.response.SalesHistoryData;
 import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.payload.response.VideoPurchaseTimeRemainingResponse;
-import com.pding.paymentservice.payload.response.SalesHistoryData;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
@@ -41,16 +35,16 @@ import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
-import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
-import com.pding.paymentservice.util.*;
-import jakarta.servlet.ServletOutputStream;
+import com.pding.paymentservice.util.DateTimeUtil;
+import com.pding.paymentservice.util.EmailValidator;
+import com.pding.paymentservice.util.StringUtil;
+import com.pding.paymentservice.util.TokenSigner;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -60,15 +54,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.SignalType;
-import reactor.core.scheduler.Schedulers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -78,7 +65,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -726,108 +722,6 @@ public class VideoPurchaseService {
         return shList;
     }
 
-//    public Flux<GenerateReportEvent> salesHistoryDownloadPreparing(String pdUserId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sortOrder) {
-//        String reportId = UUID.randomUUID().toString();
-//        Flux<GenerateReportEvent> reportGenerationEvents;
-//        // Start generate report event
-//        reportGenerationEvents = salesHistoryListStream(reportId, email, pdUserId, startDate, endDate, searchString, sortOrder);
-//
-//        return reportGenerationEvents
-//            .doOnNext(event -> {
-//                // handle event
-//                if (event instanceof ReportGenerationStartedEvent) {
-//                    log.info("Report generation started: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationInProgressEvent) {
-//                    log.info("Report is in progress: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationCompletedEvent) {
-//                    log.info("Report generation completed: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationFailedEvent) {
-//                    log.error("Report generation failed: " + event.getReportId());
-//                }
-//            });
-//    }
-
-//    private Flux<GenerateReportEvent> salesHistoryListStream(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, int sortOrder) {
-//        return Flux.<GenerateReportEvent>create(emitter -> {
-//                try {
-//                    // Step 1: Report Generation Started
-//                    emitter.next(ReportGenerationStartedEvent.builder()
-//                        .reportId(reportId)
-//                        .reportType("Sales History Report")
-//                        .parameters(Map.of("startDate", startDate, "endDate", endDate))
-//                        .timestamp(System.currentTimeMillis())
-//                        .build());
-//
-//                // Determine the user ID
-//                String userId = pdUserId != null ? pdUserId : otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
-//                if (userId == null) {
-//                    emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-001")
-//                            .errorMessage("User ID or email must be provided.")
-//                            .failureStep("INITIALIZATION")
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User ID or email must be provided."));
-//                    return;
-//                }
-//
-//                    SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sortOrder);
-//                    if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
-//                        emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-002")
-//                            .errorMessage("No sales history data available for the selected period.")
-//                            .failureStep("INITIALIZATION")
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                        emitter.complete();
-//                        return;
-//                    }
-//
-//
-//                    ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
-//                    try {
-//                        pdfService.cachePdfContent(reportId, pdfContent.toByteArray());
-//                    } catch (IOException e) {
-//                        emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-003")
-//                            .errorMessage(e.getMessage())
-//                            .failureStep("INITIALIZATION")
-//                            .errorDetails(Map.of("exception", e.getClass().getName()))
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                        emitter.complete();
-//                        return;
-//                    }
-//                    emitter.next(ReportGenerationCompletedEvent.builder()
-//                        .reportId(reportId)
-//                        .reportTitle("Sales History Report")
-//                        .metadata(Map.of("message", "The report has been successfully generated and is ready for download.",
-//                            "startDate", startDate, "endDate", endDate))
-//                        .timestamp(System.currentTimeMillis())
-//                        .build());
-//
-//                    emitter.complete();
-//
-//                } catch (Exception e) {
-//                    // Emit error if initialization fails
-//                    emitter.next(ReportGenerationFailedEvent.builder()
-//                        .reportId(reportId)
-//                        .errorCode("GEN-002")
-//                        .errorMessage(e.getMessage())
-//                        .failureStep("INITIALIZATION")
-//                        .timestamp(System.currentTimeMillis())
-//                        .errorDetails(Map.of("exception", e.getClass().getName()))
-//                        .build());
-//                    emitter.complete();
-//                }
-//            }, FluxSink.OverflowStrategy.BUFFER)
-//            .subscribeOn(Schedulers.boundedElastic())
-//            .onErrorResume(e -> Flux.empty());
-//    }
-
 
     public ResponseEntity<Map<String, String>> salesHistoryDownloadPDF(String pdUserId,
                                                                        String searchString,
@@ -892,9 +786,6 @@ public class VideoPurchaseService {
             if (videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction already refunded"));
             }
-//            if (videoPurchase.getExpiryDate() != null && videoPurchase.getExpiryDate().isBefore(LocalDateTime.now())) {
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction is expired"));
-//            }
 
             videoPurchase.setIsRefunded(true);
             videoPurchase.setLastUpdateDate(LocalDateTime.now());
@@ -910,5 +801,23 @@ public class VideoPurchaseService {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
+    }
+
+    public ResponseEntity<Map<String, Boolean>> checkPermanentPurchase(String userId, Set<String> videoIds) {
+        List<VideoPurchase> lstVideoPurchases = videoPurchaseRepository.getPermanentVideoPurchasesByUserIdAndVideoId(userId, videoIds);
+
+        Map<String, VideoPurchase> videoPurchaseMap = lstVideoPurchases.stream()
+            .collect(Collectors.toMap(VideoPurchase::getVideoId, Function.identity()));
+
+        Map<String, Boolean> result = new HashMap<>();
+
+        for (String videoId : videoIds) {
+            if (videoPurchaseMap.containsKey(videoId)) {
+                result.put(videoId, true);
+            } else {
+                result.put(videoId, false);
+            }
+        }
+        return ResponseEntity.ok(result);
     }
 }
