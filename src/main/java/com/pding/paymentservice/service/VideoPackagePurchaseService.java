@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +62,22 @@ public class VideoPackagePurchaseService {
             .blockOptional()
             .orElseThrow(() -> new NoSuchElementException("Package not found or error getting package details"));
 
+        if (!packageDetail.getIsActive()) {
+            throw new IllegalStateException("Package sale is not active");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(packageDetail.getStartDate())) {
+            throw new IllegalStateException("Package sale has not started yet");
+        }
+        if (now.isAfter(packageDetail.getEndDate())) {
+            throw new IllegalStateException("Package sale has ended");
+        }
+
         List<VideoPackageItemDTONet> items = packageDetail.getItems();
         Integer discountPercentage = packageDetail.getDiscountPercentage();
         String sellerId = packageDetail.getSellerId();
 
-        if(userId.equalsIgnoreCase(sellerId)) {
+        if (userId.equalsIgnoreCase(sellerId)) {
             throw new IllegalStateException("Can not purchase package because sellerId is the same");
         }
 
@@ -77,7 +89,7 @@ public class VideoPackagePurchaseService {
 
         Set<String> includedVideoIds = new HashSet<>();
         Set<String> ownedVideoIds = new HashSet<>();
-        BigDecimal personalizedTotalPrice = calculatePersonalizedPrice(userId,items, videoPrices, discountPercentage, includedVideoIds, ownedVideoIds);
+        BigDecimal personalizedTotalPrice = calculatePersonalizedPrice(userId, items, videoPrices, discountPercentage, includedVideoIds, ownedVideoIds);
 
         walletService.deductTreesFromWallet(userId, personalizedTotalPrice);
         earningService.addTreesToEarning(sellerId, personalizedTotalPrice);
@@ -101,18 +113,18 @@ public class VideoPackagePurchaseService {
         );
 
         List<VideoPurchase> videoPurchases = includedVideoIds.stream().map(videoId -> {
-            BigDecimal videoPrice = videoPrices.get(videoId);
-            String duration = "PERMANENT";
-            LocalDateTime expiryDate = VideoPurchaseDuration.valueOf(duration).getExpiryDate();
-            return new VideoPurchase(
-                userId,
-                videoId,
-                videoPrice.multiply(discountMultiplier).setScale(0, BigDecimal.ROUND_DOWN),
-                sellerId,
-                duration,
-                expiryDate,
-                packageId,
-                discountPercentage);
+                BigDecimal videoPrice = videoPrices.get(videoId);
+                String duration = "PERMANENT";
+                LocalDateTime expiryDate = VideoPurchaseDuration.valueOf(duration).getExpiryDate();
+                return new VideoPurchase(
+                    userId,
+                    videoId,
+                    videoPrice.multiply(discountMultiplier).setScale(0, BigDecimal.ROUND_DOWN),
+                    sellerId,
+                    duration,
+                    expiryDate,
+                    packageId,
+                    discountPercentage);
             }
         ).collect(Collectors.toList());
         videoPurchaseRepository.saveAll(videoPurchases);
@@ -131,7 +143,7 @@ public class VideoPackagePurchaseService {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    private BigDecimal calculatePersonalizedPrice(String userId, List<VideoPackageItemDTONet> items, Map<String, BigDecimal> videoPrices,Integer discountPercentage, Set<String> includedVideoIds, Set<String> ownedVideoIds) {
+    private BigDecimal calculatePersonalizedPrice(String userId, List<VideoPackageItemDTONet> items, Map<String, BigDecimal> videoPrices, Integer discountPercentage, Set<String> includedVideoIds, Set<String> ownedVideoIds) {
         Set<String> videoIds = items.stream()
             .map(VideoPackageItemDTONet::getVideoId)
             .collect(Collectors.toSet());
@@ -190,5 +202,15 @@ public class VideoPackagePurchaseService {
      */
     public boolean hasUserPurchasedPackage(String userId, String packageId) {
         return videoPackagePurchaseRepository.existsByUserIdAndPackageIdAndIsRefundedFalse(userId, packageId);
+    }
+
+    public ResponseEntity<?> checkPurchaseVideoPackage(String buyerId, Set<String> packageIds) {
+        List<VideoPackagePurchase> purchases = videoPackagePurchaseRepository.findAllByUserIdAndPackageIdInAndIsRefundedFalse(buyerId, packageIds);
+        Set<String> purchasedPackageIds = purchases.stream().map(VideoPackagePurchase::getPackageId).collect(Collectors.toSet());
+        Map<String, Boolean> mapPackageIdIsPurchased = new HashMap<>();
+        for (String packageId : packageIds) {
+            mapPackageIdIsPurchased.put(packageId, purchasedPackageIds.contains(packageId));
+        }
+        return ResponseEntity.ok(mapPackageIdIsPurchased);
     }
 }

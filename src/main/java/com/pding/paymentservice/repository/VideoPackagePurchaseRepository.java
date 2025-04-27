@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Repository for video package purchase operations
@@ -64,4 +65,6 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
             @Param("sellerId") String sellerId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    List<VideoPackagePurchase> findAllByUserIdAndPackageIdInAndIsRefundedFalse(String userId, Set<String> packageIds);
 }
