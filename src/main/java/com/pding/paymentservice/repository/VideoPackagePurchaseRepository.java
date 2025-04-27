@@ -1,7 +1,9 @@
 package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPackagePurchase;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -45,6 +47,10 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
      * @return True if the user has purchased the package
      */
     boolean existsByUserIdAndPackageIdAndIsRefundedFalse(String userId, String packageId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(value = "from VideoPackagePurchase  where userId = :userId and packageId = :packageId and isRefunded = false")
+    Optional<VideoPackagePurchase> findUnrefundedPackageByUserIdAndPackageIdForUpdate(String userId, String packageId);
 
     /**
      * Find all purchases by seller ID in a date range

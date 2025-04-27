@@ -41,7 +41,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
             new GenericClassResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception.getMessage()), null));
     }
 
-    @ExceptionHandler({ IllegalArgumentException.class })
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
     @ResponseBody
     public ResponseEntity handleEx(IllegalArgumentException exception, HttpServletRequest request) {
 

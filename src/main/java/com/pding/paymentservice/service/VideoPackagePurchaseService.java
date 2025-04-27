@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,7 +51,8 @@ public class VideoPackagePurchaseService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> purchaseVideoPackage(String userId, PurchaseVideoPackageRequest request) {
-        if (videoPackagePurchaseRepository.existsByUserIdAndPackageIdAndIsRefundedFalse(userId, request.getPackageId())) {
+        Optional<VideoPackagePurchase> packagePurchased = videoPackagePurchaseRepository.findUnrefundedPackageByUserIdAndPackageIdForUpdate(userId, request.getPackageId());
+        if (packagePurchased.isPresent()) {
             throw new IllegalStateException("Package already purchased");
         }
 
@@ -79,7 +81,7 @@ public class VideoPackagePurchaseService {
 
         walletService.deductTreesFromWallet(userId, personalizedTotalPrice);
         earningService.addTreesToEarning(sellerId, personalizedTotalPrice);
-        ledgerService.saveToLedger(packageId, personalizedTotalPrice, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
+        ledgerService.saveToLedger(packageId, personalizedTotalPrice, new BigDecimal(0), TransactionType.PACKAGE_PURCHASE, userId);
 
         VideoPackagePurchase packagePurchase = new VideoPackagePurchase(
             userId,
@@ -88,6 +90,7 @@ public class VideoPackagePurchaseService {
             personalizedTotalPrice,
             includedVideoIds,
             ownedVideoIds,
+            items.stream().map(VideoPackageItemDTONet::getPermanentPrice).reduce(BigDecimal.ZERO, BigDecimal::add),
             discountPercentage
         );
         videoPackagePurchaseRepository.save(packagePurchase);

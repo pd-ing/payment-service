@@ -44,7 +44,7 @@ public class VideoPackagePurchase {
     @Column(columnDefinition = "text")
     private String excludedVideoIds;
 
-//    private BigDecimal originalPrice;
+    private BigDecimal originalPrice;
 
     private Integer discountPercentage;
 
@@ -63,7 +63,7 @@ public class VideoPackagePurchase {
      * @param discountPercentage Discount percentage applied
      */
     public VideoPackagePurchase(String userId, String packageId, String sellerId, BigDecimal treesConsumed,
-                                Set<String> includedVideoIds, Set<String> excludedVideoIds, Integer discountPercentage) {
+                                Set<String> includedVideoIds, Set<String> excludedVideoIds, BigDecimal originalPrice, Integer discountPercentage) {
         this.userId = userId;
         this.packageId = packageId;
         this.sellerId = sellerId;
@@ -72,7 +72,7 @@ public class VideoPackagePurchase {
         this.includedVideoIds = String.join(",", includedVideoIds);
         this.excludedVideoIds = excludedVideoIds != null && !excludedVideoIds.isEmpty() ?
                                 String.join(",", excludedVideoIds) : null;
-//        this.originalPrice = originalPrice;
+        this.originalPrice = originalPrice;
         this.discountPercentage = discountPercentage;
         this.isRefunded = false;
     }
