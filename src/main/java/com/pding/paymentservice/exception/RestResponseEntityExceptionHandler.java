@@ -1,6 +1,7 @@
 package com.pding.paymentservice.exception;
 
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +38,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
     public ResponseEntity handleEx(Exception exception, HttpServletRequest request) {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception.getMessage()));
+            new GenericClassResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception.getMessage()), null));
     }
 
     @ExceptionHandler({ IllegalArgumentException.class })
@@ -46,7 +46,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
     public ResponseEntity handleEx(IllegalArgumentException exception, HttpServletRequest request) {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage()));
+            new GenericClassResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage()), null));
     }
 
 }

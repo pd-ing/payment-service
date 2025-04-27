@@ -41,6 +41,10 @@ public class VideoPurchase {
     @Column(columnDefinition = "boolean default false")
     private Boolean isRefunded = false;
 
+    private String packageId;
+
+    private Integer discountPercentageApplied;
+
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
         this.userId = userId;
         this.videoId = videoId;
@@ -72,6 +76,20 @@ public class VideoPurchase {
         this.videoOwnerUserId = videoOwnerUserId;
         this.isReplacementOfDeletedVideo = isReplacementOfDeletedVideo;
         this.isRefunded = false;
+    }
+
+    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate, String packageId, Integer discountPercentageApplied) {
+        this.userId = userId;
+        this.videoId = videoId;
+        this.treesConsumed = treesConsumed;
+        this.lastUpdateDate = LocalDateTime.now();
+        this.videoOwnerUserId = videoOwnerUserId;
+        this.isReplacementOfDeletedVideo = false;
+        this.duration = duration;
+        this.expiryDate = expiryDate;
+        this.isRefunded = false;
+        this.packageId = packageId;
+        this.discountPercentageApplied = discountPercentageApplied;
     }
 
 }

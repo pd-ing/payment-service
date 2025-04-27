@@ -44,7 +44,7 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
      * @param packageId The package ID
      * @return True if the user has purchased the package
      */
-    boolean existsByUserIdAndPackageId(String userId, String packageId);
+    boolean existsByUserIdAndPackageIdAndIsRefundedFalse(String userId, String packageId);
 
     /**
      * Find all purchases by seller ID in a date range

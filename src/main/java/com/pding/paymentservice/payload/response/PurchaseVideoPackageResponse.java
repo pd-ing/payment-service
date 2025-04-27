@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Response for a video package purchase
@@ -23,6 +23,6 @@ public class PurchaseVideoPackageResponse {
     private String sellerId; // ID of the seller who created the package
     private BigDecimal treesConsumed; // Amount paid for the package
     private LocalDateTime purchaseDate; // When the package was purchased
-    private List<String> includedVideoIds; // IDs of videos included in the purchase
-    private List<String> excludedVideoIds; // IDs of videos excluded from the purchase (already owned)
+    private Set<String> includedVideoIds; // IDs of videos included in the purchase
+    private Set<String> excludedVideoIds; // IDs of videos excluded from the purchase (already owned)
 }

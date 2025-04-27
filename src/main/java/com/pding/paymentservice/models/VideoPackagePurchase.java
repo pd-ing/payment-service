@@ -10,6 +10,7 @@ import org.hibernate.annotations.UuidGenerator;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Entity representing a purchase of a video package.
@@ -27,28 +28,28 @@ public class VideoPackagePurchase {
     @UuidGenerator
     private String id;
 
-    private String userId; // The user who purchased the package
+    private String userId;
 
-    private String packageId; // ID of the purchased package
+    private String packageId;
 
-    private String sellerId; // The creator who created the package
+    private String sellerId;
 
-    private BigDecimal treesConsumed; // Total amount paid for the package
+    private BigDecimal treesConsumed;
 
-    private LocalDateTime purchaseDate; // When the package was purchased
-
-    @Column(columnDefinition = "text")
-    private String includedVideoIds; // Comma-separated list of video IDs included in the purchase
+    private LocalDateTime purchaseDate;
 
     @Column(columnDefinition = "text")
-    private String excludedVideoIds; // Comma-separated list of video IDs excluded from the purchase (already owned)
+    private String includedVideoIds;
 
-    private BigDecimal originalPrice; // Original price before discount
+    @Column(columnDefinition = "text")
+    private String excludedVideoIds;
 
-    private Integer discountPercentage; // Discount percentage applied
+//    private BigDecimal originalPrice;
+
+    private Integer discountPercentage;
 
     @Column(columnDefinition = "boolean default false")
-    private Boolean isRefunded = false; // Whether the purchase has been refunded
+    private Boolean isRefunded = false;
 
     /**
      * Constructor for creating a new package purchase
@@ -62,8 +63,7 @@ public class VideoPackagePurchase {
      * @param discountPercentage Discount percentage applied
      */
     public VideoPackagePurchase(String userId, String packageId, String sellerId, BigDecimal treesConsumed,
-                               List<String> includedVideoIds, List<String> excludedVideoIds,
-                               BigDecimal originalPrice, Integer discountPercentage) {
+                                Set<String> includedVideoIds, Set<String> excludedVideoIds, Integer discountPercentage) {
         this.userId = userId;
         this.packageId = packageId;
         this.sellerId = sellerId;
@@ -72,7 +72,7 @@ public class VideoPackagePurchase {
         this.includedVideoIds = String.join(",", includedVideoIds);
         this.excludedVideoIds = excludedVideoIds != null && !excludedVideoIds.isEmpty() ?
                                 String.join(",", excludedVideoIds) : null;
-        this.originalPrice = originalPrice;
+//        this.originalPrice = originalPrice;
         this.discountPercentage = discountPercentage;
         this.isRefunded = false;
     }

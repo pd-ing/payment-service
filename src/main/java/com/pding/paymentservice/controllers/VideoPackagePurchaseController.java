@@ -28,12 +28,8 @@ public class VideoPackagePurchaseController {
      */
     @PostMapping("/purchase")
     public ResponseEntity<?> purchasePackage(@RequestBody PurchaseVideoPackageRequest request) {
-        try {
             String userId = authHelper.getUserId();
             return videoPackagePurchaseService.purchaseVideoPackage(userId, request);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Authentication error: " + e.getMessage());
-        }
     }
 
     /**
