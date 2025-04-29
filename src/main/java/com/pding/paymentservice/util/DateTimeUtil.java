@@ -22,6 +22,10 @@ public class DateTimeUtil {
         return LocalDateTime.parse(dateTimeString, formatter);
     }
 
+    static public LocalDateTime convertStringToLocaltime(String dateTimeString, DateTimeFormatter formatter) {
+        return LocalDateTime.parse(dateTimeString, formatter);
+    }
+
     static public String getCurrentTimeNow(){
         LocalDate currentDate = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

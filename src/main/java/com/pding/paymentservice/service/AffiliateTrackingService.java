@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Log4j2
@@ -35,12 +36,13 @@ public class AffiliateTrackingService {
             walletHistory.setIsFirstPurchase(walletHistories.size() == 1);
             walletHistoryRepository.save(walletHistory);
             if (walletHistories.size() == 1) {
+                log.info("save affiliate tracking FIRST_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
                 return;
             }
 
             WalletHistory firstPurchase = walletHistories.stream()
-                .filter(wl -> wl.getId() != walletHistory.getId())
+                .filter(wl -> !Objects.equals(wl.getId(), walletHistory.getId()))
                 .min(Comparator.comparing(WalletHistory::getPurchaseDate)).orElse(null);
 
             if (firstPurchase == null) {
@@ -48,8 +50,10 @@ public class AffiliateTrackingService {
             }
 
             if (walletHistory.getPurchaseDate().isBefore(firstPurchase.getPurchaseDate().plusHours(24))) {
+                log.info("save affiliate tracking FIRST_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "FIRST_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
             } else {
+                log.info("save affiliate tracking REPEAT_PURCHASE, userId {}", userId);
                 userServiceNetworkManager.saveAffiliateTracking(userId, "REPEAT_PURCHASE", walletHistory.getPurchasedTrees(), amountInDollars);
             }
         } catch (Exception e) {

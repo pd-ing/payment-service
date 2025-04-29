@@ -45,6 +45,8 @@ public class Ledger {
 
     private LocalDateTime timestamp;
 
+    private String transactionId;
+
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType; // "Purchase", "Donation", "Withdrawal", etc.
 
@@ -66,6 +68,7 @@ public class Ledger {
         } else if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL) || transactionType.equals(TransactionType.TEXT_MESSAGE)) {
             this.callId = referenceId;
         }
+        this.transactionId = referenceId;
         //this.walletOrVideoOrDonationOrWithdrawalId = walletOrVideoOrDonationOrWithdrawalId;
         this.treesTransacted = treesTransacted;
         this.leafsTransacted = leafsTransacted;

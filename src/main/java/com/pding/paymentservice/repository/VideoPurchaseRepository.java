@@ -2,6 +2,8 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
+import com.pding.paymentservice.payload.projection.UserProjection;
+import jakarta.persistence.LockModeType;
 import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import com.pding.paymentservice.payload.projection.UserProjection;
 import jakarta.persistence.LockModeType;
@@ -141,6 +143,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) - COALESCE(SUM(vt.drm_fee), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR) and vp.is_refunded = false", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
+    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.isRefunded != true and vp.expiryDate > current_time ")
+    Page<String> getAllPdUserIdWhoseVideosArePurchasedByUser(String userId, Pageable pageable);
+
     @Query(value =
         " select pd.id," +
         "        pd.nickname        as displayName," +
@@ -174,6 +179,10 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             " having max(vp.expiry_date) < now()"
         , nativeQuery = true)
     Page<UserProjection> getAllPdUserIdWhoseVideosAreExpiredByUserWithSearch(@Param("userId") String userId, @Param("searchString") String searchString, Pageable pageable);
+
+
+    @Query("SELECT DISTINCT vp.videoOwnerUserId FROM VideoPurchase vp WHERE vp.userId = ?1 and vp.expiryDate < current_time and vp.isRefunded = false group by vp.videoId having max(vp.expiryDate) < current_time ")
+    Page<String> getAllPdUserIdWhoseVideosAreExpiredByUser(String userId, Pageable pageable);
 
     @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoId in :videoIds and vp.isRefunded = false ")
     List<VideoPurchase> findByUserIdAndVideoIdIn(String userId, Set<String> videoIds);
@@ -223,17 +232,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.isRefunded = false and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query(nativeQuery = true, value =
-        " SELECT DATE_FORMAT(vp.last_update_date, '%Y-%m') AS month," +
-            "        COALESCE(SUM(vp.trees_consumed), 0)                    as revenue" +
-            " FROM video_purchase vp" +
-            " WHERE vp.video_owner_user_id = :pdId" +
-//            "   AND vp.last_update_date >= DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH)" +
-            " GROUP BY DATE_FORMAT(vp.last_update_date, '%Y-%m')" +
-            " ORDER BY month DESC" +
-            " LIMIT :limit"
-    )
-    List<MonthlyRevenueProjection> getMonthlyRevenueFromVideoPurchaseByUserId(@Param("pdId") String pdId, @Param("limit") Integer limit);
     @Query(value =
                 " select count(distinct uf.follower)" +
                 " from user_followings uf" +
@@ -275,6 +273,20 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                 "   )",
         nativeQuery = true)
     Long getPaidFollowersCount(String pdId);
+
+
+
+    @Query(nativeQuery = true, value =
+        " SELECT DATE_FORMAT(vp.last_update_date, '%Y-%m') AS month," +
+            "        COALESCE(SUM(vp.trees_consumed), 0)                    as revenue" +
+            " FROM video_purchase vp" +
+            " WHERE vp.video_owner_user_id = :pdId" +
+//            "   AND vp.last_update_date >= DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH)" +
+            " GROUP BY DATE_FORMAT(vp.last_update_date, '%Y-%m')" +
+            " ORDER BY month DESC" +
+            " LIMIT :limit"
+    )
+    List<MonthlyRevenueProjection> getMonthlyRevenueFromVideoPurchaseByUserId(@Param("pdId") String pdId, @Param("limit") Integer limit);
 
 
 }

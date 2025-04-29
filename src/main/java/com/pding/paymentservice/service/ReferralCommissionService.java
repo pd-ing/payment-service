@@ -61,7 +61,8 @@ public class ReferralCommissionService {
             UserInfoDTO referrerPdUserInfoDTO = getUserInfo(referralInfoDTO.getReferrerPdUserId());
             String commissionAmountInTrees = getCommissionAmountInTrees(withdrawal.getTrees(), referrerPdUserInfoDTO.getCommissionPercent());
             String commissionAmountInLeafs = getCommissionAmountInLeafs(withdrawal.getLeafs(), referrerPdUserInfoDTO.getCommissionPercent());
-            BigDecimal commissionAmountInCents = new BigDecimal(commissionAmountInTrees).multiply(new BigDecimal(Long.toString(valueOfOneTreeInCents)));
+            BigDecimal commissionAmountInCents = (new BigDecimal(commissionAmountInTrees).add(new BigDecimal(commissionAmountInLeafs)))
+                .multiply(new BigDecimal(Long.toString(valueOfOneTreeInCents)));
 
             ReferralCommission referralCommission = createReferralCommission(
                     withdrawal,

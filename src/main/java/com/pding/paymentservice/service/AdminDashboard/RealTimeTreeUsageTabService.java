@@ -30,6 +30,9 @@ public class RealTimeTreeUsageTabService {
     public RealTimeTreeTransactionHistory getRealTimeTreeUsage(LocalDate startDate, LocalDate endDate, String transactionType, String searchString, int page, int size) {
         RealTimeTreeTransactionHistory result = new RealTimeTreeTransactionHistory();
         Pageable pageable = PageRequest.of(page, size, Sort.by("last_update_date").descending());
+        if (searchString.isEmpty()) {
+            searchString = null;
+        }
         Page<Object[]> transaction = realTimeTreeUsageTabRepository.getRealTimeTreeUsage(startDate, endDate, transactionType, searchString, pageable);
         List<TransactionHistoryForAdminDashboard> transactionList = createTreeUsageSummaryList(transaction.getContent());
         result.setTransactionHistoryForAdminDashboards(new PageImpl<>(transactionList, pageable, transaction.getTotalElements()));

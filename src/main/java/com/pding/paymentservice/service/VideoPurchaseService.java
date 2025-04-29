@@ -24,6 +24,7 @@ import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.projection.UserProjection;
 import com.pding.paymentservice.payload.projection.VideoProjection;
+import com.pding.paymentservice.payload.projection.UserProjection;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -656,7 +657,7 @@ public class VideoPurchaseService {
             shObj.setAmount(salesHistory[1].toString());
             shObj.setBuyerEmail(StringUtil.maskEmail(email));
             shObj.setDuration(StringUtil.convertDurationKeyToValue(salesHistory[3].toString()));
-            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString())));
+            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
             shList.add(shObj);
         }
         return shList;
@@ -728,6 +729,7 @@ public class VideoPurchaseService {
             }
 
             videoPurchase.setIsRefunded(true);
+            videoPurchase.setLastUpdateDate(LocalDateTime.now());
             videoPurchaseRepository.save(videoPurchase);
 
             BigDecimal treeDeductFromPdWallet;
@@ -739,6 +741,8 @@ public class VideoPurchaseService {
 
             walletService.addToWallet(videoPurchase.getUserId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
             earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), treeDeductFromPdWallet);
+            ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
+            earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), videoPurchase.getTreesConsumed());
             ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Transaction refunded successfully"));
@@ -760,6 +764,7 @@ public class VideoPurchaseService {
             return ResponseEntity.ok().body(new GenericClassResponse<>(null, response));
         } catch (Exception e) {
             pdLogger.logException(PdLogger.EVENT.IS_VIDEO_PURCHASED, e);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }

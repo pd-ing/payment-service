@@ -229,7 +229,8 @@ public class ExposureTicketPurchaseService {
     }
 
     public List<SlotOverviewResponse> getSlotOverview() throws Exception {
-        List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
+        Instant now = Instant.now();
+        List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll().stream().filter(s -> s.getEndTime().isAfter(now)).collect(Collectors.toList());;
         Set<String> userIds = exposureSlots.stream().map(MExposureSlot::getUserId).collect(Collectors.toSet());
         List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
 
