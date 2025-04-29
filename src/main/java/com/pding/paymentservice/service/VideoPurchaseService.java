@@ -355,18 +355,10 @@ public class VideoPurchaseService {
             return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
         }
         try {
-            List<String> paidUsers = new ArrayList<String>();
-            List<String> unpaidUsers = new ArrayList<String>();
+            Long paidUsersCount = videoPurchaseRepository.getPaidFollowersCount(userId);
+            Long unPaidUsersCount = videoPurchaseRepository.getUnPaidFollowersCount(userId);
 
-            List<Object[]> followerList = videoPurchaseRepository.getFollowersList(userId);
-            for (Object[] followerRecord : followerList) {
-                if (followerRecord[1] == null)
-                    unpaidUsers.add(followerRecord[0].toString());
-                else
-                    paidUsers.add(followerRecord[0].toString());
-            }
-
-            return ResponseEntity.ok().body(new PaidUnpaidFollowerCountResponse(null, BigInteger.valueOf(paidUsers.size()), BigInteger.valueOf(unpaidUsers.size())));
+            return ResponseEntity.ok().body(new PaidUnpaidFollowerCountResponse(null, BigInteger.valueOf(paidUsersCount), BigInteger.valueOf(unPaidUsersCount)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaidUnpaidFollowerCountResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), BigInteger.valueOf(0), BigInteger.valueOf(0)));
         }
