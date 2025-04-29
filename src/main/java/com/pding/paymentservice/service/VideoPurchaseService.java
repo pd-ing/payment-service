@@ -5,6 +5,7 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.exception.InvalidAmountException;
 import com.pding.paymentservice.exception.WalletNotFoundException;
+import com.pding.paymentservice.listener.event.VideoPurchaseEvent;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
@@ -22,6 +23,8 @@ import com.pding.paymentservice.payload.dto.VideoSaleHistorySummary;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.projection.UserProjection;
+import com.pding.paymentservice.payload.projection.VideoProjection;
+import com.pding.paymentservice.payload.projection.UserProjection;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -36,6 +39,7 @@ import com.pding.paymentservice.payload.response.VideoPurchaseTimeRemainingRespo
 import com.pding.paymentservice.payload.response.SalesHistoryData;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
+import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
@@ -53,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -131,28 +136,12 @@ public class VideoPurchaseService {
     @Autowired
     VideoPurchaseServiceProxy self;
 
-    @Transactional
-    public VideoPurchase createVideoTransaction(String userId, String videoId, BigDecimal treesToConsumed, String videoOwnerUserId) {
-        log.info("Buy video request made with following details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
-        walletService.deductTreesFromWallet(userId, treesToConsumed);
-
-        VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId);
-        VideoPurchase video = videoPurchaseRepository.save(transaction);
-        log.info("Video purchase record created with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
-
-        earningService.addTreesToEarning(videoOwnerUserId, treesToConsumed);
-        ledgerService.saveToLedger(video.getId(), treesToConsumed, new BigDecimal(0), TransactionType.VIDEO_PURCHASE, userId);
-        log.info("Buy video request transaction completed with details UserId : {} ,VideoId : {}, trees : {}, VideoOwnerUserId : {}", userId, videoId, treesToConsumed, videoOwnerUserId);
-        return video;
-    }
+    @Autowired
+    ApplicationEventPublisher applicationEventPublisher;
 
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
         return videoPurchaseRepository.getVideoPurchaseByUserId(userID).stream().filter(videoPurchase -> videoPurchase.getIsRefunded() != true).collect(Collectors.toList());
-    }
-
-    public BigDecimal getTotalTreesEarnedByVideoOwner(String videoOwnerUserID) {
-        return videoPurchaseRepository.getTotalTreesEarnedByVideoOwner(videoOwnerUserID);
     }
 
     public BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserID, LocalDateTime endDateTime) {
@@ -185,9 +174,11 @@ public class VideoPurchaseService {
 
         try {
             String userId = authHelper.getUserId();
-            String videoOwnerUserId = otherServicesTablesNativeQueryRepository.findUserIdByVideoId(videoId).orElse(null);
+            VideoProjection videoData = otherServicesTablesNativeQueryRepository.findUserIdByVideoId(videoId).orElseThrow(
+                () -> new IllegalArgumentException("Video ID invalid")
+            );
 
-            if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
+            if (videoData.getUserId() == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), " VideoOwnerUserID is null or empty for the videoId provided"), null));
             }
 
@@ -212,14 +203,8 @@ public class VideoPurchaseService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "This duration is not enabled"), null));
             }
 
-            VideoPurchase video = self.createVideoTransaction(userId, videoId, videoOwnerUserId, price.getTrees(), price.getDuration());
-
-            sendNotificationService.sendBuyVideoNotification(video);
-
-            asyncOperationService.removeCachePattern("purchasedVideos::" + videoOwnerUserId + "," + userId + "*");
-            asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + userId + "*");
-            asyncOperationService.removeCachePattern("videos::" + videoOwnerUserId + "," + videoOwnerUserId + "*");
-
+            VideoPurchase video = self.createVideoTransaction(userId, videoId, videoData.getUserId(), videoData.getDrmEnable() != null && videoData.getDrmEnable(), price.getTrees(), price.getDuration());
+            applicationEventPublisher.publishEvent(new VideoPurchaseEvent(this, video, videoData));
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);
@@ -255,18 +240,6 @@ public class VideoPurchaseService {
         Page<VideoPurchase> videoTransactions = videoPurchaseRepository.findNotExpiredVideo(userId, pdId, pageable);
         return new GetVideoTransactionsResponse(null, videoTransactions.toList(), videoTransactions.hasNext());
 
-    }
-
-    public ResponseEntity<?> getTreesEarned(String videoOwnerUserId) {
-        if (videoOwnerUserId == null || videoOwnerUserId.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoOwnerUserID parameter is required."));
-        }
-        try {
-            BigDecimal videoTransactions = getTotalTreesEarnedByVideoOwner(videoOwnerUserId);
-            return ResponseEntity.ok().body(new TotalTreesEarnedResponse(null, videoTransactions));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TotalTreesEarnedResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
-        }
     }
 
     public ResponseEntity<?> isVideoPurchased(String userId, String videoId) {
@@ -320,36 +293,6 @@ public class VideoPurchaseService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new IsVideoPurchasedByUserResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), false));
         }
     }
-
-//    public ResponseEntity<?> getPaidUnpaidFollowerList(String userId) {
-//        if (userId == null || userId.isEmpty()) {
-//            return ResponseEntity.badRequest().body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "userid parameter is required."), null, null));
-//        }
-//        try {
-//            String paidUsers = "";
-//            String unpaidUsers = "";
-//
-//            List<Object[]> followerList = videoPurchaseRepository.getFollowersList(userId);
-//            for (Object[] followerRecord : followerList) {
-//                if(followerRecord[1] == null)
-//                    unpaidUsers = unpaidUsers.trim() + followerRecord[0].toString() + ", ";
-//                else
-//                    paidUsers = paidUsers.trim() + followerRecord[0].toString() + ", ";
-//            }
-//
-//            // Remove the trailing comma and space if they exist
-//            if (paidUsers.length() > 0) {
-//                paidUsers = paidUsers.substring(0, paidUsers.length() - 2);
-//            }
-//            if (unpaidUsers.length() > 0) {
-//                unpaidUsers = unpaidUsers.substring(0, unpaidUsers.length() - 2);
-//            }
-//
-//            return ResponseEntity.ok().body(new PaidUnpaidFollowerResponse(null, paidUsers, unpaidUsers));
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PaidUnpaidFollowerResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null, null));
-//        }
-//    }
 
     public ResponseEntity<?> getPaidUnpaidFollowerCount(String userId) {
         if (userId == null || userId.isEmpty()) {
@@ -720,108 +663,6 @@ public class VideoPurchaseService {
         return shList;
     }
 
-//    public Flux<GenerateReportEvent> salesHistoryDownloadPreparing(String pdUserId, String email, String searchString, LocalDate startDate, LocalDate endDate, int sortOrder) {
-//        String reportId = UUID.randomUUID().toString();
-//        Flux<GenerateReportEvent> reportGenerationEvents;
-//        // Start generate report event
-//        reportGenerationEvents = salesHistoryListStream(reportId, email, pdUserId, startDate, endDate, searchString, sortOrder);
-//
-//        return reportGenerationEvents
-//            .doOnNext(event -> {
-//                // handle event
-//                if (event instanceof ReportGenerationStartedEvent) {
-//                    log.info("Report generation started: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationInProgressEvent) {
-//                    log.info("Report is in progress: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationCompletedEvent) {
-//                    log.info("Report generation completed: " + event.getReportId());
-//                } else if (event instanceof ReportGenerationFailedEvent) {
-//                    log.error("Report generation failed: " + event.getReportId());
-//                }
-//            });
-//    }
-
-//    private Flux<GenerateReportEvent> salesHistoryListStream(String reportId, String email, String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, int sortOrder) {
-//        return Flux.<GenerateReportEvent>create(emitter -> {
-//                try {
-//                    // Step 1: Report Generation Started
-//                    emitter.next(ReportGenerationStartedEvent.builder()
-//                        .reportId(reportId)
-//                        .reportType("Sales History Report")
-//                        .parameters(Map.of("startDate", startDate, "endDate", endDate))
-//                        .timestamp(System.currentTimeMillis())
-//                        .build());
-//
-//                // Determine the user ID
-//                String userId = pdUserId != null ? pdUserId : otherServicesTablesNativeQueryRepository.findUserIdByEmail(email);
-//                if (userId == null) {
-//                    emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-001")
-//                            .errorMessage("User ID or email must be provided.")
-//                            .failureStep("INITIALIZATION")
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                    emitter.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User ID or email must be provided."));
-//                    return;
-//                }
-//
-//                    SalesHistoryData salesHistoryData = getAllSalesHistoryByDate(pdUserId, email, searchString, startDate, endDate, sortOrder);
-//                    if (salesHistoryData.getVideoSalesHistoryRecord() == null || salesHistoryData.getVideoSalesHistoryRecord().isEmpty()) {
-//                        emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-002")
-//                            .errorMessage("No sales history data available for the selected period.")
-//                            .failureStep("INITIALIZATION")
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                        emitter.complete();
-//                        return;
-//                    }
-//
-//
-//                    ByteArrayOutputStream pdfContent = pdfService.generatePDFSellerHistory(salesHistoryData);
-//                    try {
-//                        pdfService.cachePdfContent(reportId, pdfContent.toByteArray());
-//                    } catch (IOException e) {
-//                        emitter.next(ReportGenerationFailedEvent.builder()
-//                            .reportId(reportId)
-//                            .errorCode("ERROR-003")
-//                            .errorMessage(e.getMessage())
-//                            .failureStep("INITIALIZATION")
-//                            .errorDetails(Map.of("exception", e.getClass().getName()))
-//                            .timestamp(System.currentTimeMillis())
-//                            .build());
-//                        emitter.complete();
-//                        return;
-//                    }
-//                    emitter.next(ReportGenerationCompletedEvent.builder()
-//                        .reportId(reportId)
-//                        .reportTitle("Sales History Report")
-//                        .metadata(Map.of("message", "The report has been successfully generated and is ready for download.",
-//                            "startDate", startDate, "endDate", endDate))
-//                        .timestamp(System.currentTimeMillis())
-//                        .build());
-//
-//                    emitter.complete();
-//
-//                } catch (Exception e) {
-//                    // Emit error if initialization fails
-//                    emitter.next(ReportGenerationFailedEvent.builder()
-//                        .reportId(reportId)
-//                        .errorCode("GEN-002")
-//                        .errorMessage(e.getMessage())
-//                        .failureStep("INITIALIZATION")
-//                        .timestamp(System.currentTimeMillis())
-//                        .errorDetails(Map.of("exception", e.getClass().getName()))
-//                        .build());
-//                    emitter.complete();
-//                }
-//            }, FluxSink.OverflowStrategy.BUFFER)
-//            .subscribeOn(Schedulers.boundedElastic())
-//            .onErrorResume(e -> Flux.empty());
-//    }
-
 
     public ResponseEntity<Map<String, String>> salesHistoryDownloadPDF(String pdUserId,
                                                                        String searchString,
@@ -886,21 +727,41 @@ public class VideoPurchaseService {
             if (videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction already refunded"));
             }
-//            if (videoPurchase.getExpiryDate() != null && videoPurchase.getExpiryDate().isBefore(LocalDateTime.now())) {
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Transaction is expired"));
-//            }
 
             videoPurchase.setIsRefunded(true);
             videoPurchase.setLastUpdateDate(LocalDateTime.now());
             videoPurchaseRepository.save(videoPurchase);
 
+            BigDecimal treeDeductFromPdWallet;
+            if(videoPurchase.getDrmFee() != null && videoPurchase.getDrmFee().compareTo(BigDecimal.ZERO) > 0) {
+                treeDeductFromPdWallet = videoPurchase.getTreesConsumed().subtract(videoPurchase.getDrmFee());
+            } else {
+                treeDeductFromPdWallet = videoPurchase.getTreesConsumed();
+            }
+
             walletService.addToWallet(videoPurchase.getUserId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, LocalDateTime.now());
+            earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), treeDeductFromPdWallet);
+            ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
             earningService.deductTreesFromEarning(videoPurchase.getVideoOwnerUserId(), videoPurchase.getTreesConsumed());
             ledgerService.saveToLedger(videoPurchase.getId(), videoPurchase.getTreesConsumed(), BigDecimal.ZERO, TransactionType.REFUND_VIDEO_PURCHASE, videoPurchase.getUserId());
 
             return ResponseEntity.ok().body(new GenericStringResponse(null, "Transaction refunded successfully"));
         } catch (InsufficientTreesException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Cannot deduct trees from PD wallet,  Insufficient trees"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> isVideoPurchasedExists(String videoId) {
+        if (videoId == null || videoId.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "videoid parameter is required."));
+        }
+        try {
+            Boolean exists = videoPurchaseRepository.existsByVideoId(videoId);
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("exists", exists);
+            return ResponseEntity.ok().body(new GenericClassResponse<>(null, response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }

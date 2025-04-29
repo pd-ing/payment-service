@@ -10,13 +10,17 @@ import com.pding.paymentservice.payload.dto.LeafGiftHistoryDTO;
 import com.pding.paymentservice.payload.dto.PdSummaryDTO;
 import com.pding.paymentservice.payload.dto.PurchasedLeafHistoryDTO;
 import com.pding.paymentservice.payload.dto.PurchasedLeafHistorySummaryDTO;
+import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import com.pding.paymentservice.repository.DonationRepository;
 import com.pding.paymentservice.repository.EarningRepository;
+import com.pding.paymentservice.repository.MessagePurchaseRepository;
 import com.pding.paymentservice.repository.PaymentStatisticRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -24,6 +28,7 @@ import reactor.core.scheduler.Schedulers;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +44,8 @@ public class PaymentStatisticService {
     private final EarningRepository earningRepository;
     private final VideoPurchaseRepository videoPurchaseRepository;
     private final DonationRepository donationRepository;
-
+    private final MessagePurchaseRepository messagePurchaseRepository;
+    private final AuthHelper authHelper;
     public Page<LeafEarningInCallingHistoryDTO> leafsEarningHistory(String pdId, String startDate, String endDate, Pageable pageable) {
         return paymentStatisticRepository.getLeafEarningInCallingHistory(pdId, startDate, endDate, pageable);
     }
@@ -112,7 +118,7 @@ public class PaymentStatisticService {
             }).block();
     }
 
-    public GrossRevenueByDateGraph getGrossRevenueGraph(String pdId, LocalDate selectedDate) {
+    private GrossRevenueByDateGraph getGrossRevenueGraphByDateRange(String pdId, LocalDate selectedDate) {
         LocalDateTime startOfSelectedDate = selectedDate.atStartOfDay();
         LocalDateTime endOfSelectedDate = selectedDate.atTime(23, 59, 59);
         List<VideoPurchase> videoPurchases = videoPurchaseRepository.getVideoPurchasesByVideoOwnerUserIdAndDates(pdId, startOfSelectedDate, endOfSelectedDate);
@@ -150,8 +156,11 @@ public class PaymentStatisticService {
             grossRevenue,  new TreeMap<>(mergedMap));
     }
 
+    public GrossRevenueByDateRangeGraph getMyGrossRevenueGraphByDateRange(LocalDate fromDate, LocalDate toDate) {
+        return getGrossRevenueGraphByDateRange(authHelper.getUserId(), fromDate, toDate);
+    }
 
-    public Object getGrossRevenueGraph(String pdId, LocalDate fromDate, LocalDate toDate) {
+    private GrossRevenueByDateRangeGraph getGrossRevenueGraphByDateRange(String pdId, LocalDate fromDate, LocalDate toDate) {
         LocalDateTime startOfSelectedDate = fromDate.atStartOfDay();
         LocalDateTime endOfSelectedDate = toDate.atTime(23, 59, 59);
 
@@ -186,5 +195,46 @@ public class PaymentStatisticService {
         Map<LocalDate, BigDecimal> sortedMap = new TreeMap<>(mergedMap);
 
         return new GrossRevenueByDateRangeGraph(fromDate, toDate, grossRevenue, sortedMap);
+    }
+
+    public Map<String, BigDecimal> getMonthlyRevenue(String pdUserId, Integer noOfMonths) {
+
+        List<MonthlyRevenueProjection> messageRevenue = messagePurchaseRepository
+            .getMonthlyRevenueFromMessagePurchaseByUserId(pdUserId, noOfMonths);
+
+        List<MonthlyRevenueProjection> videoRevenue = videoPurchaseRepository
+            .getMonthlyRevenueFromVideoPurchaseByUserId(pdUserId, noOfMonths);
+
+        List<MonthlyRevenueProjection> donationRevenue = donationRepository
+            .getMonthlyRevenueFromDonationByUserId(pdUserId, noOfMonths);
+
+        Map<String, BigDecimal> consolidatedRevenue = new TreeMap<>(Collections.reverseOrder());
+
+
+        messageRevenue.forEach(mr ->
+            consolidatedRevenue.merge(mr.getMonth(), mr.getRevenue(), BigDecimal::add));
+
+        videoRevenue.forEach(vr ->
+            consolidatedRevenue.merge(vr.getMonth(), vr.getRevenue(), BigDecimal::add));
+
+        donationRevenue.forEach(dr ->
+            consolidatedRevenue.merge(dr.getMonth(), dr.getRevenue(), BigDecimal::add));
+
+        return consolidatedRevenue;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public GrossRevenueByDateGraph getGrossRevenueGraphByAdmin(String pdId, LocalDate date) {
+        return getGrossRevenueGraphByDateRange(pdId, date);
+    }
+
+    public GrossRevenueByDateGraph getMyGrossRevenueGraphByDateRange(LocalDate date) {
+        String userId = authHelper.getUserId();
+        return getGrossRevenueGraphByDateRange(userId, date);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public GrossRevenueByDateRangeGraph getGrossRevenueGraphByDateRangeByAdmin(String userId, LocalDate fromDate, LocalDate toDate) {
+        return getGrossRevenueGraphByDateRange(userId, fromDate, toDate);
     }
 }

@@ -28,9 +28,6 @@ public class SendNotificationService {
     @Autowired
     TokenSigner tokenSigner;
 
-    @Value("${bunny.libraryId}")
-    private String libraryId;
-
     @Autowired
     PdLogger pdLogger;
 
@@ -40,11 +37,11 @@ public class SendNotificationService {
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
 
-    public void sendBuyVideoNotification(VideoPurchase videoPurchase) {
+    public void sendBuyVideoNotification(VideoPurchase videoPurchase, String videoLibraryId) {
         try {
             String email = notificationRepository.findEmailByUserId(videoPurchase.getUserId());
             String videoTitle = notificationRepository.findTitleByVideoId(videoPurchase.getVideoId());
-            String videoUrl = tokenSigner.signPlaybackUrl(libraryId, videoPurchase.getVideoId(), 2);
+            String videoUrl = tokenSigner.signPlaybackUrl(videoLibraryId, videoPurchase.getVideoId(), 2);
             sendNotificationSqsMessage.sendVideoBoughtNotification(videoPurchase.getVideoOwnerUserId(), videoPurchase.getUserId(), email, videoPurchase.getVideoOwnerUserId(), videoPurchase.getVideoId(), videoTitle, videoUrl, null);
 
             //push FCM
