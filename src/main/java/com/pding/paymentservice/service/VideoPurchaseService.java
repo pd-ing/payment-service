@@ -763,8 +763,6 @@ public class VideoPurchaseService {
             response.put("exists", exists);
             return ResponseEntity.ok().body(new GenericClassResponse<>(null, response));
         } catch (Exception e) {
-            pdLogger.logException(PdLogger.EVENT.IS_VIDEO_PURCHASED, e);
-        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
