@@ -299,7 +299,7 @@ public class VideoPurchaseService {
         }
         try {
             Long paidUsersCount = videoPurchaseRepository.getPaidFollowersCount(userId);
-            Long unPaidUsersCount = videoPurchaseRepository.getUnPaidFollowersCount(userId);
+            Long unPaidUsersCount = otherServicesTablesNativeQueryRepository.getFollowersCount(userId) - paidUsersCount;
 
             return ResponseEntity.ok().body(new PaidUnpaidFollowerCountResponse(null, BigInteger.valueOf(paidUsersCount), BigInteger.valueOf(unPaidUsersCount)));
         } catch (Exception e) {
