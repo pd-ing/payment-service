@@ -214,4 +214,40 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query(value = "SELECT vp from VideoPurchase vp where vp.videoOwnerUserId = :videoOwnerUserId and vp.isRefunded != true and vp.lastUpdateDate >= :startDate and vp.lastUpdateDate <= :endDate")
     List<VideoPurchase> getVideoPurchasesByVideoOwnerUserIdAndDates(String videoOwnerUserId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query(value =
+        " select count(distinct uf.follower)" +
+            " from user_followings uf" +
+            " left join video_purchase vp on vp.user_id = uf.follower and vp.video_owner_user_id = :pdId and vp.is_refunded = false" +
+            " left join donation d on d.donor_user_id = uf.follower and d.pd_user_id = :pdId" +
+            " left join call_purchase cp on cp.user_id = uf.follower and cp.pd_user_id = :pdId" +
+            " left join message_purchase mp on mp.user_id = uf.follower and mp.pd_userid = :pdId" +
+            " left join in_chat_media_trading mt on mt.user_id = uf.follower and mt.pd_id = :pdId and mt.transaction_status = 'PAID'" +
+            " where uf.following = :pdId" +
+            "   and uf.is_deleted = false" +
+            "   and (vp.user_id is not null" +
+            "        or d.donor_user_id is not null" +
+            "        or cp.user_id is not null" +
+            "        or mp.user_id is not null" +
+            "        or mt.user_id is not null)",
+        nativeQuery = true)
+    Long getPaidFollowersCount(String pdId);
+
+    @Query(value =
+        " select count(distinct uf.follower)" +
+            " from user_followings uf" +
+            " left join video_purchase vp on vp.user_id = uf.follower and vp.video_owner_user_id = :pdId and vp.is_refunded = false" +
+            " left join donation d on d.donor_user_id = uf.follower and d.pd_user_id = :pdId" +
+            " left join call_purchase cp on cp.user_id = uf.follower and cp.pd_user_id = :pdId" +
+            " left join message_purchase mp on mp.user_id = uf.follower and mp.pd_userid = :pdId" +
+            " left join in_chat_media_trading mt on mt.user_id = uf.follower and mt.pd_id = :pdId and mt.transaction_status = 'PAID'" +
+            " where uf.following = :pdId" +
+            "   and uf.is_deleted = false" +
+            "   and vp.user_id is null" +
+            "   and d.donor_user_id is null" +
+            "   and cp.user_id is null" +
+            "   and mp.user_id is null" +
+            "   and mt.user_id is null",
+        nativeQuery = true)
+    Long getUnPaidFollowersCount(String pdId);
 }
