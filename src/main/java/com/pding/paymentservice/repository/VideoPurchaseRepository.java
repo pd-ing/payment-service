@@ -120,6 +120,42 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             nativeQuery = true)
     List<Object[]> getFollowersList(String userId);
 
+    @Query(value =
+        " select count(distinct uf.follower)" +
+            " from user_followings uf" +
+            " left join video_purchase vp on vp.user_id = uf.follower and vp.video_owner_user_id = :pdId and vp.is_refunded = false" +
+            " left join donation d on d.donor_user_id = uf.follower and d.pd_user_id = :pdId" +
+            " left join call_purchase cp on cp.user_id = uf.follower and cp.pd_user_id = :pdId" +
+            " left join message_purchase mp on mp.user_id = uf.follower and mp.pd_userid = :pdId" +
+            " left join in_chat_media_trading mt on mt.user_id = uf.follower and mt.pd_id = :pdId and mt.transaction_status = 'PAID'" +
+            " where uf.following = :pdId" +
+            "   and uf.is_deleted = false" +
+            "   and (vp.user_id is not null" +
+            "        or d.donor_user_id is not null" +
+            "        or cp.user_id is not null" +
+            "        or mp.user_id is not null" +
+            "        or mt.user_id is not null)",
+        nativeQuery = true)
+    Long getPaidFollowersCount(String pdId);
+
+    @Query(value =
+        " select count(distinct uf.follower)" +
+            " from user_followings uf" +
+            " left join video_purchase vp on vp.user_id = uf.follower and vp.video_owner_user_id = :pdId and vp.is_refunded = false" +
+            " left join donation d on d.donor_user_id = uf.follower and d.pd_user_id = :pdId" +
+            " left join call_purchase cp on cp.user_id = uf.follower and cp.pd_user_id = :pdId" +
+            " left join message_purchase mp on mp.user_id = uf.follower and mp.pd_userid = :pdId" +
+            " left join in_chat_media_trading mt on mt.user_id = uf.follower and mt.pd_id = :pdId and mt.transaction_status = 'PAID'" +
+            " where uf.following = :pdId" +
+            "   and uf.is_deleted = false" +
+            "   and vp.user_id is null" +
+            "   and d.donor_user_id is null" +
+            "   and cp.user_id is null" +
+            "   and mp.user_id is null" +
+            "   and mt.user_id is null",
+        nativeQuery = true)
+    Long getUnPaidFollowersCount(String pdId);
+
     @Query(value = "SELECT COALESCE(SUM(vt.trees_consumed), 0) - COALESCE(SUM(vt.drm_fee), 0) FROM video_purchase vt WHERE vt.video_owner_user_id = ?1 AND vt.last_update_date >= DATE_SUB(?2, INTERVAL 24 HOUR) and vp.is_refunded = false", nativeQuery = true)
     BigDecimal getDailyTreeRevenueByVideoOwner(String videoOwnerUserId, LocalDateTime endDateTime);
 
