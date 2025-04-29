@@ -329,4 +329,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
         " WHERE follower = :userId" +
         "   and following in :pdIds", nativeQuery = true)
     List<String> findFollowingByListPd(String userId, Set<String> pdIds);
+
+    @Query(value = "select count(*) from user_followings uf where following = :pdId and uf.is_deleted=false", nativeQuery = true)
+    Long getFollowersCount(String pdId);
 }
