@@ -9,11 +9,10 @@ import com.pding.paymentservice.payload.net.VideoPackageDetailsResponseNet;
 import com.pding.paymentservice.payload.net.VideoPackageItemDTONet;
 import com.pding.paymentservice.payload.request.PurchaseVideoPackageRequest;
 import com.pding.paymentservice.payload.response.PurchaseVideoPackageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
-import com.pding.paymentservice.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -123,8 +122,9 @@ public class VideoPackagePurchaseService {
                     sellerId,
                     duration,
                     expiryDate,
-                    packageId,
-                    discountPercentage);
+                    discountPercentage,
+                        packagePurchase.getId()
+                        );
             }
         ).collect(Collectors.toList());
         videoPurchaseRepository.saveAll(videoPurchases);
@@ -212,5 +212,35 @@ public class VideoPackagePurchaseService {
             mapPackageIdIsPurchased.put(packageId, purchasedPackageIds.contains(packageId));
         }
         return ResponseEntity.ok(mapPackageIdIsPurchased);
+    }
+
+    @Transactional
+    public ResponseEntity<?> refundPackagePurchase(String transactionId) {
+        VideoPackagePurchase videoPackagePurchaseToRefund = videoPackagePurchaseRepository.findById(transactionId)
+                .orElseThrow(() -> new NoSuchElementException("Transaction not found"));
+
+        if(videoPackagePurchaseToRefund.getIsRefunded() != null && videoPackagePurchaseToRefund.getIsRefunded()) {
+            throw new IllegalStateException("Can not refund this package purchase");
+        }
+        videoPackagePurchaseToRefund.setIsRefunded(true);
+        videoPackagePurchaseRepository.save(videoPackagePurchaseToRefund);
+
+        List<VideoPurchase> videoPurchasesToRefund = videoPurchaseRepository.findByPackagePurchaseId(videoPackagePurchaseToRefund.getId());
+        BigDecimal treeToRefund = BigDecimal.ZERO;
+        for (VideoPurchase videoPurchase : videoPurchasesToRefund) {
+            videoPurchase.setIsRefunded(true);
+            treeToRefund = treeToRefund.add(videoPurchase.getTreesConsumed());
+            //TODO subtract DRM fee
+        }
+        videoPurchaseRepository.saveAll(videoPurchasesToRefund);
+
+        String buyerId = videoPackagePurchaseToRefund.getUserId();
+        String sellerId = videoPackagePurchaseToRefund.getSellerId();
+        String packagePurchaseId = videoPackagePurchaseToRefund.getId();
+        walletService.addToWallet(buyerId, treeToRefund, BigDecimal.ZERO, LocalDateTime.now());
+        earningService.deductTreesFromEarning(sellerId, treeToRefund);
+        ledgerService.saveToLedger(packagePurchaseId, treeToRefund, BigDecimal.ZERO, TransactionType.REFUND_PACKAGE_PURCHASE, buyerId);
+
+        return ResponseEntity.ok(new GenericStringResponse(null, "Refund successfully"));
     }
 }

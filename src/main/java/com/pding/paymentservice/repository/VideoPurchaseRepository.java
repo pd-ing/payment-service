@@ -179,4 +179,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     //TODO check if is_refunded is set default to false
     @Query(value = "SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded = false and vp.videoId in :videoId and vp.duration = 'PERMANENT'")
     List<VideoPurchase> getPermanentVideoPurchasesByUserIdAndVideoId(@Param("userId") String userId, @Param("videoId") Set<String> videoId);
+
+    List<VideoPurchase> findByPackagePurchaseId(String packagePurchaseId);
 }

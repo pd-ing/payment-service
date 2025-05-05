@@ -36,6 +36,7 @@ public enum TransactionType {
     BUY_EXPOSURE_TICKET("buyExposureTicket"),
     REFUND_EXPOSURE_TICKET("refundExposureTicket"),
     PACKAGE_PURCHASE("packagePurchase"),
+    REFUND_PACKAGE_PURCHASE("refundPackagePurchase"),
     ;
 
     private final String displayName;

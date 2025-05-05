@@ -67,7 +67,7 @@ public class Ledger {
             this.donationId = referenceId;
         } else if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL) || transactionType.equals(TransactionType.TEXT_MESSAGE)) {
             this.callId = referenceId;
-        } else if (transactionType.equals(TransactionType.PACKAGE_PURCHASE)) {
+        } else if (transactionType.equals(TransactionType.PACKAGE_PURCHASE) || transactionType.equals(TransactionType.REFUND_PACKAGE_PURCHASE)) {
             this.packageId = referenceId;
         }
         this.transactionId = referenceId;

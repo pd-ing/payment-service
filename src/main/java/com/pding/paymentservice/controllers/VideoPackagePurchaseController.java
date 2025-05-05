@@ -5,6 +5,7 @@ import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.VideoPackagePurchaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -30,6 +31,12 @@ public class VideoPackagePurchaseController {
     public ResponseEntity<?> purchasePackage(@RequestBody PurchaseVideoPackageRequest request) {
             String userId = authHelper.getUserId();
             return videoPackagePurchaseService.purchaseVideoPackage(userId, request);
+    }
+
+    @PostMapping("/refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> refundPackagePurchase(@RequestParam String transactionId) {
+            return videoPackagePurchaseService.refundPackagePurchase(transactionId);
     }
 
     /**
