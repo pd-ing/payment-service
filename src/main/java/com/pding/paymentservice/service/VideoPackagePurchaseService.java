@@ -5,14 +5,23 @@ import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
 import com.pding.paymentservice.network.ContentNetworkService;
+import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.dto.VideoPackagePurchaseDTO;
+import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPackageDetailsResponseNet;
 import com.pding.paymentservice.payload.net.VideoPackageItemDTONet;
 import com.pding.paymentservice.payload.request.PurchaseVideoPackageRequest;
 import com.pding.paymentservice.payload.response.PurchaseVideoPackageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
+import com.pding.paymentservice.security.AuthHelper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -40,7 +49,9 @@ public class VideoPackagePurchaseService {
     private final WalletService walletService;
     private final EarningService earningService;
     private final ContentNetworkService contentNetworkService;
+    private final UserServiceNetworkManager userServiceNetworkManager;
     private final LedgerService ledgerService;
+    private final AuthHelper authHelper;
 
     /**
      * Purchase a video package
@@ -57,7 +68,7 @@ public class VideoPackagePurchaseService {
         }
 
         String packageId = request.getPackageId();
-        VideoPackageDetailsResponseNet packageDetail = contentNetworkService.getPackageDetails(userId, packageId)
+        VideoPackageDetailsResponseNet packageDetail = contentNetworkService.getPackageDetails(packageId)
             .blockOptional()
             .orElseThrow(() -> new NoSuchElementException("Package not found or error getting package details"));
 
@@ -242,5 +253,59 @@ public class VideoPackagePurchaseService {
         ledgerService.saveToLedger(packagePurchaseId, treeToRefund, BigDecimal.ZERO, TransactionType.REFUND_PACKAGE_PURCHASE, buyerId);
 
         return ResponseEntity.ok(new GenericStringResponse(null, "Refund successfully"));
+    }
+
+    public ResponseEntity<?> getPackagePurchaseHistory(String packageId, Pageable pageable) {
+        String userId = authHelper.getUserId();
+
+        VideoPackageDetailsResponseNet videoPackage = contentNetworkService.getPackageDetails(packageId).block();
+        List<VideoPackageItemDTONet> items = videoPackage.getItems() != null? videoPackage.getItems() : List.of();
+        Map<String, VideoPackageItemDTONet> videoIdToItemMap = items.stream()
+                .collect(Collectors.toMap(VideoPackageItemDTONet::getVideoId, item -> item));
+
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+        Sort sort = Sort.by(Sort.Direction.DESC, "purchaseDate");
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+        Page<VideoPackagePurchase> purchases = videoPackagePurchaseRepository.findByPackageIdAndSellerIdAndIsRefundedFalse(packageId, userId, pageRequest);
+
+        Set<String> buyerIds = purchases.getContent().stream()
+                .map(VideoPackagePurchase::getUserId)
+                .collect(Collectors.toSet());
+
+        List<PublicUserNet> buyers = userServiceNetworkManager.getUsersListFlux(buyerIds).blockLast();
+        Map<String, PublicUserNet> buyerMap = buyers.stream()
+                .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+
+        Page<VideoPackagePurchaseDTO> result = purchases.map(
+                videoPackagePurchase -> {
+                    PublicUserNet buyer = buyerMap.get(videoPackagePurchase.getUserId());
+                    List<VideoPackageItemDTONet> includedVideos = videoPackagePurchase.getIncludedVideoIdsList().stream()
+                            .map(videoIdToItemMap::get)
+                            .toList();
+
+                    List<VideoPackageItemDTONet> excludedVideos = videoPackagePurchase.getExcludedVideoIdsList().stream()
+                            .map(videoIdToItemMap::get)
+                            .toList();
+
+                    return VideoPackagePurchaseDTO.builder()
+                            .id(videoPackagePurchase.getId())
+                            .userId(videoPackagePurchase.getUserId())
+                            .packageId(videoPackagePurchase.getPackageId())
+                            .sellerId(videoPackagePurchase.getSellerId())
+                            .treesConsumed(videoPackagePurchase.getTreesConsumed())
+                            .purchaseDate(videoPackagePurchase.getPurchaseDate())
+                            .includedVideoIds(videoPackagePurchase.getIncludedVideoIdsList())
+                            .excludedVideoIds(videoPackagePurchase.getExcludedVideoIdsList())
+                            .originalPrice(videoPackagePurchase.getOriginalPrice())
+                            .discountPercentage(videoPackagePurchase.getDiscountPercentage())
+                            .isRefunded(videoPackagePurchase.getIsRefunded())
+                            .email(buyer != null ? buyer.getEmail() : null)
+                            .includedVideos(includedVideos)
+                            .excludedVideos(excludedVideos)
+                            .build();
+                }
+        );
+        return ResponseEntity.ok(new GenericPageResponse<>(null, result));
     }
 }

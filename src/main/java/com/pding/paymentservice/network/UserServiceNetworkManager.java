@@ -112,7 +112,7 @@ public class UserServiceNetworkManager {
                 });
     }
 
-    public Flux<List<PublicUserNet>> getUsersListFlux(Set<String> userIds) throws Exception {
+    public Flux<List<PublicUserNet>> getUsersListFlux(Set<String> userIds) {
         if (userIds == null || userIds.isEmpty()) return Flux.empty();
 
         String param = userIds.stream().map(Object::toString).collect(Collectors.joining(","));

@@ -2,6 +2,8 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPackagePurchase;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -67,4 +69,6 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
             @Param("endDate") LocalDateTime endDate);
 
     List<VideoPackagePurchase> findAllByUserIdAndPackageIdInAndIsRefundedFalse(String userId, Set<String> packageIds);
+
+    Page<VideoPackagePurchase> findByPackageIdAndSellerIdAndIsRefundedFalse(String packageId, String sellerId, Pageable pageable);
 }

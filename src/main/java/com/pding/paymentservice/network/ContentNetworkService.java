@@ -31,8 +31,7 @@ public class ContentNetworkService {
      * @param packageId The package ID
      * @return Package details with personalized pricing for the buyer
      */
-    public Mono<VideoPackageDetailsResponseNet> getPackageDetails(String buyerId, String packageId) {
-        log.info("Getting package details for buyer {} and package {}", buyerId, packageId);
+    public Mono<VideoPackageDetailsResponseNet> getPackageDetails(String packageId) {
 
         return webClient.get()
                 .uri(contentServiceHost + "/api/internal/sale-package-details?packageId=" + packageId)
