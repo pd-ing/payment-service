@@ -71,4 +71,18 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
     List<VideoPackagePurchase> findAllByUserIdAndPackageIdInAndIsRefundedFalse(String userId, Set<String> packageIds);
 
     Page<VideoPackagePurchase> findByPackageIdAndSellerIdAndIsRefundedFalse(String packageId, String sellerId, Pageable pageable);
+
+    /**
+     * Find all non-refunded purchases for a package
+     * @param packageId The package ID
+     * @return List of package purchases
+     */
+    List<VideoPackagePurchase> findByPackageIdAndIsRefundedFalse(String packageId);
+
+    /**
+     * Find all non-refunded purchases for a list of package IDs
+     * @param packageIds The list of package IDs
+     * @return List of package purchases
+     */
+    List<VideoPackagePurchase> findByPackageIdInAndIsRefundedFalse(List<String> packageIds);
 }

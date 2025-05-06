@@ -1,6 +1,7 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.payload.request.CheckPurchaseVideoPackageRequest;
+import com.pding.paymentservice.payload.request.PackageSalesStatsRequest;
 import com.pding.paymentservice.payload.request.VideoPurchaseStatusRequest;
 import com.pding.paymentservice.service.VideoPackagePurchaseService;
 import com.pding.paymentservice.service.VideoPurchaseService;
@@ -30,5 +31,16 @@ public class InternalController {
     @PostMapping("/package-purchase-check")
     public ResponseEntity<?> checkPurchasePackage(@RequestBody CheckPurchaseVideoPackageRequest request) {
         return videoPackagePurchaseService.checkPurchaseVideoPackage(request.getBuyerId(), request.getPackageIds());
+    }
+
+    /**
+     * Get sales statistics for a list of package IDs
+     *
+     * @param request The request containing a list of package IDs
+     * @return List of package sales statistics (package_id, quantity sold, total-tree-earned)
+     */
+    @PostMapping("/package-sales-stats")
+    public ResponseEntity<?> getPackageSalesStats(@RequestBody PackageSalesStatsRequest request) {
+        return videoPackagePurchaseService.getPackageSalesStats(request);
     }
 }
