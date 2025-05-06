@@ -10,8 +10,11 @@ import com.pding.paymentservice.payload.dto.VideoPackagePurchaseDTO;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPackageDetailsResponseNet;
 import com.pding.paymentservice.payload.net.VideoPackageItemDTONet;
+import com.pding.paymentservice.payload.request.PackageSalesStatsRequest;
 import com.pding.paymentservice.payload.request.PurchaseVideoPackageRequest;
+import com.pding.paymentservice.payload.response.PackageSalesStatsResponse;
 import com.pding.paymentservice.payload.response.PurchaseVideoPackageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
@@ -29,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -307,5 +311,51 @@ public class VideoPackagePurchaseService {
                 }
         );
         return ResponseEntity.ok(new GenericPageResponse<>(null, result));
+    }
+
+    /**
+     * Get sales statistics for a list of package IDs
+     *
+     * @param request The request containing a list of package IDs
+     * @return List of package sales statistics (package_id, quantity sold, total-tree-earned)
+     */
+    public ResponseEntity<?> getPackageSalesStats(PackageSalesStatsRequest request) {
+        List<String> packageIds = request.getPackageIds();
+        if (packageIds == null || packageIds.isEmpty()) {
+            return ResponseEntity.badRequest().body(new GenericStringResponse(null, "Package IDs list cannot be empty"));
+        }
+
+        // Get all non-refunded purchases for all package IDs in a single query
+        List<VideoPackagePurchase> allPurchases = videoPackagePurchaseRepository.findByPackageIdInAndIsRefundedFalse(packageIds);
+
+        // Group purchases by package ID
+        Map<String, List<VideoPackagePurchase>> purchasesByPackageId = allPurchases.stream()
+                .collect(Collectors.groupingBy(VideoPackagePurchase::getPackageId));
+
+        List<PackageSalesStatsResponse> responseList = new ArrayList<>();
+
+        // Process each package ID
+        for (String packageId : packageIds) {
+            List<VideoPackagePurchase> purchases = purchasesByPackageId.getOrDefault(packageId, List.of());
+
+            // Calculate quantity sold
+            long quantitySold = purchases.size();
+
+            // Calculate total trees earned
+            BigDecimal totalTreesEarned = purchases.stream()
+                    .map(VideoPackagePurchase::getTreesConsumed)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Create response object
+            PackageSalesStatsResponse stats = PackageSalesStatsResponse.builder()
+                    .packageId(packageId)
+                    .quantitySold(quantitySold)
+                    .totalTreesEarned(totalTreesEarned)
+                    .build();
+
+            responseList.add(stats);
+        }
+
+        return ResponseEntity.ok(new GenericListDataResponse<>(null, responseList));
     }
 }
