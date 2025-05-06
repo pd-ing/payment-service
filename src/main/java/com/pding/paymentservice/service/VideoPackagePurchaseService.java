@@ -21,6 +21,7 @@ import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,6 +57,9 @@ public class VideoPackagePurchaseService {
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final LedgerService ledgerService;
     private final AuthHelper authHelper;
+
+    @Value("${video.purchase.drm.fee}")
+    private BigDecimal drmFee;
 
     /**
      * Purchase a video package
@@ -101,12 +105,22 @@ public class VideoPackagePurchaseService {
                 VideoPackageItemDTONet::getPermanentPrice
             ));
 
+        Map<String, Boolean> videoDrmEnabledMap = items.stream()
+            .collect(Collectors.toMap(
+                VideoPackageItemDTONet::getVideoId,
+                VideoPackageItemDTONet::getDrmEnable
+            ));
+
         Set<String> includedVideoIds = new HashSet<>();
         Set<String> ownedVideoIds = new HashSet<>();
         BigDecimal personalizedTotalPrice = calculatePersonalizedPrice(userId, items, videoPrices, discountPercentage, includedVideoIds, ownedVideoIds);
-
         walletService.deductTreesFromWallet(userId, personalizedTotalPrice);
-        earningService.addTreesToEarning(sellerId, personalizedTotalPrice);
+
+        BigDecimal totalDrmFee = includedVideoIds.stream().filter(videoDrmEnabledMap::get)
+                .map(s -> drmFee)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        earningService.addTreesToEarning(sellerId, personalizedTotalPrice.subtract(totalDrmFee));
         ledgerService.saveToLedger(packageId, personalizedTotalPrice, new BigDecimal(0), TransactionType.PACKAGE_PURCHASE, userId);
 
         VideoPackagePurchase packagePurchase = new VideoPackagePurchase(
@@ -117,7 +131,8 @@ public class VideoPackagePurchaseService {
             includedVideoIds,
             ownedVideoIds,
             items.stream().map(VideoPackageItemDTONet::getPermanentPrice).reduce(BigDecimal.ZERO, BigDecimal::add),
-            discountPercentage
+            discountPercentage,
+            totalDrmFee
         );
         videoPackagePurchaseRepository.save(packagePurchase);
 
@@ -138,8 +153,9 @@ public class VideoPackagePurchaseService {
                     duration,
                     expiryDate,
                     discountPercentage,
-                        packagePurchase.getId()
-                        );
+                    packagePurchase.getId(),
+                    videoDrmEnabledMap.containsKey(videoId) && videoDrmEnabledMap.get(videoId) ? drmFee : BigDecimal.ZERO
+                    );
             }
         ).collect(Collectors.toList());
         videoPurchaseRepository.saveAll(videoPurchases);

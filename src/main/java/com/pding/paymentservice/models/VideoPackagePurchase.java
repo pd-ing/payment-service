@@ -51,6 +51,8 @@ public class VideoPackagePurchase {
     @Column(columnDefinition = "boolean default false")
     private Boolean isRefunded = false;
 
+    private BigDecimal drmFee;
+
     /**
      * Constructor for creating a new package purchase
      * @param userId The user who purchased the package
@@ -63,7 +65,7 @@ public class VideoPackagePurchase {
      * @param discountPercentage Discount percentage applied
      */
     public VideoPackagePurchase(String userId, String packageId, String sellerId, BigDecimal treesConsumed,
-                                Set<String> includedVideoIds, Set<String> excludedVideoIds, BigDecimal originalPrice, Integer discountPercentage) {
+                                Set<String> includedVideoIds, Set<String> excludedVideoIds, BigDecimal originalPrice, Integer discountPercentage, BigDecimal drmFee) {
         this.userId = userId;
         this.packageId = packageId;
         this.sellerId = sellerId;
@@ -75,6 +77,7 @@ public class VideoPackagePurchase {
         this.originalPrice = originalPrice;
         this.discountPercentage = discountPercentage;
         this.isRefunded = false;
+        this.drmFee = drmFee;
     }
 
     /**

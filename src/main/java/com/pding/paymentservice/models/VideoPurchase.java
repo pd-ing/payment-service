@@ -81,7 +81,7 @@ public class VideoPurchase {
         this.isRefunded = false;
     }
 
-    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate, Integer discountPercentageApplied, String packagePurchaseId) {
+    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate, Integer discountPercentageApplied, String packagePurchaseId, BigDecimal drmFee) {
         this.userId = userId;
         this.videoId = videoId;
         this.treesConsumed = treesConsumed;
@@ -93,6 +93,7 @@ public class VideoPurchase {
         this.isRefunded = false;
         this.packagePurchaseId = packagePurchaseId;
         this.discountPercentageApplied = discountPercentageApplied;
+        this.drmFee = drmFee;
     }
 
 }

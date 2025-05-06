@@ -21,4 +21,5 @@ public class VideoPackageItemDTONet {
     private BigDecimal permanentPrice;
     private String thumbnail;
     private Boolean isPurchased;
+    private Boolean drmEnable;
 }
