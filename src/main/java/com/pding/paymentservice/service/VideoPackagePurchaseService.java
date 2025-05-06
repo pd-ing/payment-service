@@ -269,7 +269,7 @@ public class VideoPackagePurchaseService {
         String sellerId = videoPackagePurchaseToRefund.getSellerId();
         String packagePurchaseId = videoPackagePurchaseToRefund.getId();
         walletService.addToWallet(buyerId, treeToRefund, BigDecimal.ZERO, LocalDateTime.now());
-        earningService.deductTreesFromEarning(sellerId, treeToRefund);
+        earningService.deductTreesFromEarning(sellerId, treeToRefund.subtract(videoPackagePurchaseToRefund.getDrmFee()));
         ledgerService.saveToLedger(packagePurchaseId, treeToRefund, BigDecimal.ZERO, TransactionType.REFUND_PACKAGE_PURCHASE, buyerId);
 
         return ResponseEntity.ok(new GenericStringResponse(null, "Refund successfully"));
