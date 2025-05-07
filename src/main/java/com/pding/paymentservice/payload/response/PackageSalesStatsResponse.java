@@ -16,6 +16,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class PackageSalesStatsResponse {
     private String packageId;
-    private Long quantitySold;
+    private Integer quantitySold;
     private BigDecimal totalTreesEarned;
 }

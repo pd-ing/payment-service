@@ -79,6 +79,10 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
      */
     List<VideoPackagePurchase> findByPackageIdAndIsRefundedFalse(String packageId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(value = "from VideoPackagePurchase  where packageId = :packageId and isRefunded = false")
+    List<VideoPackagePurchase> findByPackageIdAndIsRefundedFalseForUpdate(String packageId);
+
     /**
      * Find all non-refunded purchases for a list of package IDs
      * @param packageIds The list of package IDs

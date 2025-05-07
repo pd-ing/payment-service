@@ -4,7 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
@@ -51,7 +56,8 @@ public class VideoPackagePurchase {
     @Column(columnDefinition = "boolean default false")
     private Boolean isRefunded = false;
 
-    private BigDecimal drmFee;
+    @Column(nullable = false)
+    private BigDecimal drmFee = BigDecimal.ZERO;
 
     /**
      * Constructor for creating a new package purchase

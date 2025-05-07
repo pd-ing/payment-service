@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.listener.event.VideoPackagePurchaseUpdatedEvent;
 import com.pding.paymentservice.models.VideoPackagePurchase;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
@@ -22,6 +23,7 @@ import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +59,7 @@ public class VideoPackagePurchaseService {
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final LedgerService ledgerService;
     private final AuthHelper authHelper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${video.purchase.drm.fee}")
     private BigDecimal drmFee;
@@ -171,6 +174,8 @@ public class VideoPackagePurchaseService {
             .excludedVideoIds(ownedVideoIds)
             .build();
 
+        eventPublisher.publishEvent(new VideoPackagePurchaseUpdatedEvent(this, packageId));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -276,6 +281,8 @@ public class VideoPackagePurchaseService {
         earningService.deductTreesFromEarning(sellerId, treeToRefund.subtract(drmFee));
         ledgerService.saveToLedger(packagePurchaseId, treeToRefund, BigDecimal.ZERO, TransactionType.REFUND_PACKAGE_PURCHASE, buyerId);
 
+        eventPublisher.publishEvent(new VideoPackagePurchaseUpdatedEvent(this, videoPackagePurchaseToRefund.getPackageId()));
+
         return ResponseEntity.ok(new GenericStringResponse(null, "Refund successfully"));
     }
 
@@ -359,18 +366,22 @@ public class VideoPackagePurchaseService {
             List<VideoPackagePurchase> purchases = purchasesByPackageId.getOrDefault(packageId, List.of());
 
             // Calculate quantity sold
-            long quantitySold = purchases.size();
+            int quantitySold = purchases.size();
 
             // Calculate total trees earned
             BigDecimal totalTreesEarned = purchases.stream()
                     .map(VideoPackagePurchase::getTreesConsumed)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+            BigDecimal totalDrmFee = purchases.stream()
+                    .map(VideoPackagePurchase::getDrmFee)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             // Create response object
             PackageSalesStatsResponse stats = PackageSalesStatsResponse.builder()
                     .packageId(packageId)
                     .quantitySold(quantitySold)
-                    .totalTreesEarned(totalTreesEarned)
+                    .totalTreesEarned(totalTreesEarned.subtract(totalDrmFee))
                     .build();
 
             responseList.add(stats);

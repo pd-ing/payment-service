@@ -1,12 +1,15 @@
 package com.pding.paymentservice.network;
 
 import com.pding.paymentservice.payload.net.VideoPackageDetailsResponseNet;
+import com.pding.paymentservice.payload.response.PackageSalesStatsResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
 
 /**
  * Service for making network calls to the content service
@@ -41,5 +44,20 @@ public class ContentNetworkService {
                     log.error("Error getting package details: {}", e.getMessage(), e);
                     return Mono.empty();
                 });
+    }
+
+    public boolean saveVideoPackageSalesStats(String packageId, int quantitySold, BigDecimal totalTreesEarned) {
+        try {
+            webClient.post()
+                    .uri(contentServiceHost + "/api/internal/save-package-sales-stats")
+                    .bodyValue(new PackageSalesStatsResponse(packageId, quantitySold, totalTreesEarned))
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+            return true;
+        } catch (Exception e) {
+            log.error("Error saving video package sales stats: {}", e.getMessage(), e);
+            return false;
+        }
     }
 }
