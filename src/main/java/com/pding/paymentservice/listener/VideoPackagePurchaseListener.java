@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -23,7 +24,7 @@ public class VideoPackagePurchaseListener {
 
     @TransactionalEventListener
     @Async
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleVideoPackagePurchaseUpdatedEvent(VideoPackagePurchaseUpdatedEvent event) {
         log.info("Received VideoPackagePurchaseUpdatedEvent for packageId: {}", event.getPackageId());
         List<VideoPackagePurchase> purchases = videoPackagePurchaseRepository.findByPackageIdAndIsRefundedFalseForUpdate(event.getPackageId());
