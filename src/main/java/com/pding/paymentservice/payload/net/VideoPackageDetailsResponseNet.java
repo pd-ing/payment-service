@@ -1,0 +1,35 @@
+package com.pding.paymentservice.payload.net;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Response from content service for video package details
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class VideoPackageDetailsResponseNet {
+    private String id; // Package ID
+    private String sellerId; // Seller ID
+    private String title; // Package title
+    private String description; // Package description
+    private Integer discountPercentage; // Discount percentage
+    private LocalDateTime startDate; // Sale start date
+    private LocalDateTime endDate; // Sale end date
+    private Boolean isActive; // Whether the package is active
+    private BigDecimal basePrice; // Original price before discount
+    private BigDecimal discountedPrice; // Price after discount
+    private BigDecimal personalizedPrice; // Personalized price based on user's owned videos
+    private Set<String> videoIds; // IDs of videos in the package
+    private List<String> ownedVideoIds; // IDs of videos the user already owns
+    private List<VideoPackageItemDTONet> items; // Details of videos in the package
+}

@@ -14,9 +14,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -274,8 +271,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
         nativeQuery = true)
     Long getPaidFollowersCount(String pdId);
 
-
-
     @Query(nativeQuery = true, value =
         " SELECT DATE_FORMAT(vp.last_update_date, '%Y-%m') AS month," +
             "        COALESCE(SUM(vp.trees_consumed), 0)                    as revenue" +
@@ -289,4 +284,11 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     List<MonthlyRevenueProjection> getMonthlyRevenueFromVideoPurchaseByUserId(@Param("pdId") String pdId, @Param("limit") Integer limit);
 
 
+
+
+    //TODO check if is_refunded is set default to false
+    @Query(value = "SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded = false and vp.videoId in :videoId and vp.duration = 'PERMANENT'")
+    List<VideoPurchase> getPermanentVideoPurchasesByUserIdAndVideoId(@Param("userId") String userId, @Param("videoId") Set<String> videoId);
+
+    List<VideoPurchase> findByPackagePurchaseId(String packagePurchaseId);
 }
