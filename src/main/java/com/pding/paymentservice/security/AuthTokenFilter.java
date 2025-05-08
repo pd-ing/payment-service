@@ -69,7 +69,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/payment/tokens/sendGenericNotification",
             "/api/payment/internal/mediaTrading",
             "/api/payment/videoPurchaseTimeRemaining",
-            "/actuator"
+            "/actuator",
+            "/api/internal"
     );
 
     @Override
