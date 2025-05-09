@@ -53,7 +53,7 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(value = "from VideoPackagePurchase  where userId = :userId and packageId = :packageId and isRefunded = false")
-    Optional<VideoPackagePurchase> findUnrefundedPackageByUserIdAndPackageIdForUpdate(String userId, String packageId);
+    List<VideoPackagePurchase> findUnrefundedPackageByUserIdAndPackageIdForUpdate(String userId, String packageId);
 
     /**
      * Find all purchases by seller ID in a date range

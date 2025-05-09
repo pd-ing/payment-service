@@ -3,6 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.listener.event.VideoPackagePurchaseUpdatedEvent;
 import com.pding.paymentservice.models.VideoPackagePurchase;
 import com.pding.paymentservice.models.VideoPurchase;
+import com.pding.paymentservice.models.enums.PackageType;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
 import com.pding.paymentservice.network.ContentNetworkService;
@@ -73,15 +74,51 @@ public class VideoPackagePurchaseService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> purchaseVideoPackage(String userId, PurchaseVideoPackageRequest request) {
-        Optional<VideoPackagePurchase> packagePurchased = videoPackagePurchaseRepository.findUnrefundedPackageByUserIdAndPackageIdForUpdate(userId, request.getPackageId());
-        if (packagePurchased.isPresent()) {
-            throw new IllegalStateException("Package already purchased");
-        }
-
         String packageId = request.getPackageId();
         VideoPackageDetailsResponseNet packageDetail = contentNetworkService.getPackageDetails(packageId)
             .blockOptional()
             .orElseThrow(() -> new NoSuchElementException("Package not found or error getting package details"));
+
+        // For THEME_PACKAGE, users must purchase all videos in the package at once
+        // For FREE_CHOICE_PACKAGE, users can select specific videos to purchase
+        if (packageDetail.getPackageType() == PackageType.THEME_PACKGE) {
+            List<VideoPackagePurchase> packagePurchased = videoPackagePurchaseRepository.findUnrefundedPackageByUserIdAndPackageIdForUpdate(userId, packageId);
+            if (!packagePurchased.isEmpty()) {
+                throw new IllegalStateException("Package already purchased");
+            }
+        } else {
+            // For FREE_CHOICE_PACKAGE, check if the user has already purchased all videos in the package
+            List<VideoPackagePurchase> previousPurchases = videoPackagePurchaseRepository.findUnrefundedPackageByUserIdAndPackageIdForUpdate(userId, packageId);
+            Set<String> alreadyPurchasedVideoIds = previousPurchases.stream()
+                .flatMap(purchase -> purchase.getIncludedVideoIdsList().stream())
+                .collect(Collectors.toSet());
+
+            // If selectedVideoIds is not provided for FREE_CHOICE_PACKAGE, throw an error
+            if (request.getSelectedVideoIds() == null || request.getSelectedVideoIds().isEmpty()) {
+                throw new IllegalArgumentException("Selected video IDs are required for FREE_CHOICE_PACKAGE");
+            }
+
+            // Check if all selected videos are in the package
+            Set<String> packageVideoIds = packageDetail.getItems().stream()
+                .map(VideoPackageItemDTONet::getVideoId)
+                .collect(Collectors.toSet());
+
+            if (!packageVideoIds.containsAll(request.getSelectedVideoIds())) {
+                throw new IllegalArgumentException("Selected videos must be part of the package");
+            }
+
+            // Check if any of the selected videos have already been purchased
+            Set<String> intersection = new HashSet<>(alreadyPurchasedVideoIds);
+            intersection.retainAll(request.getSelectedVideoIds());
+            if (!intersection.isEmpty()) {
+                throw new IllegalArgumentException("Some selected videos have already been purchased: " + intersection);
+            }
+
+            // If all videos in the package have already been purchased, throw an error
+            if (alreadyPurchasedVideoIds.size() >= packageVideoIds.size()) {
+                throw new IllegalStateException("All videos in this package have already been purchased");
+            }
+        }
 
         if (!packageDetail.getIsActive()) {
             throw new IllegalStateException("Package sale is not active");
@@ -116,7 +153,17 @@ public class VideoPackagePurchaseService {
 
         Set<String> includedVideoIds = new HashSet<>();
         Set<String> ownedVideoIds = new HashSet<>();
-        BigDecimal personalizedTotalPrice = calculatePersonalizedPrice(userId, items, videoPrices, discountPercentage, includedVideoIds, ownedVideoIds);
+
+        // For FREE_CHOICE_PACKAGE, filter items to only include selected videos
+        List<VideoPackageItemDTONet> itemsToProcess = items;
+        if (packageDetail.getPackageType() == PackageType.FREE_CHOICE_PACKAGE && request.getSelectedVideoIds() != null && !request.getSelectedVideoIds().isEmpty()) {
+            Set<String> selectedVideoIds = request.getSelectedVideoIds();
+            itemsToProcess = items.stream()
+                .filter(item -> selectedVideoIds.contains(item.getVideoId()))
+                .collect(Collectors.toList());
+        }
+
+        BigDecimal personalizedTotalPrice = calculatePersonalizedPrice(userId, itemsToProcess, videoPrices, discountPercentage, includedVideoIds, ownedVideoIds);
         walletService.deductTreesFromWallet(userId, personalizedTotalPrice);
 
         BigDecimal totalDrmFee = includedVideoIds.stream().filter(videoDrmEnabledMap::get)
