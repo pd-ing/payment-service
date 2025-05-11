@@ -7,5 +7,5 @@ package com.pding.paymentservice.models.enums;
  */
 public enum PackageType {
     FREE_CHOICE_PACKAGE,
-    THEME_PACKGE
+    THEME_PACKAGE
 }

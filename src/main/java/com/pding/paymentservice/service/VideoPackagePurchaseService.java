@@ -81,7 +81,7 @@ public class VideoPackagePurchaseService {
 
         // For THEME_PACKAGE, users must purchase all videos in the package at once
         // For FREE_CHOICE_PACKAGE, users can select specific videos to purchase
-        if (packageDetail.getPackageType() == PackageType.THEME_PACKGE) {
+        if (packageDetail.getPackageType() == PackageType.THEME_PACKAGE) {
             List<VideoPackagePurchase> packagePurchased = videoPackagePurchaseRepository.findUnrefundedPackageByUserIdAndPackageIdForUpdate(userId, packageId);
             if (!packagePurchased.isEmpty()) {
                 throw new IllegalStateException("Package already purchased");

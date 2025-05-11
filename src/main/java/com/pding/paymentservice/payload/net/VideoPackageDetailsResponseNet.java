@@ -33,5 +33,5 @@ public class VideoPackageDetailsResponseNet {
     private Set<String> videoIds; // IDs of videos in the package
     private List<String> ownedVideoIds; // IDs of videos the user already owns
     private List<VideoPackageItemDTONet> items; // Details of videos in the package
-    private PackageType packageType = PackageType.THEME_PACKGE; // Type of package (FREE_CHOICE_PACKAGE or THEME_PACKGE)
+    private PackageType packageType = PackageType.THEME_PACKAGE; // Type of package (FREE_CHOICE_PACKAGE or THEME_PACKGE)
 }
