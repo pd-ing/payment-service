@@ -25,11 +25,11 @@ public interface ExposureTicketPurchaseRepository extends JpaRepository<Exposure
 
 
     @Query(value =
-        " select date(purchased_date) offer_date, count(*) as number_of_offer_ticket" +
+        " select date(purchased_date) as offer_date, count(*) as number_of_offer_ticket" +
         " from exposure_ticket_purchase" +
         " where user_id = :userId and type = :type" +
-        " group by offer_date" +
-        " order by offer_date desc", nativeQuery = true)
+        " group by date(purchased_date)" +
+        " order by date(purchased_date) desc", nativeQuery = true)
     Page<Object[]> _countUserTicketByDate(String userId, String type, Pageable pageable);
 
     default Page<UserTicketCountDTO> countUserTicketByDate(String userId, String type, Pageable pageable) {
