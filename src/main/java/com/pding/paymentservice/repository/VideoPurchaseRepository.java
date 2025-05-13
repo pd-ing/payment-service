@@ -90,7 +90,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "COALESCE(vp.trees_consumed, ''), " +
                     "COALESCE(u.email, ''), " +
                     "COALESCE(vp.duration, ''), " +
-                    "COALESCE(vp.expiry_date, '') " +
+                    "COALESCE(DATE_FORMAT(vp.expiry_date, '%Y-%m-%d %H:%i:%s'), '') " +
                     "FROM video_purchase vp " +
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
