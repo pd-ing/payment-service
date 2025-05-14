@@ -62,7 +62,7 @@ public class SendNotificationService {
     public void sendDonateTreesNotification(Donation donation) {
         try {
             String donorUserEmail = notificationRepository.findEmailByUserId(donation.getDonorUserId());
-            sendNotificationSqsMessage.sendDonationNotification(donation.getPdUserId(), donation.getDonorUserId(), donorUserEmail, donation.getPdUserId());
+            sendNotificationSqsMessage.sendDonationNotification(donation.getPdUserId(), donation.getDonorUserId(), donorUserEmail, donation.getPdUserId(), donation.getDonatedTrees(), donation.getDonatedLeafs());
 
             //push FCM
             Map<String, String> data = new HashMap<>();

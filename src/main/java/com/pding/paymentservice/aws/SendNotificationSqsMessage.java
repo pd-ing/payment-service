@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +59,9 @@ public class SendNotificationSqsMessage extends BaseService {
             String sendToUserId,
             String donnerUserId,
             String donnerUserEmail,
-            String donatedToUserId
+            String donatedToUserId,
+            BigDecimal donatedTrees,
+            BigDecimal donatedLeafs
     ) throws Exception {
         if (isNotValid(sendToUserId) || isNotValid(donnerUserId) || isNotValid(donnerUserEmail) || isNotValid(donatedToUserId)) {
             throw new Exception("Invalid params for sendDonationNotification");
@@ -71,6 +74,8 @@ public class SendNotificationSqsMessage extends BaseService {
         map.put("donnerUserId", donnerUserId);
         map.put("donnerUserEmail", donnerUserEmail);
         map.put("donatedToUserId", donatedToUserId);
+        map.put("donatedTrees", donatedTrees);
+        map.put("donatedLeafs", donatedLeafs);
 
         sendNotification(map);
     }
