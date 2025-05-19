@@ -75,7 +75,7 @@ public class ExposureTicketController {
             return ResponseEntity.ok(new GenericClassResponse<>(null, purchase));
         }  catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+                .body(new GenericClassResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), null));
         }
     }
 
