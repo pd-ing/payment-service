@@ -1,10 +1,12 @@
 package com.pding.paymentservice.controllers;
 
+import com.pding.paymentservice.models.ExposureTicketPurchase;
 import com.pding.paymentservice.models.enums.ExposureTicketType;
 import com.pding.paymentservice.payload.request.BuyExposureTicketRequest;
 import com.pding.paymentservice.payload.request.ForceReleaseExposureTicketRequest;
 import com.pding.paymentservice.payload.request.GiveExposureTicketByAdminRequest;
 import com.pding.paymentservice.payload.request.RefundExposureTicketRequest;
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
@@ -13,6 +15,7 @@ import com.pding.paymentservice.service.ExposureTicketPurchaseService;
 import com.pding.paymentservice.service.ExposureTicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,7 +70,13 @@ public class ExposureTicketController {
 
     @PostMapping("/ticket/use")
     public ResponseEntity useTicketByType(@RequestParam ExposureTicketType type) throws Exception {
-        return ResponseEntity.ok(new GenericClassResponse<>(null, exposureTicketPurchaseService.useTicket(type)));
+        try {
+            ExposureTicketPurchase purchase = exposureTicketPurchaseService.useTicket(type);
+            return ResponseEntity.ok(new GenericClassResponse<>(null, purchase));
+        }  catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        }
     }
 
     @GetMapping("/top-exposure-pds")
