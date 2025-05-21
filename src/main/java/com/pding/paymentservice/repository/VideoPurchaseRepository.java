@@ -2,8 +2,6 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
-import com.pding.paymentservice.payload.projection.UserProjection;
-import jakarta.persistence.LockModeType;
 import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import com.pding.paymentservice.payload.projection.UserProjection;
 import jakarta.persistence.LockModeType;
@@ -186,6 +184,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
 
     @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded = false")
     List<VideoPurchase> findByUserId(String userId);
+
+    @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoOwnerUserId = :pdId and vp.isRefunded = false")
+    List<VideoPurchase> findByUserIdAndPdId(String userId, String pdId);
 
     @Query(value = "select vp from VideoPurchase vp where vp.expiryDate > current_date and vp.userId = :userId and (:ownerId is null or vp.videoOwnerUserId = :ownerId) and vp.isRefunded = false")
     Page<VideoPurchase> findNotExpiredVideo(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);

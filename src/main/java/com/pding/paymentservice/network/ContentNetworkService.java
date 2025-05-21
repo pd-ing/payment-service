@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 /**
  * Service for making network calls to the content service
@@ -34,10 +35,14 @@ public class ContentNetworkService {
      * @param packageId The package ID
      * @return Package details with personalized pricing for the buyer
      */
-    public Mono<VideoPackageDetailsResponseNet> getPackageDetails(String packageId) {
+    public Mono<VideoPackageDetailsResponseNet> getPackageDetails(String packageId, Set<String> selectedVideoIds) {
 
+        String uri = contentServiceHost + "/api/internal/sale-package-details?packageId=" + packageId;
+        if (selectedVideoIds != null && !selectedVideoIds.isEmpty()) {
+            uri += "&selectedVideoIds=" + String.join(",", selectedVideoIds);
+        }
         return webClient.get()
-                .uri(contentServiceHost + "/api/internal/sale-package-details?packageId=" + packageId)
+                .uri(uri)
                 .retrieve()
                 .bodyToMono(VideoPackageDetailsResponseNet.class)
                 .onErrorResume(e -> {
