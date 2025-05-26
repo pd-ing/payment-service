@@ -89,4 +89,8 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
      * @return List of package purchases
      */
     List<VideoPackagePurchase> findByPackageIdInAndIsRefundedFalse(List<String> packageIds);
+
+    @Query("SELECT p FROM VideoPackagePurchase p WHERE p.packageId = :packageId AND p.purchaseDate >= :startDate AND p.purchaseDate <= :endDate AND p.isRefunded = false")
+    List<VideoPackagePurchase> findByPackageIdAndPurchaseDateBetweenAndIsRefundedFalse(
+            String packageId, LocalDateTime startDate, LocalDateTime endDate);
 }

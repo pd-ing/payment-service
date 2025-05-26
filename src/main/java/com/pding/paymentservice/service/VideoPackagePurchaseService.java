@@ -16,6 +16,7 @@ import com.pding.paymentservice.payload.request.PackageSalesStatsRequest;
 import com.pding.paymentservice.payload.request.PurchaseVideoPackageRequest;
 import com.pding.paymentservice.payload.response.PackageSalesStatsResponse;
 import com.pding.paymentservice.payload.response.PurchaseVideoPackageResponse;
+import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
 import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -429,4 +431,41 @@ public class VideoPackagePurchaseService {
 
         return ResponseEntity.ok(new GenericListDataResponse<>(null, responseList));
     }
+
+    public ResponseEntity<?> getDailySales(String packageId, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body(new GenericStringResponse(null, "Invalid date range"));
+        }
+
+        List<VideoPackagePurchase> purchases = videoPackagePurchaseRepository.findByPackageIdAndPurchaseDateBetweenAndIsRefundedFalse(
+                packageId, startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+
+        Map<LocalDate, BigDecimal> dailySales = new HashMap<>();
+        for (VideoPackagePurchase purchase : purchases) {
+            LocalDate purchaseDate = purchase.getPurchaseDate().toLocalDate();
+            dailySales.putIfAbsent(purchaseDate, BigDecimal.ZERO);
+            dailySales.put(purchaseDate, dailySales.get(purchaseDate).add(purchase.getTreesConsumed()).subtract(purchase.getDrmFee()));
+        }
+
+        Map<LocalDate, Integer> dailySalesCount = new HashMap<>();
+        for (VideoPackagePurchase purchase : purchases) {
+            LocalDate purchaseDate = purchase.getPurchaseDate().toLocalDate();
+            dailySalesCount.putIfAbsent(purchaseDate, 0);
+            dailySalesCount.put(purchaseDate, dailySalesCount.get(purchaseDate) + 1);
+        }
+
+        Map<LocalDate, PackageSalesStatsResponse> responseMap = startDate.datesUntil(endDate.plusDays(1))
+                .collect(Collectors.toMap(
+                        date -> date,
+                        date -> PackageSalesStatsResponse.builder()
+                                .packageId(packageId)
+                                .quantitySold(dailySalesCount.getOrDefault(date, 0))
+                                .totalTreesEarned(dailySales.getOrDefault(date, BigDecimal.ZERO))
+                                .build()
+                ));
+
+        return ResponseEntity.ok(new GenericClassResponse<>(null, responseMap));
+    }
 }
+
+

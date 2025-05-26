@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+
 /**
  * Controller for video package purchase operations
  */
@@ -51,47 +53,8 @@ public class VideoPackagePurchaseController {
         return videoPackagePurchaseService.getPackagePurchaseHistory(packageId, pageable);
     }
 
-    /**
-     * Get all package purchases by the current user
-     * @return List of package purchases
-     */
-//    @GetMapping("/user")
-//    public ResponseEntity<?> getUserPackagePurchases() {
-//        try {
-//            String userId = authHelper.getUserId();
-//            return videoPackagePurchaseService.getPackagePurchasesByUserId(userId);
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body("Authentication error: " + e.getMessage());
-//        }
-//    }
-
-    /**
-     * Get all package purchases by the current seller
-     * @return List of package purchases
-     */
-//    @GetMapping("/seller")
-//    public ResponseEntity<?> getSellerPackagePurchases() {
-//        try {
-//            String sellerId = authHelper.getUserId();
-//            return videoPackagePurchaseService.getPackagePurchasesBySellerId(sellerId);
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body("Authentication error: " + e.getMessage());
-//        }
-//    }
-
-    /**
-     * Check if the current user has purchased a specific package
-     * @param packageId The package ID
-     * @return True if the user has purchased the package
-     */
-//    @GetMapping("/check/{packageId}")
-//    public ResponseEntity<?> checkPackagePurchase(@PathVariable String packageId) {
-//        try {
-//            String userId = authHelper.getUserId();
-//            boolean hasPurchased = videoPackagePurchaseService.hasUserPurchasedPackage(userId, packageId);
-//            return ResponseEntity.ok(hasPurchased);
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body("Authentication error: " + e.getMessage());
-//        }
-//    }
+    @GetMapping("/dailySales")
+    public ResponseEntity<?> dailySales(@RequestParam String packageId, @RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
+        return videoPackagePurchaseService.getDailySales(packageId, startDate, endDate);
+    }
 }
