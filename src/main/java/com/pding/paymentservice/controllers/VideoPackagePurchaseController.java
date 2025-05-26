@@ -22,7 +22,7 @@ import java.time.LocalDate;
  */
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/payments/packages")
+@RequestMapping("/api/payment/packages")
 public class VideoPackagePurchaseController {
 
     @Autowired

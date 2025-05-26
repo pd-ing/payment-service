@@ -164,7 +164,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/paypal/createOrder").authenticated()
                                 .requestMatchers("/api/payment/paypal/captureOrder").authenticated()
                                 .requestMatchers("/api/internal/**").permitAll()
-                                .requestMatchers("/api/payments/packages/**").authenticated()
+                                .requestMatchers("/api/payment/packages/**").authenticated()
                 );
 
 
