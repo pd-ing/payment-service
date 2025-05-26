@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +33,12 @@ public class VideoPackageDetailsResponseNet {
     private BigDecimal personalizedPrice; // Personalized price based on user's owned videos
     private Set<String> videoIds; // IDs of videos in the package
     private List<String> ownedVideoIds; // IDs of videos the user already owns
-    private List<VideoPackageItemDTONet> items; // Details of videos in the package
+    private List<VideoPackageItemDTONet> items = new ArrayList<>(); // Details of videos in the package
     private PackageType packageType = PackageType.THEME_PACKAGE; // Type of package (FREE_CHOICE_PACKAGE or THEME_PACKGE)
     private Integer numberOfVideos;
+
+    public List<VideoPackageItemDTONet> getItems() {
+        if(this.items == null) return new ArrayList<>();
+        return items;
+    }
 }

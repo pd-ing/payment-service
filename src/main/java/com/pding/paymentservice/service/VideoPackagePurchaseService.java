@@ -347,6 +347,7 @@ public class VideoPackagePurchaseService {
                 .collect(Collectors.toSet());
 
         List<PublicUserNet> buyers = userServiceNetworkManager.getUsersListFlux(buyerIds).blockLast();
+        if(buyers == null) {buyers = List.of();}
         Map<String, PublicUserNet> buyerMap = buyers.stream()
                 .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
 
