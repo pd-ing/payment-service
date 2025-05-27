@@ -332,6 +332,9 @@ public class VideoPackagePurchaseService {
         String userId = authHelper.getUserId();
 
         VideoPackageDetailsResponseNet videoPackage = contentNetworkService.getPackageDetails(packageId, null).block();
+        if(videoPackage == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new GenericStringResponse(null, "Package not found"));
+        }
         List<VideoPackageItemDTONet> items = videoPackage.getItems() != null? videoPackage.getItems() : List.of();
         Map<String, VideoPackageItemDTONet> videoIdToItemMap = items.stream()
                 .collect(Collectors.toMap(VideoPackageItemDTONet::getVideoId, item -> item));
@@ -346,20 +349,33 @@ public class VideoPackagePurchaseService {
                 .map(VideoPackagePurchase::getUserId)
                 .collect(Collectors.toSet());
 
+        if(videoPackage.getPackageType() == PackageType.FREE_CHOICE_PACKAGE) {
+            Set<String> includedVideoIds = purchases.getContent().stream()
+                    .flatMap(purchase -> purchase.getIncludedVideoIdsList().stream())
+                    .collect(Collectors.toSet());
+            VideoPackageDetailsResponseNet freeChoiceVideoPackage = contentNetworkService.getPackageDetails(packageId, includedVideoIds).block();
+            if(freeChoiceVideoPackage == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new GenericStringResponse(null, "Package  not found"));
+            }
+            videoIdToItemMap =  freeChoiceVideoPackage.getItems().stream()
+                    .collect(Collectors.toMap(VideoPackageItemDTONet::getVideoId, item -> item));
+        }
+
         List<PublicUserNet> buyers = userServiceNetworkManager.getUsersListFlux(buyerIds).blockLast();
         if(buyers == null) {buyers = List.of();}
         Map<String, PublicUserNet> buyerMap = buyers.stream()
                 .collect(Collectors.toMap(PublicUserNet::getId, user -> user));
 
+        Map<String, VideoPackageItemDTONet> finalVideoIdToItemMap = videoIdToItemMap;
         Page<VideoPackagePurchaseDTO> result = purchases.map(
                 videoPackagePurchase -> {
                     PublicUserNet buyer = buyerMap.get(videoPackagePurchase.getUserId());
                     List<VideoPackageItemDTONet> includedVideos = videoPackagePurchase.getIncludedVideoIdsList().stream()
-                            .map(videoIdToItemMap::get)
+                            .map(finalVideoIdToItemMap::get)
                             .toList();
 
                     List<VideoPackageItemDTONet> excludedVideos = videoPackagePurchase.getExcludedVideoIdsList().stream()
-                            .map(videoIdToItemMap::get)
+                            .map(finalVideoIdToItemMap::get)
                             .toList();
 
                     return VideoPackagePurchaseDTO.builder()
