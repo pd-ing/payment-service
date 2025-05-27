@@ -42,7 +42,17 @@ public class SendNotificationService {
             String email = notificationRepository.findEmailByUserId(videoPurchase.getUserId());
             String videoTitle = notificationRepository.findTitleByVideoId(videoPurchase.getVideoId());
             String videoUrl = tokenSigner.signPlaybackUrl(videoLibraryId, videoPurchase.getVideoId(), 2);
-            sendNotificationSqsMessage.sendVideoBoughtNotification(videoPurchase.getVideoOwnerUserId(), videoPurchase.getUserId(), email, videoPurchase.getVideoOwnerUserId(), videoPurchase.getVideoId(), videoTitle, videoUrl, null);
+            sendNotificationSqsMessage.sendVideoBoughtNotification(videoPurchase.getVideoOwnerUserId(),
+                videoPurchase.getUserId(),
+                email,
+                videoPurchase.getVideoOwnerUserId(),
+                videoPurchase.getVideoId(),
+                videoTitle,
+                videoUrl,
+                null,
+                videoPurchase.getTreesConsumed(),
+                videoPurchase.getDrmFee()
+            );
 
             //push FCM
             Map<String, String> data = new HashMap<>();

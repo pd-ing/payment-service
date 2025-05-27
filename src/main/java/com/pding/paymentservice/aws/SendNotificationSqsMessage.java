@@ -33,7 +33,9 @@ public class SendNotificationSqsMessage extends BaseService {
             String videoId,
             String videoTitle,
             String videoUrl,
-            String photoUrl //url of thumbnail
+            String photoUrl,
+            BigDecimal tree,
+            BigDecimal drmFee
     ) throws Exception {
         if (isNotValid(sendToUserId) || isNotValid(videoBuyerUserId) || isNotValid(videoBuyerUserEmail) || isNotValid(videoOwnerUserId) ||
                 isNotValid(videoId) || isNotValid(videoTitle) || isNotValid(videoUrl)) {
@@ -51,6 +53,8 @@ public class SendNotificationSqsMessage extends BaseService {
         map.put("videoTitle", videoTitle);
         map.put("videoUrl", videoUrl);
         map.put("photoUrl", photoUrl);
+        map.put("tree", tree);
+        map.put("drmFee", drmFee);
 
         sendNotification(map);
     }
