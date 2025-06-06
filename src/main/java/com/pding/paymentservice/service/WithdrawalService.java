@@ -266,10 +266,8 @@ public class WithdrawalService {
         }
     }
 
-    public ResponseEntity<?> getAllWithDrawTransactions(int page, int size, int sortOrder) {
+    public ResponseEntity<?> getAllWithDrawTransactions(int page, int size, int sortOrder, String searchString) {
         try {
-            String pdUserId = authHelper.getUserId();
-
             // Define custom sorting comparator, To show all the data with status as complete first and then rest of the data
             Comparator<Withdrawal> customComparator = (w1, w2) -> {
                 if (w1.getStatus() == WithdrawalStatus.COMPLETE && w2.getStatus() != WithdrawalStatus.COMPLETE) {
@@ -288,7 +286,15 @@ public class WithdrawalService {
                     Sort.by(Sort.Direction.DESC, "createdDate");
             PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-            Page<Withdrawal> withdrawalPage = withdrawalRepository.findAll(pageRequest);
+
+
+            Page<Withdrawal> withdrawalPage;
+
+            if (searchString != null && !searchString.isEmpty()) {
+                withdrawalPage = withdrawalRepository.findAllWithdrawals(searchString, pageRequest);
+            } else {
+                withdrawalPage = withdrawalRepository.findAll(pageRequest);
+            }
 
             //List<Withdrawal> withdrawalList = withdrawalPage.getContent();
             List<Withdrawal> withdrawalList = new ArrayList<>(withdrawalPage.getContent());
