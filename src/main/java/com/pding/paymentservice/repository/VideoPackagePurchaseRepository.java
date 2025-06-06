@@ -72,6 +72,24 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
 
     Page<VideoPackagePurchase> findByPackageIdAndSellerIdAndIsRefundedFalse(String packageId, String sellerId, Pageable pageable);
 
+
+    @Query(value = " select vpp.*, vpp.purchase_date as purchaseDate" +
+                   " from video_package_purchase vpp" +
+                   "          join users buyer on vpp.user_id = buyer.id" +
+                   " where vpp.package_id = :packageId" +
+                   "   and seller_id = :sellerId" +
+                   "   and is_refunded = false" +
+                   "   and (buyer.nickname like concat(:searchString, '%') or buyer.email like concat(:searchString, '%'))",
+    countQuery = " select count(distinct vpp.id)" +
+                 " from video_package_purchase vpp" +
+                 "          join users buyer on vpp.user_id = buyer.id" +
+                 " where vpp.package_id = :packageId" +
+                 "   and seller_id = :sellerId" +
+                 "   and is_refunded = false" +
+                 "   and (buyer.nickname like concat(:searchString, '%') or buyer.email like concat(:searchString, '%'))"
+            , nativeQuery = true)
+    Page<VideoPackagePurchase> findByPackageIdAndSellerIdAndIsRefundedFalse(String packageId, String sellerId, String searchString, Pageable pageable);
+
     /**
      * Find all non-refunded purchases for a package
      * @param packageId The package ID

@@ -49,8 +49,8 @@ public class VideoPackagePurchaseController {
     }
 
     @GetMapping("/saleHistory")
-    public ResponseEntity<?> packagePurchaseHistory(@RequestParam String packageId, Pageable pageable) {
-        return videoPackagePurchaseService.getPackagePurchaseHistory(packageId, pageable);
+    public ResponseEntity<?> packagePurchaseHistory(@RequestParam String packageId, Pageable pageable, @RequestParam(required = false) String searchString) {
+        return videoPackagePurchaseService.getPackagePurchaseHistory(packageId, searchString, pageable);
     }
 
     @GetMapping("/dailySales")

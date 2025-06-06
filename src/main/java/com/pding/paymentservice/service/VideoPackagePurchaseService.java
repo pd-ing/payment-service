@@ -328,7 +328,7 @@ public class VideoPackagePurchaseService {
         return ResponseEntity.ok(new GenericStringResponse(null, "Refund successfully"));
     }
 
-    public ResponseEntity<?> getPackagePurchaseHistory(String packageId, Pageable pageable) {
+    public ResponseEntity<?> getPackagePurchaseHistory(String packageId, String searchString, Pageable pageable) {
         String userId = authHelper.getUserId();
 
         VideoPackageDetailsResponseNet videoPackage = contentNetworkService.getPackageDetails(packageId, null).block();
@@ -343,7 +343,13 @@ public class VideoPackagePurchaseService {
         int size = pageable.getPageSize();
         Sort sort = Sort.by(Sort.Direction.DESC, "purchaseDate");
         PageRequest pageRequest = PageRequest.of(page, size, sort);
-        Page<VideoPackagePurchase> purchases = videoPackagePurchaseRepository.findByPackageIdAndSellerIdAndIsRefundedFalse(packageId, userId, pageRequest);
+        Page<VideoPackagePurchase> purchases;
+        if (searchString != null && !searchString.isEmpty()) {
+            purchases = videoPackagePurchaseRepository.findByPackageIdAndSellerIdAndIsRefundedFalse(
+                    packageId, userId, searchString, pageRequest);
+        } else {
+            purchases = videoPackagePurchaseRepository.findByPackageIdAndSellerIdAndIsRefundedFalse(packageId, userId, pageRequest);
+        }
 
         Set<String> buyerIds = purchases.getContent().stream()
                 .map(VideoPackagePurchase::getUserId)
