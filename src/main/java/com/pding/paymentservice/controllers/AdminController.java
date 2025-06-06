@@ -33,8 +33,10 @@ public class AdminController {
     @GetMapping(value = "/admin/allWithDrawTransactions")
     public ResponseEntity<?> allWithDrawTransactions(@RequestParam(defaultValue = "0") @Min(0) int page,
                                                      @RequestParam(defaultValue = "10") @Min(1) int size,
-                                                     @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder) {
-        return withdrawalService.getAllWithDrawTransactions(page, size, sortOrder);
+                                                     @RequestParam(defaultValue = "0") @Min(0) @Max(1) int sortOrder,
+                                                     @RequestParam(value = "searchString" ,required = false) String searchString
+                                                     ) {
+        return withdrawalService.getAllWithDrawTransactions(page, size, sortOrder, searchString);
     }
 
     @GetMapping(value = "/admin/pendingWithDrawTransactions")

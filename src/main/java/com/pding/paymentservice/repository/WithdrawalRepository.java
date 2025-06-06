@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 public interface WithdrawalRepository extends JpaRepository<Withdrawal, String> {
     List<Withdrawal> findByPdUserIdAndStatus(String pdUserId, WithdrawalStatus status);
@@ -44,5 +43,11 @@ public interface WithdrawalRepository extends JpaRepository<Withdrawal, String> 
             nativeQuery = true)
     Page<Object[]> findWithdrawalHistoryByPdId(String pdUserId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
-    //Optional<Withdrawal> findByPdUserIdAndTransactionId(String pdUserId, String transactionId);
+    @Query(value = "SELECT w.*, w.created_date as createdDate" +
+            "            FROM withdrawals w" +
+            "            INNER JOIN users u ON w.pd_user_id = u.id" +
+            "           WHERE u.email like concat(:searchString, '%') OR u.nickname like concat(:searchString, '%')",
+            countQuery = "SELECT COUNT(*) FROM withdrawals w INNER JOIN users u ON w.pd_user_id = u.id WHERE u.email like concat(:searchString, '%') OR u.nickname like concat(:searchString, '%')",
+            nativeQuery = true)
+    Page<Withdrawal> findAllWithdrawals(String searchString, Pageable pageable);
 }
