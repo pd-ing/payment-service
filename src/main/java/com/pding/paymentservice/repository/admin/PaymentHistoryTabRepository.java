@@ -57,9 +57,9 @@ public interface PaymentHistoryTabRepository extends JpaRepository<WalletHistory
             "COALESCE(u.email, '') " +
             "FROM wallet_history wh " +
             "LEFT JOIN users u ON wh.user_id = u.id " +
-            "WHERE u.email LIKE %?1%",
+            "WHERE u.email LIKE ?1%",
             countQuery = "SELECT COUNT(*) FROM wallet_history wh LEFT JOIN users u ON wh.user_id = u.id " +
-                         "WHERE u.email LIKE %?1%",
+                         "WHERE u.email LIKE ?1%",
             nativeQuery = true)
     Page<Object[]> findPaymentHistoryByEmailId(String searchString, Pageable pageable);
 

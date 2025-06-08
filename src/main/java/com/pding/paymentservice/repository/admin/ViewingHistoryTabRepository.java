@@ -79,8 +79,8 @@ public interface ViewingHistoryTabRepository extends JpaRepository<VideoPurchase
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON v.user_id = u.id " +
             "WHERE vp.user_id = ?1 " +
-            "AND v.title LIKE %?2%",
-            countQuery = "SELECT COUNT(*) FROM video_purchase vp LEFT JOIN videos v ON vp.video_id = v.video_id WHERE vp.user_id = ?1 AND v.title LIKE %?2%",
+            "AND v.title LIKE ?2%",
+            countQuery = "SELECT COUNT(*) FROM video_purchase vp LEFT JOIN videos v ON vp.video_id = v.video_id WHERE vp.user_id = ?1 AND v.title LIKE ?2%",
             nativeQuery = true)
     Page<Object[]> findVideoPurchaseHistoryByUserIdAndVideoTitle(String userId, String videoTitle, Pageable pageable);
 
@@ -104,12 +104,12 @@ public interface ViewingHistoryTabRepository extends JpaRepository<VideoPurchase
             "\tFROM videos v LEFT JOIN video_view_count vw ON vw.video_id = v.video_id \n" +
             "\tLEFT JOIN video_purchase vp ON vp.video_id = v.video_id AND v.user_id = vp.video_owner_user_id \n" +
             "\tWHERE v.user_id = :pdUserId \n" +
-            "\t\t AND ((:searchString IS NULL) OR (v.title LIKE %:searchString%)) \n" +
+            "\t\t AND ((:searchString IS NULL) OR (v.title LIKE :searchString%)) \n" +
             "\tGROUP BY v.video_id, v.title, trees_consumed, vw.count ) AS subquery \n" +
             " GROUP BY  title, video_id, views ",
             countQuery = "SELECT COUNT(*) FROM videos v " +
                     "WHERE v.user_id = :pdUserId " +
-                    "AND ((:searchString IS NULL) OR (v.title LIKE %:searchString%)) ",
+                    "AND ((:searchString IS NULL) OR (v.title LIKE :searchString%)) ",
             nativeQuery = true)
     Page<Object[]> getVideoSalesHistoryByPdIdAndVideoTitle(String pdUserId, String searchString, Pageable pageable);
 

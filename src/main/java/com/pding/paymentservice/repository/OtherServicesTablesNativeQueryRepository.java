@@ -65,7 +65,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "where r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId\n" +
             "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
             "            AND (:endDate IS NULL OR  FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
-            "             AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+            "             AND (:searchString IS NULL OR u.email LIKE :searchString% OR u.nickname LIKE :searchString%)",
             countQuery = "SELECT COUNT(*) \n" +
                     "FROM  referrals r \n" +
                     "INNER JOIN  users u ON u.id = r.referred_pd_user_id \n" +
@@ -73,7 +73,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
                     "WHERE r.referrer_pd_user_id COLLATE utf8mb4_unicode_ci = :pdUserId \n" +
                     "AND (:startDate IS NULL OR FROM_UNIXTIME(u.created_date) >= :startDate) \n" +
                     "            AND (:endDate IS NULL OR  FROM_UNIXTIME(u.created_date) <= :endDate) \n" +
-                    "             AND (:searchString IS NULL OR u.email LIKE %:searchString% OR u.nickname LIKE %:searchString%)",
+                    "             AND (:searchString IS NULL OR u.email LIKE :searchString% OR u.nickname LIKE :searchString%)",
             nativeQuery = true)
     Page<Object[]> getListOfAllTheReferredPdsEOL(String pdUserId, LocalDate startDate, LocalDate endDate, String searchString, Pageable pageable);
 
