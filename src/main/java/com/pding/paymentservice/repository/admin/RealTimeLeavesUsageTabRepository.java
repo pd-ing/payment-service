@@ -112,7 +112,7 @@ public interface RealTimeLeavesUsageTabRepository extends JpaRepository<VideoPur
                             "       where mt.transaction_status = 'PAID') tb" +
                             " where (:startDate IS NULL OR transactionDateTime >= :startDate) " +
                             " AND (:endDate IS NULL OR transactionDateTime <= :endDate) " +
-                            " AND (:searchString IS NULL OR (userEmail LIKE concat('%', :searchString, '%') OR pdNickName LIKE concat('%', :searchString, '%')))  ",
+                            " AND (:searchString IS NULL OR (userEmail LIKE concat('%', :searchString, '%') OR pdNickName LIKE concat(:searchString, '%')))  ",
             countQuery =
                     "         select userId, userEmail, transactionDateTime, transactionType, totalLeaves, pdUserId, pdNickName" +
                             " from (select cp.user_id                as userId," +
@@ -160,7 +160,7 @@ public interface RealTimeLeavesUsageTabRepository extends JpaRepository<VideoPur
                             "       where mt.transaction_status = 'PAID') tb" +
                             " where (:startDate IS NULL OR transactionDateTime >= :startDate) " +
                             " AND (:endDate IS NULL OR transactionDateTime <= :endDate) " +
-                            " AND (:searchString IS NULL OR (userEmail LIKE concat('%', :searchString, '%') OR pdNickName LIKE concat('%', :searchString, '%'))) ",
+                            " AND (:searchString IS NULL OR (userEmail LIKE concat('%', :searchString, '%') OR pdNickName LIKE concat(:searchString, '%'))) ",
             nativeQuery = true
     )
     Page<Object[]> getRealTimeTreeUsage(@Param("startDate") LocalDate startDate,

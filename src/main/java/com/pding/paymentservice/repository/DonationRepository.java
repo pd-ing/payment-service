@@ -103,8 +103,8 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             "       WHERE pd_user_id = :pdUserId" +
             "       GROUP BY donor_user_id) as temp" +
             "          left join users u on u.id = temp.userId" +
-            " where (:searchString is null or :searchString = '' or u.email like concat('%', :searchString, '%') or" +
-            "        u.nickname like concat('%', :searchString, '%'))" +
+            " where (:searchString is null or :searchString = '' or u.email like concat(:searchString, '%') or" +
+            "        u.nickname like concat(:searchString, '%'))" +
             " group by userId" +
             " order by totalVideoPurchase + totalDonation desc",
         countQuery =
@@ -129,8 +129,8 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
                     "             WHERE pd_user_id = :pdUserId" +
                     "             GROUP BY donor_user_id) as temp" +
                     "                left join users u on u.id = temp.userId" +
-                    "       where (:searchString is null or :searchString = '' or u.email like concat('%', :searchString, '%') or" +
-                    "              u.nickname like concat('%', :searchString, '%'))" +
+                    "       where (:searchString is null or :searchString = '' or u.email like concat(:searchString, '%') or" +
+                    "              u.nickname like concat(:searchString, '%'))" +
                     "       group by userId) as count",
         nativeQuery = true)
     Page<Object[]> findTopDonorUser(@Param("pdUserId") String pdUserId, @Param("searchString") String searchString, Pageable pageable);

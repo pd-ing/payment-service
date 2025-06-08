@@ -82,7 +82,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
             "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
-            "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
+            "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat(:searchString, '%')) " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
@@ -98,7 +98,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
                     "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
-                    "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
+                    "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat(:searchString, '%')) " +
                     "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                     "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
                     "ORDER BY CASE WHEN :sortDirection = 'ASC' THEN vp.last_update_date END ASC, " +

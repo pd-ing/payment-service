@@ -133,7 +133,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
             "WHERE rc.referrer_pd_user_id = :referrerPdUserId " +
             "AND (:startDate IS NULL OR rc.created_date >= :startDate) " +
             "AND (:endDate IS NULL OR rc.created_date <= :endDate) " +
-            "AND (COALESCE(:searchString, '') = '' OR u.nickname LIKE CONCAT('%', :searchString, '%')) " +
+            "AND (COALESCE(:searchString, '') = '' OR u.nickname LIKE CONCAT(:searchString, '%')) " +
             " order by w.created_date desc",
             countQuery = "SELECT COUNT(*) FROM referral_commission rc " +
                     "INNER JOIN withdrawals w ON rc.withdrawal_id = w.id " +
@@ -141,7 +141,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
                     "WHERE rc.referrer_pd_user_id = :referrerPdUserId " +
                     "AND (:startDate IS NULL OR rc.created_date >= :startDate) " +
                     "AND (:endDate IS NULL OR rc.created_date <= :endDate) " +
-                    "AND (COALESCE(:searchString, '') = '' OR u.nickname LIKE CONCAT('%', :searchString, '%'))",
+                    "AND (COALESCE(:searchString, '') = '' OR u.nickname LIKE CONCAT(:searchString, '%'))",
             nativeQuery = true)
     Page<Object[]> getReferralCommissionDetailsWithFilters(
             @Param("referrerPdUserId") String referrerPdUserId,

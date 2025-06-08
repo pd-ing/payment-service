@@ -150,7 +150,7 @@ public interface PaymentStatisticRepository extends JpaRepository<CallPurchase, 
                     "          left join users u on wh.user_id = u.id" +
                     " where wh.purchased_leafs > 0" +
                     "   and wh.transaction_status = 'paymentCompleted'" +
-                    "   and (:searchString is null or wh.user_id like CONCAT('%', :searchString, '%') or u.email like CONCAT('%', :searchString, '%'))" +
+                    "   and (:searchString is null or wh.user_id like CONCAT('%', :searchString, '%') or u.email like CONCAT(:searchString, '%'))" +
                     "   and (:fromDate is null or wh.purchase_date >= :fromDate)" +
                     "   and (:toDate is null or wh.purchase_date <= :toDate)" +
                     "   order by wh.purchase_date desc"
