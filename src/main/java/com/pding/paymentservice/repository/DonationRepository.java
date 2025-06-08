@@ -108,30 +108,18 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             " group by userId" +
             " order by totalVideoPurchase + totalDonation desc",
         countQuery =
-                    " select count(*)" +
-                    " from (select *" +
-                    "       from (SELECT vp.user_id             AS userId," +
-                    "                    SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
-                    "                    MAX(last_update_date)  AS lastPurchaseDate," +
-                    "                    0                      as totalTreeDonation," +
-                    "                    null                   as lastDonationDate" +
-                    "             FROM video_purchase vp" +
-                    "             WHERE vp.video_owner_user_id = :pdUserId" +
-                    "               AND vp.is_refunded IS NOT TRUE" +
-                    "             GROUP BY vp.user_id" +
-                    "             union all" +
-                    "             SELECT donor_user_id         AS userId," +
-                    "                    0                     as totalPurchasedVideoTree," +
-                    "                    null                  as lastPurchaseDate," +
-                    "                    SUM(donated_trees)    AS totalTreeDonation," +
-                    "                    MAX(last_update_date) AS lastDonationDate" +
-                    "             FROM donation" +
-                    "             WHERE pd_user_id = :pdUserId" +
-                    "             GROUP BY donor_user_id) as temp" +
-                    "                left join users u on u.id = temp.userId" +
-                    "       where (:searchString is null or :searchString = '' or u.email like concat(:searchString, '%') or" +
-                    "              u.nickname like concat(:searchString, '%'))" +
-                    "       group by userId) as count",
+                    " select count(distinct temp.userId)" +
+                    " from (SELECT vp.user_id AS userId" +
+                    "       FROM video_purchase vp" +
+                    "       WHERE vp.video_owner_user_id = :pdUserId" +
+                    "         AND vp.is_refunded IS NOT TRUE" +
+                    "       UNION" +
+                    "       SELECT donor_user_id AS userId" +
+                    "       FROM donation" +
+                    "       WHERE pd_user_id = :pdUserId) as temp" +
+                    " left join users u on u.id = temp.userId" +
+                    " where (:searchString is null or :searchString = '' or u.email like concat(:searchString, '%') or" +
+                    "        u.nickname like concat(:searchString, '%'))",
         nativeQuery = true)
     Page<Object[]> findTopDonorUser(@Param("pdUserId") String pdUserId, @Param("searchString") String searchString, Pageable pageable);
 
@@ -143,45 +131,50 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
 
     @Query(value = "" +
             " select d.donor_user_id, " +
-            "       sum(d.donated_trees)                 as totalTreeDonation, " +
-            "       (select sum(trees_consumed) " +
-            "        from video_purchase vp " +
-            "        where vp.video_owner_user_id = :pdUserId " +
-            "          and vp.user_id = d.donor_user_id " +
-            "          and vp.last_update_date >= :startDate " +
-            "          and vp.last_update_date <= :endDate) as totalPurchasedVideoTree, " +
-            "       (select max(last_update_date) " +
-            "        from video_purchase vp " +
-            "        where vp.video_owner_user_id = :pdUserId " +
-            "          and vp.user_id = d.donor_user_id " +
-            "          and vp.last_update_date >= :startDate " +
-            "          and vp.last_update_date <= :endDate) as lastPurchasedVideoDate, " +
-            "       max(d.last_update_date)              as lastDonationDate " +
+            "       sum(d.donated_trees) as totalTreeDonation, " +
+            "       COALESCE(vp_sum.total_trees, 0) as totalPurchasedVideoTree, " +
+            "       vp_max.last_date as lastPurchasedVideoDate, " +
+            "       max(d.last_update_date) as lastDonationDate " +
             " from donation d " +
+            " left join (" +
+            "   select user_id, sum(trees_consumed) as total_trees" +
+            "   from video_purchase" +
+            "   where video_owner_user_id = :pdUserId" +
+            "     and last_update_date >= :startDate" +
+            "     and last_update_date <= :endDate" +
+            "   group by user_id" +
+            " ) vp_sum on d.donor_user_id = vp_sum.user_id" +
+            " left join (" +
+            "   select user_id, max(last_update_date) as last_date" +
+            "   from video_purchase" +
+            "   where video_owner_user_id = :pdUserId" +
+            "     and last_update_date >= :startDate" +
+            "     and last_update_date <= :endDate" +
+            "   group by user_id" +
+            " ) vp_max on d.donor_user_id = vp_max.user_id" +
             " where d.pd_user_id = :pdUserId " +
             "   and d.last_update_date >= :startDate " +
             "   and d.last_update_date <= :endDate " +
-            " group by d.donor_user_id " +
-            " having sum(d.donated_trees) > 0 " +
-            "     or (select sum(trees_consumed) " +
-            "         from video_purchase vp " +
-            "         where vp.video_owner_user_id = :pdUserId " +
-            "           and vp.user_id = d.donor_user_id " +
-            "           and vp.last_update_date >= :startDate " +
-            "           and vp.last_update_date <= :endDate) > 0 " +
+            " group by d.donor_user_id, vp_sum.total_trees, vp_max.last_date " +
+            " having sum(d.donated_trees) > 0 or COALESCE(vp_sum.total_trees, 0) > 0 " +
             " ORDER BY totalTreeDonation + totalPurchasedVideoTree desc",
-            countQuery = "select count(*) from donation d " +
+            countQuery = "select count(*) from (" +
+                    " select d.donor_user_id" +
+                    " from donation d " +
+                    " left join (" +
+                    "   select user_id, sum(trees_consumed) as total_trees" +
+                    "   from video_purchase" +
+                    "   where video_owner_user_id = :pdUserId" +
+                    "     and last_update_date >= :startDate" +
+                    "     and last_update_date <= :endDate" +
+                    "   group by user_id" +
+                    " ) vp_sum on d.donor_user_id = vp_sum.user_id" +
                     " where d.pd_user_id = :pdUserId " +
                     "   and d.last_update_date >= :startDate " +
                     "   and d.last_update_date <= :endDate " +
                     " group by d.donor_user_id " +
-                    " having sum(d.donated_trees) > 0 " +
-                    "     or (select sum(trees_consumed) " +
-                    "         from video_purchase vp " +
-                    "         where vp.video_owner_user_id = :pdUserId " +
-                    "           and vp.user_id = d.donor_user_id " +
-                    "           and vp.last_update_date >= :startDate " +
-                    "           and vp.last_update_date <= :endDate) > 0",
+                    " having sum(d.donated_trees) > 0 or COALESCE(vp_sum.total_trees, 0) > 0" +
+                    " ) as count_table",
             nativeQuery = true)
     List<Object[]> findTopDonorUserByDateRanger(String pdUserId, LocalDate startDate, LocalDate endDate);
 

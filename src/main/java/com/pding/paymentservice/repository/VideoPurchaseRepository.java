@@ -82,7 +82,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
             "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
-            "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat(:searchString, '%')) " +
+            "AND (:searchString IS NULL OR u.email like concat(:searchString, '%') OR v.title like concat(:searchString, '%')) " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
@@ -98,7 +98,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
                     "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
-                    "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat(:searchString, '%')) " +
+                    "AND (:searchString IS NULL OR u.email like concat(:searchString, '%') OR v.title like concat(:searchString, '%')) " +
                     "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                     "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
                     "ORDER BY CASE WHEN :sortDirection = 'ASC' THEN vp.last_update_date END ASC, " +
@@ -125,18 +125,40 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value =
         " select count(distinct uf.follower)" +
             " from user_followings uf" +
-            " left join video_purchase vp on vp.user_id = uf.follower and vp.video_owner_user_id = :pdId and vp.is_refunded = false" +
-            " left join donation d on d.donor_user_id = uf.follower and d.pd_user_id = :pdId" +
-            " left join call_purchase cp on cp.user_id = uf.follower and cp.pd_user_id = :pdId" +
-            " left join message_purchase mp on mp.user_id = uf.follower and mp.pd_userid = :pdId" +
-            " left join in_chat_media_trading mt on mt.user_id = uf.follower and mt.pd_id = :pdId and mt.transaction_status = 'PAID'" +
             " where uf.following = :pdId" +
             "   and uf.is_deleted = false" +
-            "   and vp.user_id is null" +
-            "   and d.donor_user_id is null" +
-            "   and cp.user_id is null" +
-            "   and mp.user_id is null" +
-            "   and mt.user_id is null",
+            "   and not exists (" +
+            "     select 1" +
+            "     from video_purchase vp" +
+            "     where vp.user_id = uf.follower" +
+            "       and vp.video_owner_user_id = :pdId" +
+            "       and vp.is_refunded = false" +
+            "   )" +
+            "   and not exists (" +
+            "     select 1" +
+            "     from donation d" +
+            "     where d.donor_user_id = uf.follower" +
+            "       and d.pd_user_id = :pdId" +
+            "   )" +
+            "   and not exists (" +
+            "     select 1" +
+            "     from call_purchase cp" +
+            "     where cp.user_id = uf.follower" +
+            "       and cp.pd_user_id = :pdId" +
+            "   )" +
+            "   and not exists (" +
+            "     select 1" +
+            "     from message_purchase mp" +
+            "     where mp.user_id = uf.follower" +
+            "       and mp.pd_userid = :pdId" +
+            "   )" +
+            "   and not exists (" +
+            "     select 1" +
+            "     from in_chat_media_trading mt" +
+            "     where mt.user_id = uf.follower" +
+            "       and mt.pd_id = :pdId" +
+            "       and mt.transaction_status = 'PAID'" +
+            "   )",
         nativeQuery = true)
     Long getUnPaidFollowersCount(String pdId);
 
