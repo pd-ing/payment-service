@@ -2,8 +2,6 @@ package com.pding.paymentservice.repository;
 
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.tables.inner.VideoEarningsAndSales;
-import com.pding.paymentservice.payload.projection.UserProjection;
-import jakarta.persistence.LockModeType;
 import com.pding.paymentservice.payload.projection.MonthlyRevenueProjection;
 import com.pding.paymentservice.payload.projection.UserProjection;
 import jakarta.persistence.LockModeType;
@@ -14,9 +12,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -93,7 +88,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "COALESCE(vp.trees_consumed, ''), " +
                     "COALESCE(u.email, ''), " +
                     "COALESCE(vp.duration, ''), " +
-                    "COALESCE(vp.expiry_date, '') " +
+                    "COALESCE(DATE_FORMAT(vp.expiry_date, '%Y-%m-%d %H:%i:%s'), '') " +
                     "FROM video_purchase vp " +
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
@@ -190,6 +185,9 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded = false")
     List<VideoPurchase> findByUserId(String userId);
 
+    @Query("SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.videoOwnerUserId = :pdId and vp.isRefunded = false")
+    List<VideoPurchase> findByUserIdAndPdId(String userId, String pdId);
+
     @Query(value = "select vp from VideoPurchase vp where vp.expiryDate > current_date and vp.userId = :userId and (:ownerId is null or vp.videoOwnerUserId = :ownerId) and vp.isRefunded = false")
     Page<VideoPurchase> findNotExpiredVideo(@Param("userId") String userId, @Param("ownerId") String ownerId, Pageable pageable);
 
@@ -274,8 +272,6 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
         nativeQuery = true)
     Long getPaidFollowersCount(String pdId);
 
-
-
     @Query(nativeQuery = true, value =
         " SELECT DATE_FORMAT(vp.last_update_date, '%Y-%m') AS month," +
             "        COALESCE(SUM(vp.trees_consumed), 0)                    as revenue" +
@@ -289,4 +285,11 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     List<MonthlyRevenueProjection> getMonthlyRevenueFromVideoPurchaseByUserId(@Param("pdId") String pdId, @Param("limit") Integer limit);
 
 
+
+
+    //TODO check if is_refunded is set default to false
+    @Query(value = "SELECT vp from VideoPurchase vp where vp.userId = :userId and vp.isRefunded = false and vp.videoId in :videoId and vp.duration = 'PERMANENT'")
+    List<VideoPurchase> getPermanentVideoPurchasesByUserIdAndVideoId(@Param("userId") String userId, @Param("videoId") Set<String> videoId);
+
+    List<VideoPurchase> findByPackagePurchaseId(String packagePurchaseId);
 }

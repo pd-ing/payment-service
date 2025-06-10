@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Ledger {
     @Id
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @UuidGenerator
     private String id;
 
@@ -46,6 +45,7 @@ public class Ledger {
     private LocalDateTime timestamp;
 
     private String transactionId;
+    private String packageId;
 
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType; // "Purchase", "Donation", "Withdrawal", etc.
@@ -67,9 +67,10 @@ public class Ledger {
             this.donationId = referenceId;
         } else if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL) || transactionType.equals(TransactionType.TEXT_MESSAGE)) {
             this.callId = referenceId;
+        } else if (transactionType.equals(TransactionType.PACKAGE_PURCHASE) || transactionType.equals(TransactionType.REFUND_PACKAGE_PURCHASE)) {
+            this.packageId = referenceId;
         }
         this.transactionId = referenceId;
-        //this.walletOrVideoOrDonationOrWithdrawalId = walletOrVideoOrDonationOrWithdrawalId;
         this.treesTransacted = treesTransacted;
         this.leafsTransacted = leafsTransacted;
         this.transactionType = transactionType;

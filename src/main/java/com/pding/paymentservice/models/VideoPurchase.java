@@ -43,6 +43,10 @@ public class VideoPurchase {
 
     private BigDecimal drmFee;
 
+    private String packagePurchaseId;
+
+    private Integer discountPercentageApplied;
+
     public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId) {
         this.userId = userId;
         this.videoId = videoId;
@@ -75,6 +79,21 @@ public class VideoPurchase {
         this.videoOwnerUserId = videoOwnerUserId;
         this.isReplacementOfDeletedVideo = isReplacementOfDeletedVideo;
         this.isRefunded = false;
+    }
+
+    public VideoPurchase(String userId, String videoId, BigDecimal treesConsumed, String videoOwnerUserId, String duration, LocalDateTime expiryDate, Integer discountPercentageApplied, String packagePurchaseId, BigDecimal drmFee) {
+        this.userId = userId;
+        this.videoId = videoId;
+        this.treesConsumed = treesConsumed;
+        this.lastUpdateDate = LocalDateTime.now();
+        this.videoOwnerUserId = videoOwnerUserId;
+        this.isReplacementOfDeletedVideo = false;
+        this.duration = duration;
+        this.expiryDate = expiryDate;
+        this.isRefunded = false;
+        this.packagePurchaseId = packagePurchaseId;
+        this.discountPercentageApplied = discountPercentageApplied;
+        this.drmFee = drmFee;
     }
 
 }

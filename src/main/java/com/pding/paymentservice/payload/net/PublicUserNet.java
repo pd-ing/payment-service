@@ -44,4 +44,6 @@ public class PublicUserNet {
     private String pdCategory;
 
     private String language;
+
+    private Long follower;
 }

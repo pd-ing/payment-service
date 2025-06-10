@@ -23,6 +23,8 @@ public class UserLite {
 
     String pdCategory;
 
+    Long follower;
+
     public static UserLite fromPublicUserNet(PublicUserNet src, TokenSigner tokenSigner) {
         String displayName = src.getId();
          if (src.getNickname() != null && !src.getNickname().isEmpty()) {
@@ -40,7 +42,7 @@ public class UserLite {
         } catch (Exception e) {}
 
         return new UserLite(
-            src.getId(), displayName, src.getDescription(), profilePicture, src.getProfileId(), src.getPdCategory()
+            src.getId(), displayName, src.getDescription(), profilePicture, src.getProfileId(), src.getPdCategory(), src.getFollower()
         );
     }
 
