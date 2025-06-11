@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.error.VideoPackagePurchaseErrorCode;
 import com.pding.paymentservice.listener.event.VideoPackagePurchaseUpdatedEvent;
 import com.pding.paymentservice.models.VideoPackagePurchase;
 import com.pding.paymentservice.models.VideoPurchase;
@@ -81,14 +82,14 @@ public class VideoPackagePurchaseService {
             .orElseThrow(() -> new NoSuchElementException("Package not found or error getting package details"));
 
         if (!packageDetail.getIsActive()) {
-            throw new IllegalStateException("Package sale is not active");
+            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_NOT_ACTIVE.getCode() + ": Package sale is not active");
         }
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(packageDetail.getStartDate())) {
-            throw new IllegalStateException("Package sale has not started yet");
+            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_SALE_NOT_STARTED.getCode() + ": Package sale has not started yet");
         }
         if (now.isAfter(packageDetail.getEndDate())) {
-            throw new IllegalStateException("Package sale has ended");
+            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_SALE_ENDED.getCode() + ": Package sale has ended");
         }
 
         PurchaseVideoPackageResponse response;
@@ -108,12 +109,12 @@ public class VideoPackagePurchaseService {
         if (request.getSelectedVideoIds() == null
             || request.getSelectedVideoIds().isEmpty()
             || request.getSelectedVideoIds().size() > packageDetail.getNumberOfVideos()) {
-            throw new IllegalArgumentException("Invalid number of selected videos, must be between 1 and " + packageDetail.getNumberOfVideos() + " videos");
+            throw new IllegalArgumentException(VideoPackagePurchaseErrorCode.INVALID_SELECTED_VIDEOS_COUNT.getCode() + ": Invalid number of selected videos, must be between 1 and " + packageDetail.getNumberOfVideos() + " videos");
         }
 
         // Check if the selected videos belong to the package's seller
         if (request.getSelectedVideoIds().size() != packageDetail.getItems().size()) {
-            throw new IllegalArgumentException("Invalid selected videos, video ids do not belong to this package's seller");
+            throw new IllegalArgumentException(VideoPackagePurchaseErrorCode.INVALID_SELECTED_VIDEOS.getCode() + ": Invalid selected videos, video ids do not belong to this package's seller");
         }
 
         String packageId = packageDetail.getId();
@@ -125,7 +126,7 @@ public class VideoPackagePurchaseService {
         Set<String> intersection = new HashSet<>(alreadyPurchasedVideoIds);
         intersection.retainAll(request.getSelectedVideoIds());
         if (!intersection.isEmpty()) {
-            throw new IllegalArgumentException("Some selected videos have already been purchased: " + intersection);
+            throw new IllegalArgumentException(VideoPackagePurchaseErrorCode.VIDEOS_ALREADY_PURCHASED.getCode() + ": Some selected videos have already been purchased: " + intersection);
         }
 
         PurchaseVideoPackageResponse response = savePackagePurchaseTransaction(buyerId, packageDetail);
@@ -135,7 +136,7 @@ public class VideoPackagePurchaseService {
         String packageId = packageDetail.getId();
         List<VideoPackagePurchase> packagePurchased = videoPackagePurchaseRepository.findUnrefundedPackageByUserIdAndPackageIdForUpdate(buyerId, packageId);
         if (!packagePurchased.isEmpty()) {
-            throw new IllegalStateException("Package already purchased");
+            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_ALREADY_PURCHASED.getCode() + ": Package already purchased");
         }
 
         PurchaseVideoPackageResponse response = savePackagePurchaseTransaction(buyerId, packageDetail);
@@ -298,7 +299,7 @@ public class VideoPackagePurchaseService {
                 .orElseThrow(() -> new NoSuchElementException("Transaction not found"));
 
         if(videoPackagePurchaseToRefund.getIsRefunded() != null && videoPackagePurchaseToRefund.getIsRefunded()) {
-            throw new IllegalStateException("Can not refund this package purchase");
+            throw new IllegalStateException(VideoPackagePurchaseErrorCode.CANNOT_REFUND_PACKAGE.getCode() + ": Can not refund this package purchase");
         }
         videoPackagePurchaseToRefund.setIsRefunded(true);
         videoPackagePurchaseRepository.save(videoPackagePurchaseToRefund);
@@ -490,5 +491,3 @@ public class VideoPackagePurchaseService {
         return ResponseEntity.ok(new GenericClassResponse<>(null, responseMap));
     }
 }
-
-
