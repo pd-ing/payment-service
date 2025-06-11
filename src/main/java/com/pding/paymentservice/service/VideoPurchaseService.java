@@ -199,7 +199,17 @@ public class VideoPurchaseService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BuyVideoResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "This duration is not enabled"), null));
             }
 
-            VideoPurchase video = self.createVideoTransaction(userId, videoId, videoData.getUserId(), videoData.getDrmEnable() != null && videoData.getDrmEnable(), price.getTrees(), price.getDuration());
+            VideoPurchase video = self.createVideoTransaction(
+                userId,
+                videoId,
+                videoData.getUserId(),
+                videoData.getDrmEnable() != null && videoData.getDrmEnable(),
+                videoData.getIs4kEnable() != null && videoData.getIs4kEnable(),
+                videoData.getAdvancedEncodingEnable() != null && videoData.getAdvancedEncodingEnable(),
+                videoData.getDuration(),
+                price.getTrees(),
+                price.getDuration()
+            );
             applicationEventPublisher.publishEvent(new VideoPurchaseEvent(this, video, videoData));
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
