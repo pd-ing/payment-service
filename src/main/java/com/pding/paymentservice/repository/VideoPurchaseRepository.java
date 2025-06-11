@@ -57,10 +57,10 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
         return resultMap;
     }
 
-    @Query("SELECT vp from VideoPurchase vp where vp.videoId = :videoId and vp.isRefunded = false order by vp.lastUpdateDate desc")
+    @Query("SELECT vp from VideoPurchase vp where vp.videoId = :videoId and vp.isRefunded = false and vp.packagePurchaseId is null order by vp.lastUpdateDate desc")
     Page<VideoPurchase> findAllByVideoIdOrderByLastUpdateDateDesc(String videoId, Pageable pageable);
 
-    @Query("SELECT vp from VideoPurchase vp where vp.videoId = :videoId and vp.userId in :onlyTheseUsersList and vp.isRefunded = false order by vp.lastUpdateDate desc")
+    @Query("SELECT vp from VideoPurchase vp where vp.videoId = :videoId and vp.userId in :onlyTheseUsersList and vp.isRefunded = false and vp.packagePurchaseId is null order by vp.lastUpdateDate desc")
     Page<VideoPurchase> findAllByVideoIdAndUserIdInOrderByLastUpdateDateDesc(String videoId, List<String> onlyTheseUsersList, Pageable pageable);
 
     @Query(value = "SELECT COALESCE(SUM(vp.treesConsumed), 0) FROM VideoPurchase vp WHERE vp.userId = :userId and vp.isRefunded = false")
