@@ -10,10 +10,14 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
@@ -32,21 +36,59 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
+    @ExceptionHandler({ NoSuchElementException.class })
+    @ResponseBody
+    public ResponseEntity handleNotFoundException(NoSuchElementException exception, HttpServletRequest request) {
+        log.error(exception.getMessage(), exception);
+
+        String message = exception.getMessage();
+        String errorCode = null;
+
+        // Extract error code if message is in format "CODE: message"
+        if (message != null && message.contains(":")) {
+            String[] parts = message.split(":", 2);
+            errorCode = parts[0];
+            message = parts[1].trim();
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            new GenericClassResponse(new ErrorResponse(HttpStatus.NOT_FOUND.value(), message, errorCode, null), null));
+    }
 
     @ExceptionHandler({ Exception.class })
     @ResponseBody
     public ResponseEntity handleEx(Exception exception, HttpServletRequest request) {
+        log.error(exception.getMessage(), exception);
+
+        String message = exception.getMessage();
+        String errorCode = null;
+
+        // Extract error code if message is in format "CODE: message"
+        if (message != null && message.contains(":")) {
+            String[] parts = message.split(":", 2);
+            errorCode = parts[0];
+            message = parts[1].trim();
+        }
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-            new GenericClassResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception.getMessage()), null));
+            new GenericClassResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, errorCode, null), null));
     }
 
     @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
     @ResponseBody
     public ResponseEntity handleBadRequestEx(Exception exception, HttpServletRequest request) {
+        String message = exception.getMessage();
+        String errorCode = null;
+
+        // Extract error code if message is in format "CODE: message"
+        if (message != null && message.contains(":")) {
+            String[] parts = message.split(":", 2);
+            errorCode = parts[0];
+            message = parts[1].trim();
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            new GenericClassResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage()), null));
+            new GenericClassResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message, errorCode, null), message));
     }
 
 }
