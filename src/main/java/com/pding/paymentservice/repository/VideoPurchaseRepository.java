@@ -76,7 +76,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "FROM video_purchase vp " +
             "LEFT JOIN videos v ON vp.video_id = v.video_id " +
             "LEFT JOIN users u ON vp.user_id = u.id " +
-            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
+            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
             "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
@@ -92,7 +92,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                     "FROM video_purchase vp " +
                     "LEFT JOIN videos v ON vp.video_id = v.video_id " +
                     "LEFT JOIN users u ON vp.user_id = u.id " +
-                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
+                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
                     "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
                     "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                     "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
@@ -104,7 +104,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     @Query(value =
             "SELECT sum(vp.trees_consumed) - sum(drm_fee)" +
             "FROM video_purchase vp " +
-            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false " +
+            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
             "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
             nativeQuery = true)
