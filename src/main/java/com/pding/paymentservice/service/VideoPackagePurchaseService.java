@@ -108,8 +108,8 @@ public class VideoPackagePurchaseService {
 
         if (request.getSelectedVideoIds() == null
             || request.getSelectedVideoIds().isEmpty()
-            || request.getSelectedVideoIds().size() > packageDetail.getNumberOfVideos()) {
-            throw new IllegalArgumentException(VideoPackagePurchaseErrorCode.INVALID_SELECTED_VIDEOS_COUNT.getCode() + ": Invalid number of selected videos, must be between 1 and " + packageDetail.getNumberOfVideos() + " videos");
+            || request.getSelectedVideoIds().size() < packageDetail.getNumberOfVideos()) {
+            throw new IllegalArgumentException(VideoPackagePurchaseErrorCode.INVALID_SELECTED_VIDEOS_COUNT.getCode() + ": Invalid number of selected videos, must be greater than" + packageDetail.getNumberOfVideos() + " videos");
         }
 
         // Check if the selected videos belong to the package's seller
