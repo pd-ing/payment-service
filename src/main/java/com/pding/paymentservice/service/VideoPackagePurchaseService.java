@@ -84,13 +84,13 @@ public class VideoPackagePurchaseService {
         if (!packageDetail.getIsActive()) {
             throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_NOT_ACTIVE.getCode() + ": Package sale is not active");
         }
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(packageDetail.getStartDate())) {
-            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_SALE_NOT_STARTED.getCode() + ": Package sale has not started yet");
-        }
-        if (now.isAfter(packageDetail.getEndDate())) {
-            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_SALE_ENDED.getCode() + ": Package sale has ended");
-        }
+//        LocalDateTime now = LocalDateTime.now();
+//        if (now.isBefore(packageDetail.getStartDate())) {
+//            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_SALE_NOT_STARTED.getCode() + ": Package sale has not started yet");
+//        }
+//        if (now.isAfter(packageDetail.getEndDate())) {
+//            throw new IllegalStateException(VideoPackagePurchaseErrorCode.PACKAGE_SALE_ENDED.getCode() + ": Package sale has ended");
+//        }
 
         PurchaseVideoPackageResponse response;
         if (packageDetail.getPackageType() == PackageType.THEME_PACKAGE) {
