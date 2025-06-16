@@ -15,6 +15,12 @@ public class StringUtil {
             "ONE_DAY", "1 day",
             "ONE_WEEK", "1 week"
     );
+
+    private static final Map<String, String> PACKAGE_TYPE_MAP = Map.of(
+            "FREE_CHOICE_PACKAGE", "Free choice",
+            "THEME_PACKAGE", "Theme",
+            "SINGLE", "Single"
+    );
     public static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {
             return email;
@@ -34,6 +40,13 @@ public class StringUtil {
     public static String convertDurationKeyToValue(String durationKey) {
         if (DURATION_MAP.containsKey(durationKey)) {
             return DURATION_MAP.get(durationKey);
+        }
+        return "";
+    }
+
+    public static String convertPackageTypeKeyToValue(String durationKey) {
+        if (PACKAGE_TYPE_MAP.containsKey(durationKey)) {
+            return PACKAGE_TYPE_MAP.get(durationKey);
         }
         return "";
     }

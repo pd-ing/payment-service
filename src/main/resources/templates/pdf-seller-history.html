@@ -26,7 +26,7 @@
         .text-content {
             font-size: 14px;
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
             vertical-align: middle;
         }
@@ -74,6 +74,9 @@
         <th style="border: 1px solid #ddd; padding: 8px; align-content: center; text-align: center; vertical-align: middle;">
             Buyer Email
         </th>
+      <th style="border: 1px solid #ddd; padding: 8px; align-content: center; text-align: center; vertical-align: middle;">
+            Type
+        </th>
         <th style="border: 1px solid #ddd; padding: 8px; align-content: center; text-align: center; vertical-align: middle;">
             Amount
         </th>
@@ -94,6 +97,9 @@
         </td>
          <td class="text-content">
             [[${seller.buyerEmail}]]
+        </td>
+        <td class="text-content">
+            [[${seller.type}]]
         </td>
          <td class="text-content">
             [[${seller.amount}]]

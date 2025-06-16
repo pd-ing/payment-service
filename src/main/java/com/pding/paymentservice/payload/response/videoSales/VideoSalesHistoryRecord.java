@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -17,4 +19,7 @@ public class VideoSalesHistoryRecord {
     private String purchaseDate;
     private String duration;
     private String expiryDate;
+    private String type;
+    private String numberOfVideos;
+    private Integer discountPercentage;
 }

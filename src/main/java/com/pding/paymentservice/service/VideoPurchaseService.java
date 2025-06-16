@@ -18,7 +18,6 @@ import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.projection.UserProjection;
 import com.pding.paymentservice.payload.projection.VideoProjection;
-import com.pding.paymentservice.payload.projection.UserProjection;
 import com.pding.paymentservice.payload.response.BuyVideoResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.GetVideoTransactionsResponse;
@@ -27,7 +26,6 @@ import com.pding.paymentservice.payload.response.IsVideoPurchasedByUserResponseV
 import com.pding.paymentservice.payload.response.PaidUnpaidFollowerCountResponse;
 import com.pding.paymentservice.payload.response.PaidUnpaidFollowerResponse;
 import com.pding.paymentservice.payload.response.SalesHistoryData;
-import com.pding.paymentservice.payload.response.TotalTreesEarnedResponse;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.payload.response.VideoEarningsAndSalesResponse;
 import com.pding.paymentservice.payload.response.VideoPurchaseTimeRemainingResponse;
@@ -41,6 +39,7 @@ import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResp
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
+import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.util.DateTimeUtil;
@@ -134,6 +133,8 @@ public class VideoPurchaseService {
 
     @Autowired
     ApplicationEventPublisher applicationEventPublisher;
+    @Autowired
+    private VideoPackagePurchaseRepository videoPackagePurchaseRepository;
 
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
@@ -416,7 +417,7 @@ public class VideoPurchaseService {
                 } else {
                     shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, pageable);
                     shList = createSalesHistoryList(shPage.getContent());
-                    totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate);
+                    totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate) + videoPackagePurchaseRepository.getTotalTreesEarnedFromPackageSales(userId, startDate, endDate);
                 }
             }
             return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, totalTreesEarned, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
@@ -437,6 +438,9 @@ public class VideoPurchaseService {
             shObj.setPurchaseDate(salesHistory[0].toString());
             shObj.setDuration(salesHistory[4].toString());
             shObj.setExpiryDate(salesHistory[5].toString());
+            shObj.setType(salesHistory[6].toString());
+            shObj.setNumberOfVideos(salesHistory[7].toString());
+            shObj.setDiscountPercentage(Integer.valueOf(salesHistory[8].toString()));
             shList.add(shObj);
         }
         return shList;
@@ -628,7 +632,7 @@ public class VideoPurchaseService {
         List<VideoSalesHistoryRecord> shList = getSaleHistoryData(shPage);
 
         // Calculate total trees earned
-        Long totalTreesEarned = Optional.ofNullable(videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate)).orElse(0L);
+        Long totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate) + videoPackagePurchaseRepository.getTotalTreesEarnedFromPackageSales(userId, startDate, endDate);
         List<Object[]> userInfo = otherServicesTablesNativeQueryRepository.findEmailAndNicknameByUserId(userId);
         String nickname = "";
         String email = "";
@@ -653,7 +657,10 @@ public class VideoPurchaseService {
             shObj.setAmount(salesHistory[1].toString());
             shObj.setBuyerEmail(StringUtil.maskEmail(email));
             shObj.setDuration(StringUtil.convertDurationKeyToValue(salesHistory[3].toString()));
-            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+//            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            shObj.setType(StringUtil.convertPackageTypeKeyToValue(salesHistory[4].toString()));
+            shObj.setNumberOfVideos(salesHistory[5].toString());
+            shObj.setDiscountPercentage(Integer.valueOf(salesHistory[6].toString()));
             shList.add(shObj);
         }
         return shList;
