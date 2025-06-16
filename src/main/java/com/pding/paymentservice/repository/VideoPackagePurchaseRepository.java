@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -111,4 +112,9 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
     @Query("SELECT p FROM VideoPackagePurchase p WHERE p.packageId = :packageId AND p.purchaseDate >= :startDate AND p.purchaseDate <= :endDate AND p.isRefunded = false")
     List<VideoPackagePurchase> findByPackageIdAndPurchaseDateBetweenAndIsRefundedFalse(
             String packageId, LocalDateTime startDate, LocalDateTime endDate);
+
+
+    @Query(value = "SELECT COALESCE(SUM(p.trees_consumed) - SUM(p.drm_fee), 0) FROM video_package_purchase p WHERE p.seller_id = :pdId AND p.purchase_date BETWEEN :startDate AND :endDate AND p.is_refunded = false", nativeQuery = true)
+    Long getTotalTreesEarnedFromPackageSales(@Param("pdId") String pdId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
 }

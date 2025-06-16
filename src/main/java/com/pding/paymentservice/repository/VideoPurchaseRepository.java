@@ -67,38 +67,156 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     BigDecimal getTotalTreesConsumedByUserId(@Param("userId") String userId);
 
     @Query(value =
-            "SELECT COALESCE(vp.last_update_date, ''), " +
-            "COALESCE(v.title, ''), " +
-            "COALESCE(vp.trees_consumed, ''), " +
-            "COALESCE(u.email, ''), " +
-            "COALESCE(vp.duration, ''), " +
-            "COALESCE(vp.expiry_date, '') " +
-            "FROM video_purchase vp " +
-            "LEFT JOIN videos v ON vp.video_id = v.video_id " +
-            "LEFT JOIN users u ON vp.user_id = u.id " +
-            "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
-            "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
-            "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
-            "AND (:endDate IS NULL OR vp.last_update_date < :endDate) ",
+                "SELECT COALESCE(purchase_date, '')  as last_update_date," +
+                "       COALESCE(title, '')          as title," +
+                "       COALESCE(trees_consumed, '') as trees_consumed," +
+                "       COALESCE(email, '')          as email," +
+                "       COALESCE(duration, '')       as duration," +
+                "       COALESCE(expiry_date, '')    as expiry_date," +
+                "       COALESCE(type, '')    as type," +
+                "       COALESCE(number_of_videos, '')    as number_of_videos," +
+                "       discount_percentage" +
+                " FROM (" +
+                "         SELECT vp.last_update_date as purchase_date," +
+                "                v.title," +
+                "                vp.trees_consumed," +
+                "                buyer.email," +
+                "                vp.duration," +
+                "                vp.expiry_date," +
+                "                'SINGLE'            as type," +
+                "                1                   as number_of_videos," +
+                "                0 as discount_percentage" +
+                "         FROM video_purchase vp" +
+                "                  LEFT JOIN videos v ON vp.video_id = v.video_id" +
+                "                  LEFT JOIN users buyer ON vp.user_id = buyer.id" +
+                "         WHERE vp.video_owner_user_id = :userId" +
+                "           AND vp.is_refunded = false" +
+                "           AND vp.package_purchase_id is null" +
+                "         UNION ALL" +
+                "         SELECT vpp.purchase_date," +
+                "                vp.title," +
+                "                vpp.trees_consumed," +
+                "                buyer.email," +
+                "                'PERMANENT'     as duration," +
+                "                NULL            as expiry_date," +
+                "                vp.package_type as type," +
+                "                (LENGTH(vpp.included_video_ids) - LENGTH(REPLACE(vpp.included_video_ids, ',', '')) + 1) as number_of_videos," +
+                "                vpp.discount_percentage as discount_percentage" +
+                "         FROM video_package_purchase vpp" +
+                "                  LEFT JOIN video_packages vp ON vpp.package_id = vp.id" +
+                "                  LEFT JOIN users buyer ON vpp.user_id = buyer.id" +
+                "         WHERE vp.seller_id = :userId" +
+                "           AND vpp.is_refunded = false) combined_purchases" +
+                " WHERE (:searchString IS NULL" +
+                "    OR email LIKE CONCAT(:searchString, '%')" +
+                "    OR title LIKE CONCAT(:searchString, '%')" +
+                "    )" +
+                "  AND (:startDate IS NULL OR purchase_date >= :startDate)" +
+                "  AND (:endDate IS NULL OR purchase_date < :endDate)",
+            countQuery = "SELECT count(*)" +
+                " FROM (" +
+                "         SELECT vp.last_update_date as purchase_date," +
+                "                v.title," +
+                "                vp.trees_consumed," +
+                "                buyer.email," +
+                "                vp.duration," +
+                "                vp.expiry_date," +
+                "                'SINGLE'            as type," +
+                "                1                   as number_of_videos" +
+                "         FROM video_purchase vp" +
+                "                  LEFT JOIN videos v ON vp.video_id = v.video_id" +
+                "                  LEFT JOIN users buyer ON vp.user_id = buyer.id" +
+                "         WHERE vp.video_owner_user_id = :userId" +
+                "           AND vp.is_refunded = false" +
+                "           AND vp.package_purchase_id is null" +
+                "         UNION ALL" +
+                "         SELECT vpp.purchase_date," +
+                "                vp.title," +
+                "                vpp.trees_consumed," +
+                "                buyer.email," +
+                "                'PERMANENT'     as duration," +
+                "                NULL            as expiry_date," +
+                "                vp.package_type as type," +
+                "                (LENGTH(vpp.included_video_ids) - LENGTH(REPLACE(vpp.included_video_ids, ',', '')) + 1) as number_of_videos" +
+                "         FROM video_package_purchase vpp" +
+                "                  LEFT JOIN video_packages vp ON vpp.package_id = vp.id" +
+                "                  LEFT JOIN users buyer ON vpp.user_id = buyer.id" +
+                "         WHERE vp.seller_id = :userId" +
+                "           AND vpp.is_refunded = false) combined_purchases" +
+                " WHERE (:searchString IS NULL" +
+                "    OR email LIKE CONCAT(:searchString, '%')" +
+                "    OR title LIKE CONCAT(:searchString, '%')" +
+                "    )" +
+                "  AND (:startDate IS NULL OR purchase_date >= :startDate)" +
+                "  AND (:endDate IS NULL OR purchase_date < :endDate)",
             nativeQuery = true)
     Page<Object[]> getSalesHistoryByUserIdAndDates(String searchString, String userId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
+//    @Query(value =
+//            "SELECT COALESCE(vp.last_update_date, ''), " +
+//                    "COALESCE(vp.trees_consumed, ''), " +
+//                    "COALESCE(u.email, ''), " +
+//                    "COALESCE(vp.duration, ''), " +
+//                    "COALESCE(DATE_FORMAT(vp.expiry_date, '%Y-%m-%d %H:%i:%s'), '') " +
+//                    "FROM video_purchase vp " +
+//                    "LEFT JOIN videos v ON vp.video_id = v.video_id " +
+//                    "LEFT JOIN users u ON vp.user_id = u.id " +
+//                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
+//                    "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
+//                    "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
+//                    "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
+//                    "ORDER BY CASE WHEN :sortDirection = 'ASC' THEN vp.last_update_date END ASC, " +
+//                    "CASE WHEN :sortDirection = 'DESC' THEN vp.last_update_date END DESC",
+//            nativeQuery = true)
     @Query(value =
-            "SELECT COALESCE(vp.last_update_date, ''), " +
-                    "COALESCE(vp.trees_consumed, ''), " +
-                    "COALESCE(u.email, ''), " +
-                    "COALESCE(vp.duration, ''), " +
-                    "COALESCE(DATE_FORMAT(vp.expiry_date, '%Y-%m-%d %H:%i:%s'), '') " +
-                    "FROM video_purchase vp " +
-                    "LEFT JOIN videos v ON vp.video_id = v.video_id " +
-                    "LEFT JOIN users u ON vp.user_id = u.id " +
-                    "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
-                    "AND (:searchString IS NULL OR u.email like concat('%', :searchString, '%') OR v.title like concat('%', :searchString, '%')) " +
-                    "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
-                    "AND (:endDate IS NULL OR vp.last_update_date < :endDate)"+
-                    "ORDER BY CASE WHEN :sortDirection = 'ASC' THEN vp.last_update_date END ASC, " +
-                    "CASE WHEN :sortDirection = 'DESC' THEN vp.last_update_date END DESC",
-            nativeQuery = true)
+            "SELECT COALESCE(purchase_date, '')  as last_update_date," +
+            "       COALESCE(trees_consumed, '') as trees_consumed," +
+            "       COALESCE(email, '')          as email," +
+            "       COALESCE(duration, '')       as duration," +
+//            "       COALESCE(DATE_FORMAT(expiry_date, '%Y-%m-%d %H:%i:%s'), '')," +
+            "       COALESCE(type, '')    as type," +
+            "       COALESCE(number_of_videos, '')    as number_of_videos," +
+            "       discount_percentage" +
+            " FROM (" +
+            "         SELECT vp.last_update_date as purchase_date," +
+            "                v.title," +
+            "                vp.trees_consumed," +
+            "                buyer.email," +
+            "                vp.duration," +
+//            "                vp.expiry_date," +
+            "                'SINGLE'            as type," +
+            "                1                   as number_of_videos," +
+            "                0 as discount_percentage" +
+            "         FROM video_purchase vp" +
+            "                  LEFT JOIN videos v ON vp.video_id = v.video_id" +
+            "                  LEFT JOIN users buyer ON vp.user_id = buyer.id" +
+            "         WHERE vp.video_owner_user_id = :userId" +
+            "           AND vp.is_refunded = false" +
+            "           AND vp.package_purchase_id is null" +
+            "         UNION ALL" +
+            "         SELECT vpp.purchase_date," +
+            "                vp.title," +
+            "                vpp.trees_consumed," +
+            "                buyer.email," +
+            "                'PERMANENT'     as duration," +
+//            "                ''            as expiry_date," +
+            "                vp.package_type as type," +
+            "                (LENGTH(vpp.included_video_ids) - LENGTH(REPLACE(vpp.included_video_ids, ',', '')) + 1) as number_of_videos," +
+            "                vpp.discount_percentage as discount_percentage" +
+            "         FROM video_package_purchase vpp" +
+            "                  LEFT JOIN video_packages vp ON vpp.package_id = vp.id" +
+            "                  LEFT JOIN users buyer ON vpp.user_id = buyer.id" +
+            "         WHERE vp.seller_id = :userId" +
+            "           AND vpp.is_refunded = false) combined_purchases" +
+            " WHERE (:searchString IS NULL" +
+            "    OR email LIKE CONCAT(:searchString, '%')" +
+            "    OR title LIKE CONCAT(:searchString, '%')" +
+            "    )" +
+            "  AND (:startDate IS NULL OR purchase_date >= :startDate)" +
+            "  AND (:endDate IS NULL OR purchase_date < :endDate)" +
+            " ORDER BY CASE WHEN :sortDirection = 'ASC' THEN last_update_date END ASC, " +
+            " CASE WHEN :sortDirection = 'DESC' THEN last_update_date END DESC",
+        nativeQuery = true)
     List<Object[]> getAllSalesHistoryByUserIdAndDates(String searchString, String userId, LocalDate startDate, LocalDate endDate, String sortDirection);
 
     @Query(value =
