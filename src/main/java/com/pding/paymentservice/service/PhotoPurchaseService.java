@@ -231,8 +231,16 @@ public class PhotoPurchaseService {
      */
     public Map<String, Boolean> isPhotoPostPurchased(String userId, List<String> postIds) {
         List<PhotoPurchase> photoPurchases = photoPurchaseRepository.findByUserIdAndPostIdIn(userId, postIds);
-        List<String> purchasedPostIds = photoPurchases.stream().map(PhotoPurchase::getPostId).collect(Collectors.toList());
-        return postIds.stream().filter(Objects::nonNull).collect(Collectors.toMap(postId -> postId, postId -> purchasedPostIds.contains(postId)));
+
+        // Filter purchases to only include those that haven't expired (expiry_date > now())
+        List<String> purchasedPostIds = photoPurchases.stream()
+            .filter(purchase -> purchase.getExpiryDate() == null || purchase.getExpiryDate().isAfter(Instant.now()))
+            .map(PhotoPurchase::getPostId)
+            .collect(Collectors.toList());
+
+        return postIds.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(postId -> postId, postId -> purchasedPostIds.contains(postId)));
     }
 
     /**

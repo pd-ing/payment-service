@@ -4,6 +4,7 @@ import com.pding.paymentservice.service.PaymentStatisticService;
 import com.pding.paymentservice.payload.request.CheckPurchaseVideoPackageRequest;
 import com.pding.paymentservice.payload.request.PackageSalesStatsRequest;
 import com.pding.paymentservice.payload.request.VideoPurchaseStatusRequest;
+import com.pding.paymentservice.service.PhotoPurchaseService;
 import com.pding.paymentservice.service.VideoPackagePurchaseService;
 import com.pding.paymentservice.service.VideoPurchaseService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,6 +26,7 @@ public class InternalController {
     private final VideoPurchaseService videoPurchaseService;
     private final VideoPackagePurchaseService videoPackagePurchaseService;
     private final PaymentStatisticService paymentStatisticService;
+    private final PhotoPurchaseService photoPurchaseService;
 
     @PostMapping("/checkIfVideoPurchasedExists")
     public ResponseEntity<?> checkIfVideoIsPurchased(@RequestParam(value = "videoId") String videoId) {
@@ -63,5 +66,20 @@ public class InternalController {
     @PostMapping("/package-sales-stats")
     public ResponseEntity<?> getPackageSalesStats(@RequestBody PackageSalesStatsRequest request) {
         return videoPackagePurchaseService.getPackageSalesStats(request);
+    }
+
+    /**
+     * Check if a list of photo posts have been purchased by a user
+     *
+     * @param userId  The ID of the user
+     * @param postIds The list of post IDs to check
+     * @return A map of post IDs to boolean values indicating if they have been purchased
+     */
+    @PostMapping("/check-photo-posts-purchased")
+    public ResponseEntity<Map<String, Boolean>> checkPhotoPostsPurchased(
+            @RequestParam(value = "userId") String userId,
+            @RequestBody List<String> postIds) {
+        Map<String, Boolean> result = photoPurchaseService.isPhotoPostPurchased(userId, postIds);
+        return ResponseEntity.ok(result);
     }
 }
