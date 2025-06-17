@@ -28,7 +28,6 @@ public class PhotoPostResponseNet {
     private Boolean isPaid;
     private Boolean isAdult;
     private Boolean isVisible;
-    private String status;
     private Double ratingScore;
     private Boolean isDeleted;
     private Boolean isPinned;
