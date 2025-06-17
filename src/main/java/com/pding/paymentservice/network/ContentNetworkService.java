@@ -1,5 +1,6 @@
 package com.pding.paymentservice.network;
 
+import com.pding.paymentservice.payload.net.PhotoPostResponseNet;
 import com.pding.paymentservice.payload.net.VideoPackageDetailsResponseNet;
 import com.pding.paymentservice.payload.response.PackageSalesStatsResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +32,8 @@ public class ContentNetworkService {
 
     /**
      * Get package details from content service
-     * @param buyerId The buyer ID
      * @param packageId The package ID
+     * @param selectedVideoIds Optional set of selected video IDs
      * @return Package details with personalized pricing for the buyer
      */
     public Mono<VideoPackageDetailsResponseNet> getPackageDetails(String packageId, Set<String> selectedVideoIds) {
@@ -64,5 +65,22 @@ public class ContentNetworkService {
             log.error("Error saving video package sales stats: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    /**
+     * Get photo post details from content service
+     * @param postId The photo post ID
+     * @return Photo post details
+     */
+    public Mono<PhotoPostResponseNet> getPhotoPostDetails(String postId) {
+        String uri = contentServiceHost + "/api/internal/photo-post?postId=" + postId;
+        return webClient.get()
+                .uri(uri)
+                .retrieve()
+                .bodyToMono(PhotoPostResponseNet.class)
+                .onErrorResume(e -> {
+                    log.error("Error getting photo post details: {}", e.getMessage(), e);
+                    return Mono.empty();
+                });
     }
 }

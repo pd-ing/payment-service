@@ -1,6 +1,8 @@
 package com.pding.paymentservice.models.enums;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public enum VideoPurchaseDuration {
     THREE_DAYS("THREE_DAYS"),
@@ -40,5 +42,9 @@ public enum VideoPurchaseDuration {
             default:
                 throw new IllegalArgumentException("Invalid duration: " + this.value);
         }
+    }
+
+    public Instant getExpiryDateInstant() {
+        return getExpiryDate().atZone(ZoneId.systemDefault()).toInstant();
     }
 }
