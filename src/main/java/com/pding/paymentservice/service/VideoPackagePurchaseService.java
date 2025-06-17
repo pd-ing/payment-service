@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -247,7 +248,7 @@ public class VideoPackagePurchaseService {
                 .divide(new BigDecimal(100))
         );
 
-        return subtotal.multiply(discountMultiplier).setScale(0, BigDecimal.ROUND_DOWN);
+        return subtotal.multiply(discountMultiplier).setScale(0, RoundingMode.UP);
     }
 
     /**
