@@ -114,7 +114,7 @@ public interface VideoPackagePurchaseRepository extends JpaRepository<VideoPacka
             String packageId, LocalDateTime startDate, LocalDateTime endDate);
 
 
-    @Query(value = "SELECT COALESCE(SUM(p.trees_consumed) - SUM(p.drm_fee), 0) FROM video_package_purchase p WHERE p.seller_id = :pdId AND p.purchase_date BETWEEN :startDate AND :endDate AND p.is_refunded = false", nativeQuery = true)
+    @Query(value = "SELECT COALESCE(SUM(p.trees_consumed), 0) - COALESCE(SUM(p.drm_fee), 0) FROM video_package_purchase p WHERE p.seller_id = :pdId AND p.purchase_date BETWEEN :startDate AND :endDate AND p.is_refunded = false", nativeQuery = true)
     Long getTotalTreesEarnedFromPackageSales(@Param("pdId") String pdId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
 }

@@ -220,7 +220,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
     List<Object[]> getAllSalesHistoryByUserIdAndDates(String searchString, String userId, LocalDate startDate, LocalDate endDate, String sortDirection);
 
     @Query(value =
-            "SELECT sum(vp.trees_consumed) - sum(drm_fee)" +
+            "SELECT COALESCE(SUM(vp.trees_consumed), 0) - COALESCE(SUM(drm_fee), 0)" +
             "FROM video_purchase vp " +
             "WHERE vp.video_owner_user_id = :userId and vp.is_refunded = false and vp.package_purchase_id is null " +
             "AND (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
