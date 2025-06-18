@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,8 @@ public class PhotoPostResponseNet {
     private String userId;
     private String title;
     private String description;
-    private Long uploadedTimeStamp;
-    private Long updatedTimeStamp;
+    private Instant uploadedTimeStamp;
+    private Instant updatedTimeStamp;
     private BigDecimal trees;
     private Boolean isPaid;
     private Boolean isAdult;

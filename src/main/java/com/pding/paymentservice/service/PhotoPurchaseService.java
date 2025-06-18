@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,7 +106,7 @@ public class PhotoPurchaseService {
                 LogSanitizer.sanitizeForLog(duration));
 
         earningService.addTreesToEarning(postOwnerUserId, treesConsumed);
-        ledgerService.saveToLedger(savedTransaction.getId(), treesConsumed, new BigDecimal(0), TransactionType.IMAGE_PURCHASE, userId);
+        ledgerService.saveToLedger(savedTransaction.getId(), treesConsumed, new BigDecimal(0), TransactionType.WEB_PHOTO_PURCHASE, userId);
 
         log.info("Buy photo request transaction completed with details UserId: {}, postId: {}, treesConsumed: {}, postOwnerUserId: {}, duration: {}",
                 LogSanitizer.sanitizeForLog(userId), LogSanitizer.sanitizeForLog(postId),
@@ -151,18 +150,16 @@ public class PhotoPurchaseService {
      * @param duration The duration of the purchase
      * @return The created transaction
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public PhotoPurchase buyPhotoPost(String userId, String postId, String duration) {
         validate(userId, postId, duration);
 
-        // Get photo post details from content service
         PhotoPostResponseNet photoPost = contentNetworkService.getPhotoPostDetails(postId)
             .blockOptional()
             .orElseThrow(() -> new RuntimeException("Cannot find photo post with ID: " + postId));
 
         String postOwnerUserId = photoPost.getUserId();
 
-        // Find the price for the specified duration
         PhotoPostResponseNet.PhotoDurationPriceDTO price = photoPost.getPrices().stream()
             .filter(p -> p.getDuration().equals(duration) && p.getEnabled())
             .findFirst()
@@ -174,7 +171,6 @@ public class PhotoPurchaseService {
             throw new RuntimeException("Cannot find post owner or trees amount");
         }
 
-        // Calculate expiry date based on duration
         Instant expiryDate = VideoPurchaseDuration.valueOf(duration).getExpiryDateInstant();
 
         return createPhotoPostTransaction(userId, postId, treesConsumed, postOwnerUserId, duration, expiryDate);

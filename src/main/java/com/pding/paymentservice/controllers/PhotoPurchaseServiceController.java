@@ -35,26 +35,13 @@ public class PhotoPurchaseServiceController {
     private PhotoPurchaseService photoPurchaseService;
 
     /**
-     * Buy a photo post
-     *
-     * @param postId The ID of the post to buy
-     * @return The purchase transaction
-     */
-    @PostMapping(value = "/buyPhotoPost")
-    public ResponseEntity<?> buyPhotoPost(
-        @RequestParam(value = "postId") String postId) {
-        String userId = authHelper.getUserId();
-        return ResponseEntity.ok(new GenericClassResponse<>(null, photoPurchaseService.buyPhotoPost(userId, postId)));
-    }
-
-    /**
      * Buy a photo post with a specific duration
      *
      * @param postId   The ID of the post to buy
      * @param duration The duration of the purchase
      * @return The purchase transaction
      */
-    @PostMapping(value = "/buyPhotoPostWithDuration")
+    @PostMapping(value = "/buyPhotoPost")
     public ResponseEntity<?> buyPhotoPostWithDuration(
         @RequestParam(value = "postId") String postId,
         @RequestParam(value = "duration") String duration) {
