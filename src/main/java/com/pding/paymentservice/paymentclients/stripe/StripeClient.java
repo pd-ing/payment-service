@@ -58,7 +58,7 @@ public class StripeClient {
         SessionCreateParams.Builder builder = new SessionCreateParams.Builder();
         builder.setSuccessUrl(successUrl)
                 .setCancelUrl(cancelUrl)
-                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+//                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                 .setAutomaticTax(SessionCreateParams.AutomaticTax.builder()
                         .setEnabled(true)
                         .build())
