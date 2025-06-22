@@ -8,6 +8,7 @@ import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericSliceResponse;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.PhotoPurchaseService;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
@@ -33,6 +34,23 @@ public class PhotoPurchaseServiceController {
 
     @Autowired
     private PhotoPurchaseService photoPurchaseService;
+
+    /**
+     * Get the purchaser list of a photo post
+     *
+     * @param photoId The ID of the photo post
+     * @param page    The page number
+     * @param size    The page size
+     * @return A list of users who purchased the photo post
+     */
+    @GetMapping(value = "/getPurchaserOfPhoto")
+    public ResponseEntity<?> purchaserListOfPhoto(
+        @RequestParam String photoId,
+        @RequestParam(defaultValue = "0") @Min(0) int page,
+        @RequestParam(defaultValue = "10") @Min(1) int size
+    ) {
+        return photoPurchaseService.loadPurchaseListOfSellerResponse(photoId, page, size);
+    }
 
     /**
      * Buy a photo post with a specific duration

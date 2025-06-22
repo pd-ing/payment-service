@@ -7,7 +7,11 @@ import com.pding.paymentservice.network.ContentNetworkService;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PhotoPostResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
+import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
+import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.UserLite;
+import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
+import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.repository.PhotoPurchaseRepository;
 import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
@@ -19,14 +23,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +55,67 @@ public class PhotoPurchaseService {
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final ContentNetworkService contentNetworkService;
     private final TokenSigner tokenSigner;
+
+    public ResponseEntity<?> loadPurchaseListOfSellerResponse(String photoId, int page, int size) {
+        try {
+            return ResponseEntity.ok(new PaginationResponse(null, loadPurchaseListOfSeller(photoId, page, size)));
+        } catch (Exception ex) {
+            log.error("Error loading purchase list of seller for photo: {}", photoId, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
+        }
+    }
+
+    private PaginationInfoWithGenericList<VideoPurchaserInfo> convertToResponse(Page<PhotoPurchase> dataList) throws Exception {
+        List<PhotoPurchase> dataContent = dataList.getContent();
+        Set<String> userIds = dataContent.stream().parallel().map(PhotoPurchase::getUserId).collect(Collectors.toSet());
+
+        List<PublicUserNet> usersFlux = userServiceNetworkManager.getUsersListFlux(userIds).blockFirst();
+
+        if (usersFlux == null) {
+            return new PaginationInfoWithGenericList<>(
+                dataList.getNumber(),
+                dataList.getSize(),
+                dataList.getTotalElements(),
+                dataList.getTotalPages(),
+                List.of()
+            );
+        }
+
+        Map<String, PublicUserNet> userMap = usersFlux.stream().parallel().collect(Collectors.toMap(PublicUserNet::getId, user -> user));
+
+        List<VideoPurchaserInfo> res = new ArrayList<>();
+
+        dataContent.forEach((p) -> {
+            PublicUserNet user = userMap.get(p.getUserId());
+            if (user != null) {
+                String date = p.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
+                LocalDateTime expiryDateTime = p.getExpiryDate() != null ?
+                    LocalDateTime.ofInstant(p.getExpiryDate(), ZoneId.systemDefault()) : null;
+                res.add(new VideoPurchaserInfo(user.getEmail(), p.getUserId(), null, date, p.getDuration(), expiryDateTime, p.getTreesConsumed()));
+            }
+        });
+
+        return new PaginationInfoWithGenericList<>(
+            dataList.getNumber(),
+            dataList.getSize(),
+            dataList.getTotalElements(),
+            dataList.getTotalPages(),
+            res
+        );
+    }
+
+    private PaginationInfoWithGenericList<VideoPurchaserInfo> loadPurchaseListOfSeller(String photoId, int page, int size) {
+        try {
+            PageRequest pageRequest = PageRequest.of(page, size);
+            Page<PhotoPurchase> pageData = photoPurchaseRepository.findAllByPostIdOrderByLastUpdateDateDesc(photoId, pageRequest);
+
+            return convertToResponse(pageData);
+        } catch (Exception ex) {
+            log.error("Error loading purchase list of seller for photo: {}", photoId, ex);
+            return null;
+        }
+    }
 
     /**
      * Create a transaction for purchasing a photo post

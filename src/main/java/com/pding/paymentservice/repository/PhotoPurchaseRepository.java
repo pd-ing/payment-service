@@ -26,4 +26,6 @@ public interface PhotoPurchaseRepository extends JpaRepository<PhotoPurchase, St
 
     @Query(value = "select distinct post_owner_user_id from photo_purchase where user_id = :userId", nativeQuery = true)
     Page<String> getAllPdUserIdWhosePostsArePurchasedByUser(String userId, Pageable pageable);
+
+    Page<PhotoPurchase> findAllByPostIdOrderByLastUpdateDateDesc(String postId, Pageable pageable);
 }
