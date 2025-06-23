@@ -12,6 +12,9 @@ import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
 import com.pding.paymentservice.util.LogSanitizer;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentMethod;
 import com.stripe.model.checkout.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -156,10 +159,24 @@ public class PaymentService {
         walletHistory.setDescription(description);
         walletHistory.setTransactionId(paymentIntentId);
         walletHistory.setTransactionStatus(TransactionType.PAYMENT_COMPLETED.getDisplayName());
+
+        updatePaymentMethod(walletHistory, paymentIntentId);
         walletHistoryService.save(walletHistory);
 
         affiliateTrackingService.trackTreePurchase(walletHistory.getUserId(), walletHistory);
         return "Payment completed successfully for paymentIntentId " + paymentIntentId;
+    }
+
+    private void updatePaymentMethod(WalletHistory walletHistory, String paymentIntentId) {
+       try {
+           PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+           String paymentMethodId = paymentIntent.getPaymentMethod();
+           PaymentMethod method = PaymentMethod.retrieve(paymentMethodId);
+           String type = method.getType();
+           walletHistory.setPaymentMethod(type);
+       } catch (Exception e) {
+           log.error("Error while updating payment method {}", e.getMessage());
+       }
     }
 
     @Transactional

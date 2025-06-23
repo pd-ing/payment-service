@@ -1,8 +1,12 @@
 package com.pding.paymentservice;
 
+import com.stripe.Stripe;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -15,6 +19,9 @@ import java.util.logging.Logger;
 public class PaymentServiceApplication {
 
     private static final Logger logger = Logger.getLogger(PaymentServiceApplication.class.getName());
+
+    @Value("${stripe.secret.key}")
+    private String secretKey;
 
     public static void main(String[] args) {
         logger.info("Starting User Management Application on the production server...");
@@ -48,4 +55,12 @@ public class PaymentServiceApplication {
 
     }
 
+    @Bean
+    public CommandLineRunner commandLineRunner() {
+        return args -> {
+            logger.info("Setting Stripe API key...");
+            Stripe.apiKey = secretKey;
+            logger.info("Stripe API key set successfully!");
+        };
+    }
 }

@@ -142,7 +142,7 @@ public class PaymentServiceController {
             paymentDetailsRequest.setTrees(new BigDecimal(Integer.parseInt(trees)));
             paymentDetailsRequest.setAmount(new BigDecimal(stripeClientResponse.getSession().getAmountTotal()));
             paymentDetailsRequest.setPurchasedDate(LocalDateTime.now());
-            paymentDetailsRequest.setPaymentMethod(String.join(", ", stripeClientResponse.getSession().getPaymentMethodTypes()));
+//            paymentDetailsRequest.setPaymentMethod(String.join(", ", stripeClientResponse.getSession().getPaymentMethodTypes()));
             paymentDetailsRequest.setCurrency(stripeClientResponse.getSession().getCurrency());
             paymentDetailsRequest.setDescription("Started payment to buy " + trees + " trees");
             paymentDetailsRequest.setTransactionId(stripeClientResponse.getSession().getId());
