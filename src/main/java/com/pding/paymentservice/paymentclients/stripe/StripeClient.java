@@ -29,23 +29,13 @@ import static com.stripe.param.checkout.SessionCreateParams.Mode.PAYMENT;
 
 @Component
 public class StripeClient {
-    @Value("${stripe.secret.key}")
-    private String secretKey;
-
     @Autowired
     WalletRepository walletRepository;
 
     @Autowired
     AuthHelper authHelper;
 
-    @Autowired
-    StripeClient() {
-        Stripe.apiKey = secretKey;
-    }
-
     public StripeClientResponse createStripeSession(String productId, String successUrl, String cancelUrl) throws Exception {
-        Stripe.apiKey = secretKey;
-
         Product product = getProduct(productId);
         String priceId = getPriceIdForProduct(product.getId());
 
@@ -77,8 +67,6 @@ public class StripeClient {
     // Method to check the status of a payment based on the payment intent ID
     public String checkPaymentStatus(String paymentIntentId) {
         try {
-            Stripe.apiKey = secretKey;
-
             PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
 
             String status = paymentIntent.getStatus();
@@ -93,18 +81,14 @@ public class StripeClient {
 
     // Retrieve a Stripe product by its ID
     private Product getProduct(String productId) throws StripeException {
-        Stripe.apiKey = secretKey;
         return Product.retrieve(productId);
     }
 
     public Price getPrice(String priceId) throws StripeException {
-        Stripe.apiKey = secretKey;
         return Price.retrieve(priceId);
     }
 
     private String getPriceIdForProduct(String productId) throws StripeException {
-        Stripe.apiKey = secretKey;
-
         PriceListParams params = PriceListParams.builder()
                 .setProduct(productId)
                 .build();
@@ -127,7 +111,6 @@ public class StripeClient {
     }
 
     public boolean isPaymentIntentIDPresentInStripe(String paymentIntentId) throws Exception {
-        Stripe.apiKey = secretKey;
         PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
         return paymentIntent.getStatus().equals("succeeded");
     }
@@ -139,7 +122,7 @@ public class StripeClient {
         Request request = new Request.Builder()
                 .url("https://api.stripe.com/v1/checkout/sessions?payment_intent=" + paymentIntentId)
                 .method("GET", null) // No need for a request body in a GET request
-                .addHeader("Authorization", "Bearer " + secretKey)
+                .addHeader("Authorization", "Bearer " + Stripe.apiKey)
                 .build();
 
         // Execute the request
@@ -153,12 +136,10 @@ public class StripeClient {
     }
 
     public Session getSessionDetails(String sessionId) throws Exception {
-        Stripe.apiKey = secretKey;
         return Session.retrieve(sessionId);
     }
 
     public Transfer transferPayment(String stripeId, String recipientEmail, Long amountInCents, Map<String, String> metaData) throws Exception {
-        Stripe.apiKey = secretKey;
         TransferCreateParams createParams = TransferCreateParams.builder()
                 .setAmount(amountInCents) // amount in cents
                 .setCurrency("usd")
