@@ -113,6 +113,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/topEarners").permitAll()
                                 .requestMatchers("/api/payment/topFans").authenticated()
                                 .requestMatchers("/api/payment/getPurchaserOfVideo").authenticated()
+                                .requestMatchers("/api/payment/getPurchaserOfPhoto").authenticated()
                                 .requestMatchers("/api/payment/v2/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v3/buyVideo").authenticated()
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
@@ -165,6 +166,11 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/paypal/captureOrder").authenticated()
                                 .requestMatchers("/api/internal/**").permitAll()
                                 .requestMatchers("/api/payment/packages/**").authenticated()
+                                .requestMatchers("/api/payment/buyPhotoPost").authenticated()
+                                .requestMatchers("/api/payment/getPurchaserOfPhoto").authenticated()
+                                .requestMatchers("/api/payment/isPhotoPostPurchased").authenticated()
+                                .requestMatchers("/api/payment/getPurchasedPhotoPosts").authenticated()
+                                .requestMatchers("/api/payment/allPdWhosePhotoPostsArePurchasedByUser").authenticated()
                 );
 
 
