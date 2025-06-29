@@ -4,8 +4,10 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.service.PaymentService;
 import com.pding.paymentservice.service.WalletHistoryService;
 import com.pding.paymentservice.paymentclients.stripe.StripeClient;
+import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Price;
 import com.stripe.model.Refund;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,7 @@ import com.stripe.model.Event;
 import com.stripe.net.Webhook;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -83,18 +86,47 @@ public class WebhookController {
                 case "charge.refunded":
                     Charge charge = (Charge) event.getData().getObject();
                     paymentIntentId = charge.getPaymentIntent();
-                    Long amountToRefundInCents = charge.getAmountRefunded();
-                    double treesToRefund = amountToRefundInCents / valueOfOneTreeInCents;
-                    log.info("handling Stripe charge.refunded event for paymentIntentId: {}, amountToRefundInCents: {}, treesToRefund: {}", paymentIntentId, amountToRefundInCents, treesToRefund);
-                    message = paymentService.completeRefundTrees(new BigDecimal(amountToRefundInCents), new BigDecimal(treesToRefund), paymentIntentId);
+                    String chargeId = charge.getId();
+                    Long amountToRefund = charge.getAmountRefunded();
+                    String currency = charge.getCurrency();
+                    Long treesToRefund;
+                    if (currency.equalsIgnoreCase("krw")) {
+                        treesToRefund = (new BigDecimal(amountToRefund)
+                            .divide(getPriceOfTreeInWon(), 2, RoundingMode.UP)
+                            .divide(BigDecimal.valueOf(1.1 * 0.8), 0, RoundingMode.UP))
+                            .longValue();
+                    } else {
+                        treesToRefund = (long) Math.ceil(amountToRefund / valueOfOneTreeInCents);
+                    }
+
+                    log.info("handling Stripe charge.refunded event for paymentIntentId: {}, amountToRefund: {}, treesToRefund: {}", paymentIntentId, amountToRefund, treesToRefund);
+                    // comment because this event send all refund amount, not this refund amount
+                    //                    message = paymentService.completeRefundTrees(new BigDecimal(amountToRefund), new BigDecimal(treesToRefund), paymentIntentId, chargeId);
                     break;
                 case "charge.refund.updated":
                     Refund refund = (Refund) event.getData().getObject();
-                    double treesToAdd = (refund.getAmount() / valueOfOneTreeInCents);
+                    currency = refund.getCurrency();
+                    amountToRefund = refund.getAmount();
+                    String refundId = refund.getId();
+                    paymentIntentId = refund.getPaymentIntent();
+                    long treesToAdd;
+
+                    if (currency.equalsIgnoreCase("krw")) {
+                        treesToAdd = (new BigDecimal(amountToRefund)
+                            .divide(getPriceOfTreeInWon(), 2, RoundingMode.UP)
+                            .divide(BigDecimal.valueOf(1.1 * 0.8), 0, RoundingMode.UP))
+                            .longValue();
+                    } else {
+                        treesToAdd = (long) Math.ceil(amountToRefund / valueOfOneTreeInCents);
+                    }
+
                     String transactionId = treesToAdd + "_trees_refunded_for_" + refund.getPaymentIntent();
                     if (refund.getStatus().equals("canceled")) {
                         log.info("handling Stripe charge.refund.updated, status CANCEL for transactionId: {}, treesToAdd: {}", transactionId, treesToAdd);
                         message = paymentService.cancelRefundTrees(new BigDecimal(treesToAdd), transactionId);
+                    }
+                    else if("succeeded".equalsIgnoreCase(refund.getStatus())) {
+                        message = paymentService.completeRefundTrees(new BigDecimal(amountToRefund), new BigDecimal(treesToAdd), paymentIntentId, refundId);
                     }
                     break;
                 default:
@@ -116,5 +148,14 @@ public class WebhookController {
             return (PaymentIntent) event.getData().getObject();
         }
         return null;
+    }
+
+    @Value("${stripe.product.OneHundredTreesKwonProdId}")
+    String productOneHundredTreesKwonProdId;
+
+    private BigDecimal getPriceOfTreeInWon() throws StripeException {
+        Price aPriceOfProduct = stripeClient.getListActivePrice(productOneHundredTreesKwonProdId, 1l).get(0);
+        BigDecimal amount = aPriceOfProduct.getUnitAmountDecimal();
+        return amount.divide(new BigDecimal(110), 2, RoundingMode.UP);
     }
 }

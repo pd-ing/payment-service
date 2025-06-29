@@ -6,10 +6,13 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Price;
+import com.stripe.model.PriceCollection;
 import com.stripe.model.Product;
+import com.stripe.model.ProductCollection;
 import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.PriceListParams;
+import com.stripe.param.ProductListParams;
 import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import okhttp3.OkHttpClient;
@@ -18,7 +21,6 @@ import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -159,4 +161,23 @@ public class StripeClient {
         return (session.getPaymentStatus().equals("paid"));
     }
 
+    public List<Product> getListActiveProduct(Long limit) throws StripeException {
+        ProductListParams params = ProductListParams.builder()
+            .setLimit(limit)
+            .setActive(true)
+            .build();
+
+        ProductCollection products = Product.list(params);
+        return products.getData();
+    }
+
+    public List<Price> getListActivePrice(String productId, Long limit) throws StripeException {
+        PriceListParams params = PriceListParams.builder()
+            .setProduct(productId)
+            .setActive(true)
+            .setLimit(limit)
+            .build();
+        PriceCollection prices = Price.list(params);
+        return prices.getData();
+    }
 }
