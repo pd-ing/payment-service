@@ -225,7 +225,7 @@ public class PaymentService {
 
 
     @Transactional
-    public String completeRefundTrees(BigDecimal amountInCents, BigDecimal treesToRefund, String paymentIntentId) {
+    public String completeRefundTrees(BigDecimal amountInCents, BigDecimal treesToRefund, String paymentIntentId, String refundId) {
         log.info("Start refund for transactionId: {}", paymentIntentId);
         Optional<WalletHistory> walletHistoryOptional = walletHistoryService.findByTransactionId(paymentIntentId);
         if (walletHistoryOptional.isPresent()) {
@@ -240,8 +240,8 @@ public class PaymentService {
             }
 
 
-            String transactionId = treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
-            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByTransactionId(transactionId);
+            String transactionId = refundId + "_" + treesToRefund + "_trees_refunded_for_" + walletHistory.getTransactionId();
+            Optional<WalletHistory> walletHistoryRefundEntryOptional = walletHistoryService.findByRefundId(refundId);
             if (walletHistoryRefundEntryOptional.isPresent()) {
                 WalletHistory walletHistoryRefundRecord = walletHistoryRefundEntryOptional.get();
                 String description = walletHistoryRefundRecord.getDescription() + ", Refund completed successfully";
@@ -260,7 +260,8 @@ public class PaymentService {
                         "Refunded through stripe",
                         walletHistory.getCurrency(),
                         "Refund completed successfully",
-                        walletHistory.getIpAddress()
+                        walletHistory.getIpAddress(),
+                        refundId
                 );
             }
 
