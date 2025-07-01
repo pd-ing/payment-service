@@ -125,9 +125,24 @@ public class WebhookController {
                         log.info("handling Stripe charge.refund.updated, status CANCEL for transactionId: {}, treesToAdd: {}", transactionId, treesToAdd);
                         message = paymentService.cancelRefundTrees(new BigDecimal(treesToAdd), transactionId);
                     }
-                    else if("succeeded".equalsIgnoreCase(refund.getStatus())) {
-                        message = paymentService.completeRefundTrees(new BigDecimal(amountToRefund), new BigDecimal(treesToAdd), paymentIntentId, refundId);
+                    break;
+                case "refund.created":
+                    refund = (Refund) event.getData().getObject();
+                    currency = refund.getCurrency();
+                    amountToRefund = refund.getAmount();
+                    refundId = refund.getId();
+                    paymentIntentId = refund.getPaymentIntent();
+
+                    if (currency.equalsIgnoreCase("krw")) {
+                        treesToAdd = (new BigDecimal(amountToRefund)
+                            .divide(getPriceOfTreeInWon(), 2, RoundingMode.UP)
+                            .divide(BigDecimal.valueOf(1.1 * 0.8), 0, RoundingMode.UP))
+                            .longValue();
+                    } else {
+                        treesToAdd = (long) Math.ceil(amountToRefund / valueOfOneTreeInCents);
                     }
+
+                    message = paymentService.completeRefundTrees(new BigDecimal(amountToRefund), new BigDecimal(treesToAdd), paymentIntentId, refundId);
                     break;
                 default:
                     break;
