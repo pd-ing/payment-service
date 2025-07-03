@@ -4,6 +4,7 @@ import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.Earning;
 import com.pding.paymentservice.payload.request.PremiumEncodingFeeRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.PhotoPurchaseTimeRemainingResponse;
 import com.pding.paymentservice.payload.response.PremiumEncodingFeeResponse;
 import com.pding.paymentservice.payload.response.UserEarningWalletResponse;
 import com.pding.paymentservice.service.EarningService;
@@ -89,13 +90,13 @@ public class InternalController {
      *
      * @param userId  The ID of the user
      * @param postIds The list of post IDs to check
-     * @return A map of post IDs to boolean values indicating if they have been purchased
+     * @return A map of post IDs to PhotoPurchaseTimeRemainingResponse objects containing purchase information
      */
     @PostMapping("/check-photo-posts-purchased")
-    public ResponseEntity<Map<String, Boolean>> checkPhotoPostsPurchased(
+    public ResponseEntity<Map<String, PhotoPurchaseTimeRemainingResponse>> checkPhotoPostsPurchased(
             @RequestParam(value = "userId") String userId,
             @RequestBody List<String> postIds) {
-        Map<String, Boolean> result = photoPurchaseService.isPhotoPostPurchased(userId, postIds);
+        Map<String, PhotoPurchaseTimeRemainingResponse> result = photoPurchaseService.isPhotoPostPurchased(userId, postIds);
         return ResponseEntity.ok(result);
     }
 

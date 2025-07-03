@@ -9,6 +9,7 @@ import com.pding.paymentservice.payload.net.PhotoPostResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.PhotoPurchaseTimeRemainingResponse;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
@@ -33,7 +34,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -295,20 +298,55 @@ public class PhotoPurchaseService {
      *
      * @param userId  The ID of the user
      * @param postIds The list of post IDs to check
-     * @return A map of post IDs to boolean values indicating if they have been purchased
+     * @return A map of post IDs to PhotoPurchaseTimeRemainingResponse objects containing purchase information
      */
-    public Map<String, Boolean> isPhotoPostPurchased(String userId, List<String> postIds) {
+    public Map<String, PhotoPurchaseTimeRemainingResponse> isPhotoPostPurchased(String userId, List<String> postIds) {
         List<PhotoPurchase> photoPurchases = photoPurchaseRepository.findByUserIdAndPostIdIn(userId, postIds);
 
-        // Filter purchases to only include those that haven't expired (expiry_date > now())
-        List<String> purchasedPostIds = photoPurchases.stream()
-            .filter(purchase -> purchase.getExpiryDate() == null || purchase.getExpiryDate().isAfter(Instant.now()))
-            .map(PhotoPurchase::getPostId)
-            .collect(Collectors.toList());
+        // Group purchases by post ID
+        Map<String, List<PhotoPurchase>> purchasesByPostId = photoPurchases.stream()
+            .collect(Collectors.groupingBy(PhotoPurchase::getPostId));
 
-        return postIds.stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(postId -> postId, postId -> purchasedPostIds.contains(postId)));
+        // Create a map of post IDs to purchase information
+        Map<String, PhotoPurchaseTimeRemainingResponse> result = new HashMap<>();
+
+        for (String postId : postIds) {
+            if (postId == null) continue;
+
+            List<PhotoPurchase> purchases = purchasesByPostId.get(postId);
+            if (purchases == null || purchases.isEmpty()) {
+                // No purchases for this post
+                continue;
+            }
+
+            // Find the best purchase (permanent or with the latest expiry date)
+            PhotoPurchase bestPurchase = purchases.stream()
+                .filter(purchase -> purchase.getExpiryDate() == null || purchase.getExpiryDate().isAfter(Instant.now()))
+                .findFirst()
+                .orElse(null);
+
+            if (bestPurchase == null) {
+                // No valid purchases for this post
+                continue;
+            }
+
+            // Create response object
+            PhotoPurchaseTimeRemainingResponse response = new PhotoPurchaseTimeRemainingResponse();
+            response.setPhotoPostId(postId);
+            response.setExpiryDate(bestPurchase.getExpiryDate());
+            response.setIsPermanent(bestPurchase.getExpiryDate() == null || bestPurchase.getDuration() == null || bestPurchase.getDuration().equals(VideoPurchaseDuration.PERMANENT.name()));
+            response.setIsExpirated(bestPurchase.getExpiryDate() != null && bestPurchase.getExpiryDate().isBefore(Instant.now()));
+
+            // Calculate days remaining if not permanent
+            if (bestPurchase.getExpiryDate() != null) {
+                long daysRemaining = ChronoUnit.DAYS.between(Instant.now(), bestPurchase.getExpiryDate());
+                response.setNumberOfDaysRemaining(daysRemaining);
+            }
+
+            result.put(postId, response);
+        }
+
+        return result;
     }
 
     /**
