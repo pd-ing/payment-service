@@ -3,12 +3,14 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.models.PhotoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
+import com.pding.paymentservice.models.tables.inner.PhotoEarningsAndSales;
 import com.pding.paymentservice.network.ContentNetworkService;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
 import com.pding.paymentservice.payload.net.PhotoPostResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.net.VideoPurchaserInfo;
 import com.pding.paymentservice.payload.response.ErrorResponse;
+import com.pding.paymentservice.payload.response.PhotoEarningsAndSalesResponse;
 import com.pding.paymentservice.payload.response.PhotoPurchaseTimeRemainingResponse;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.payload.response.custompagination.PaginationInfoWithGenericList;
@@ -36,6 +38,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -388,5 +391,25 @@ public class PhotoPurchaseService {
 
         List<UserLite> users = usersFlux.stream().map(userObj -> UserLite.fromPublicUserNet(userObj, tokenSigner)).toList();
         return new PageImpl<>(users, pageable, userIdsPage.getTotalElements());
+    }
+
+    /**
+     * Get earnings and sales data for photo posts
+     *
+     * @param photoPostIds Comma-separated list of photo post IDs
+     * @return Response with earnings and sales data for each photo post
+     */
+    public ResponseEntity<?> photoEarningAndSales(String photoPostIds) {
+        if (photoPostIds == null || photoPostIds.isEmpty()) {
+            return ResponseEntity.badRequest().body(new PhotoEarningsAndSalesResponse(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "photoPostIds parameter is required."), null));
+        }
+        try {
+            List<String> photoPostIdsList = Arrays.stream(photoPostIds.split(","))
+                .toList();
+            Map<String, PhotoEarningsAndSales> photoStats = photoPurchaseRepository.getTotalTreesEarnedAndSalesCountMapForPostIds(photoPostIdsList);
+            return ResponseEntity.ok().body(new PhotoEarningsAndSalesResponse(null, photoStats));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PhotoEarningsAndSalesResponse(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), null));
+        }
     }
 }

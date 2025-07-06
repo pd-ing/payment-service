@@ -201,4 +201,15 @@ public class InternalController {
             ));
         }
     }
+
+    /**
+     * Get sales and purchase data for photo posts
+     *
+     * @param photoPostIds The set of photo post IDs to get data for
+     * @return A response containing a HashMap mapping photo post IDs to their sales and purchase data
+     */
+    @GetMapping("/photoEarningAndSales")
+    public ResponseEntity<?> photoEarningAndSales(@RequestParam(value = "photoPostIds") String photoPostIds) {
+        return photoPurchaseService.photoEarningAndSales(photoPostIds);
+    }
 }
