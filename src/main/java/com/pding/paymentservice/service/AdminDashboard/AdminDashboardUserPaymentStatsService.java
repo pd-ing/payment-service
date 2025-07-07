@@ -242,8 +242,8 @@ public class AdminDashboardUserPaymentStatsService {
         return realTimeTreeUsageTabService.getRealTimeTreeUsage(startDate, endDate, transactionType, searchString, page, size);
     }
 
-    public TotalTreeUsageSummary getTotalTreeUsageSummary(LocalDate startDate, LocalDate endDate) {
-        return realTimeTreeUsageTabService.getTreesSummaryTotals(startDate, endDate);
+    public TotalTreeUsageSummary getTotalTreeUsageSummary(LocalDate startDate, LocalDate endDate, String searchString) {
+        return realTimeTreeUsageTabService.getTreesSummaryTotals(startDate, endDate, searchString);
     }
 
     public RealTimeLeafTransactionHistory getRealTimeLeafUsage(LocalDate startDate, LocalDate endDate, String searchString, int page, int size) {
