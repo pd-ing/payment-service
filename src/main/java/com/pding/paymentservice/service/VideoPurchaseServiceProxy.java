@@ -70,7 +70,7 @@ public class VideoPurchaseServiceProxy {
         }
 
         // Total fee is DRM fee (if applicable) plus 4K fee (if applicable)
-        BigDecimal totalFee = (drmEnable ? drmFee : BigDecimal.ZERO).add(fee4k).add(feePremiumEncoding);
+        BigDecimal totalFee = (drmEnable ? drmFee : BigDecimal.ZERO);
 
         VideoPurchase transaction = new VideoPurchase(userId, videoId, treesToConsumed, videoOwnerUserId, duration,
             VideoPurchaseDuration.valueOf(duration).getExpiryDate(), totalFee);
