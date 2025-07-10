@@ -77,4 +77,8 @@ public class PremiumEncodingTransactionService {
     public List<PremiumEncodingTransaction> getTransactionsByUserIdAndVideoId(String userId, String videoId) {
         return premiumEncodingTransactionRepository.findByUserIdAndVideoId(userId, videoId);
     }
+
+    public List<PremiumEncodingTransaction> findPremiumEncodingTransactionByVideoWithLocking(String videoId) {
+        return premiumEncodingTransactionRepository.findPremiumEncodingTransactionByVideoWithLocking(videoId);
+    }
 }

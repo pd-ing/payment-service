@@ -2,6 +2,7 @@ package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.models.Earning;
+import com.pding.paymentservice.models.PremiumEncodingTransaction;
 import com.pding.paymentservice.payload.request.PremiumEncodingFeeRequest;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.payload.response.PhotoPurchaseTimeRemainingResponse;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -137,69 +139,53 @@ public class InternalController {
     }
 
     @PostMapping("/deduct-premium-encoding-fee")
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public ResponseEntity<PremiumEncodingFeeResponse> deductPremiumEncodingFee(@RequestBody PremiumEncodingFeeRequest request) {
         log.info("Deducting premium encoding fee for userId: {}, videoId: {}, fee: {}",
             request.getUserId(), request.getVideoId(), request.getFee());
 
-        try {
-            Earning earning = earningService.findEarningByUserId(request.getUserId());
-            BigDecimal currentBalance = earning.getTreesEarned();
-
-            if (currentBalance.compareTo(request.getFee()) < 0) {
-                log.error("Insufficient trees in earning wallet. Current balance: {}, Required: {}",
-                    currentBalance, request.getFee());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new PremiumEncodingFeeResponse(
-                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Insufficient trees in earning wallet"),
-                    "Insufficient trees in earning wallet",
-                    null,
-                    currentBalance
-                ));
-            }
-
-            earningService.deductTreesFromEarning(request.getUserId(), request.getFee());
-
-            BigDecimal updatedBalance = earningService.findEarningByUserId(request.getUserId()).getTreesEarned();
-
-            premiumEncodingTransactionService.createTransaction(
-                request.getUserId(),
-                request.getVideoId(),
-                request.getFee(),
-                "COMPLETED",
-                "Premium encoding fee deducted from earning wallet"
-            );
-
-            log.info("Successfully deducted premium encoding fee for userId: {}, videoId: {}, fee: {}, remaining balance: {}",
-                request.getUserId(), request.getVideoId(), request.getFee(), updatedBalance);
-
+        List<PremiumEncodingTransaction> existing = premiumEncodingTransactionService.findPremiumEncodingTransactionByVideoWithLocking(request.getVideoId());
+        if (!existing.isEmpty()) {
             return ResponseEntity.ok(new PremiumEncodingFeeResponse(
                 null,
                 "Premium encoding fee deducted successfully",
                 request.getFee(),
-                updatedBalance
-            ));
-
-        } catch (Exception e) {
-            log.error("Error deducting premium encoding fee", e);
-//            try {
-//                premiumEncodingTransactionService.createTransaction(
-//                    request.getUserId(),
-//                    request.getVideoId(),
-//                    request.getFee(),
-//                    "FAILED",
-//                    "Error: " + e.getMessage()
-//                );
-//            } catch (Exception ex) {
-//                log.error("Error saving failed transaction record", ex);
-//            }
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PremiumEncodingFeeResponse(
-                new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()),
-                "Error deducting premium encoding fee",
-                null,
                 null
             ));
         }
+        Earning earning = earningService.findEarningByUserId(request.getUserId());
+        BigDecimal currentBalance = earning.getTreesEarned();
+
+        if (currentBalance.compareTo(request.getFee()) < 0) {
+            log.error("Insufficient trees in earning wallet. Current balance: {}, Required: {}",
+                currentBalance, request.getFee());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new PremiumEncodingFeeResponse(
+                new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Insufficient trees in earning wallet"),
+                "Insufficient trees in earning wallet",
+                null,
+                currentBalance
+            ));
+        }
+        earningService.deductTreesFromEarning(request.getUserId(), request.getFee());
+        BigDecimal updatedBalance = earningService.findEarningByUserId(request.getUserId()).getTreesEarned();
+
+        premiumEncodingTransactionService.createTransaction(
+            request.getUserId(),
+            request.getVideoId(),
+            request.getFee(),
+            "COMPLETED",
+            "Premium encoding fee deducted from earning wallet"
+        );
+
+        log.info("Successfully deducted premium encoding fee for userId: {}, videoId: {}, fee: {}, remaining balance: {}",
+            request.getUserId(), request.getVideoId(), request.getFee(), updatedBalance);
+
+        return ResponseEntity.ok(new PremiumEncodingFeeResponse(
+            null,
+            "Premium encoding fee deducted successfully",
+            request.getFee(),
+            updatedBalance
+        ));
     }
 
     /**
