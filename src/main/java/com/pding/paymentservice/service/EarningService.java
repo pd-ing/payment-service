@@ -115,6 +115,19 @@ public class EarningService {
         return earning;
     }
 
+    public Earning findEarningByUserId(String userId) {
+        Optional<Earning> earning = earningRepository.findByUserId(userId);
+        if (!earning.isPresent()) {
+            Earning earningObj = new Earning();
+            earningObj.setUserId(userId);
+            earningObj.setTreesEarned(new BigDecimal(0));
+            earningObj.setLeafsEarned(new BigDecimal(0));
+            earningObj.setTotalTransactions(0);
+            return earningObj;
+        }
+        return earning.get();
+    }
+
 
     @Transactional
     public void deductTreesFromEarning(String userId, BigDecimal treesToDeduct) {

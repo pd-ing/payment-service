@@ -2,7 +2,9 @@ package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.models.ImagePurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
+import com.pding.paymentservice.network.ContentNetworkService;
 import com.pding.paymentservice.network.UserServiceNetworkManager;
+import com.pding.paymentservice.payload.net.PhotoPostResponseNet;
 import com.pding.paymentservice.payload.net.PublicUserNet;
 import com.pding.paymentservice.payload.response.UserLite;
 import com.pding.paymentservice.repository.ImagePurchaseRepository;

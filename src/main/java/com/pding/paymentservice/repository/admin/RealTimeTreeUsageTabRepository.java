@@ -26,12 +26,11 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "  FROM video_purchase vp" +
         "           LEFT JOIN users u ON vp.user_id = u.id" +
         "           LEFT JOIN users pd ON vp.video_owner_user_id = pd.id" +
-        "  WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate)" +
+        "  WHERE vp.package_id is null and (:startDate IS NULL OR vp.last_update_date >= :startDate)" +
         "    AND (:endDate IS NULL OR vp.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL) OR" +
         "         (u.email LIKE concat(:searchString, '%') OR pd.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'VIDEO')" +
-//        "    order by vp.last_update_date desc" +
         " )" +
         " UNION ALL" +
         " (SELECT COALESCE(u.email, '')," +
@@ -77,7 +76,6 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR u.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'EXPOSURE_TICKET')" +
-//        "    order by ticket.purchased_date desc" +
         " )" +
         " union all" +
         " (select COALESCE(u.email, '')," +
@@ -101,6 +99,29 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "      OR (u.email LIKE concat(:searchString, '%')" +
         "          OR u.nickname LIKE concat(:searchString, '%')))" +
         "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE')" +
+        "    )" +
+        " union all" +
+        " (select COALESCE(u.email, '')," +
+        "         COALESCE(u.id, '')," +
+        "         COALESCE(vpp.purchase_date, '') AS last_update_date," +
+        "         COALESCE(vpp.trees_consumed, 0)," +
+        "         COALESCE(vp.package_type, 'THEME_PACKAGE')  as transaction_type," +
+        "         COALESCE(pd.nickname, '')," +
+        "         COALESCE(pd.id, '')," +
+        "         vpp.id," +
+        "         case vpp.is_refunded when true then 'REFUNDED' else 'COMPLETED' end as status" +
+        "  from video_package_purchase vpp" +
+        "           left join users u on vpp.user_id = u.id" +
+        "           left join users pd on vpp.seller_id = pd.id" +
+        "           left join video_packages vp on vpp.package_id = vp.id" +
+        "  where (:startDate IS NULL" +
+        "      OR vpp.purchase_date >= :startDate)" +
+        "    and (:endDate IS NULL" +
+        "      OR vpp.purchase_date <= :endDate)" +
+        "    AND ((:searchString IS NULL)" +
+        "      OR (u.email LIKE concat(:searchString, '%')" +
+        "          OR pd.nickname LIKE concat(:searchString, '%')))" +
+        "    AND (:transactionType IS NULL OR :transactionType = COALESCE(vp.package_type, 'THEME_PACKAGE'))" +
         "    )"
         ,countQuery =
                 " select count(*) " +
@@ -156,6 +177,20 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "      OR (u.email LIKE concat(:searchString, '%')" +
                 "          OR u.nickname LIKE concat( :searchString, '%')))" +
                 "    AND (:transactionType IS NULL OR :transactionType = 'MESSAGE'))" +
+                " union all" +
+                " (select vpp.id " +
+                "  from video_package_purchase vpp" +
+                "           left join users u on vpp.user_id = u.id" +
+                "           left join users pd on vpp.seller_id = pd.id" +
+                "           left join video_packages vp on vpp.package_id = vp.id" +
+                "  where (:startDate IS NULL" +
+                "      OR vpp.purchase_date >= :startDate)" +
+                "    and (:endDate IS NULL" +
+                "      OR vpp.purchase_date <= :endDate)" +
+                "    AND ((:searchString IS NULL)" +
+                "      OR (u.email LIKE concat(:searchString, '%')" +
+                "          OR pd.nickname LIKE concat(:searchString, '%')))" +
+                "    AND (:transactionType IS NULL OR :transactionType = COALESCE(vp.package_type, 'THEME_PACKAGE')))" +
                 ") as total_count",
             nativeQuery = true)
     Page<Object[]> getRealTimeTreeUsage(@Param("startDate") LocalDate startDate,
@@ -165,25 +200,55 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                                         Pageable pageable);
 
 
-    @Query(value = "SELECT  COALESCE(SUM(trees_consumed), 0) " +
-            "FROM video_purchase " +
-            "WHERE (:startDate IS NULL OR last_update_date >= :startDate) " +
-            "AND (:endDate IS NULL OR  last_update_date <= :endDate) ",
+    @Query(value =
+                " SELECT COALESCE(SUM(trees_consumed), 0)" +
+                " FROM video_purchase vp" +
+                "          left join users u on vp.user_id = u.id" +
+                " WHERE (:startDate IS NULL OR last_update_date >= :startDate)" +
+                "   AND (:endDate IS NULL OR last_update_date <= :endDate)" +
+                "   AND (:searchString IS NULL OR :searchString = '' OR u.email like concat(:searchString, '%')" +
+                "     OR u.nickname like concat(:searchString, '%')" +
+                "     OR u.id like concat(:searchString, '%'))",
             nativeQuery = true)
-    BigDecimal getTotalTreesTransactedForVideos(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    BigDecimal getTotalTreesTransactedForVideos(@Param("startDate") LocalDate startDate,
+                                                @Param("endDate") LocalDate endDate,
+                                                @Param("searchString") String searchString
+                                                );
 
-    @Query(value = "SELECT  COALESCE(SUM(donated_trees),0) " +
-            "FROM donation d " +
-            "WHERE (:startDate IS NULL OR last_update_date >= :startDate) " +
-            "AND (:endDate IS NULL OR  last_update_date <= :endDate) ",
+    @Query(value =
+            " SELECT  COALESCE(SUM(donated_trees),0) " +
+            " FROM donation d " +
+            " LEFT JOIN users u ON d.donor_user_id = u.id " +
+            " WHERE (:startDate IS NULL OR d.last_update_date >= :startDate) " +
+            " AND (:endDate IS NULL OR d.last_update_date <= :endDate) " +
+            " AND (:searchString IS NULL OR :searchString = '' OR u.email like concat(:searchString, '%') " +
+            " OR u.nickname like concat(:searchString, '%') " +
+            " OR u.id like concat(:searchString, '%'))",
             nativeQuery = true)
-    BigDecimal getTotalTreesDonated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    BigDecimal getTotalTreesDonated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
-    @Query(value = "SELECT  COALESCE(SUM(trees_consumed), 0) " +
-            "FROM exposure_ticket_purchase " +
-            "WHERE is_give_by_admin is not true and (:startDate IS NULL OR purchased_date >= :startDate) " +
-            "AND (:endDate IS NULL OR  purchased_date <= :endDate) and status != 'REFUNDED'",
+    @Query(value =
+            " SELECT  COALESCE(SUM(e.trees_consumed), 0) " +
+            " FROM exposure_ticket_purchase e " +
+            " LEFT JOIN users u ON e.user_id = u.id " +
+            " WHERE e.is_give_by_admin = false and (:startDate IS NULL OR e.purchased_date >= :startDate) " +
+            " AND (:endDate IS NULL OR e.purchased_date <= :endDate) and e.status in ('UNUSED', 'USED') " +
+            " AND (:searchString IS NULL OR :searchString = '' OR u.email like concat(:searchString, '%') " +
+            " OR u.nickname like concat(:searchString, '%') " +
+            " OR u.id like concat(:searchString, '%'))",
             nativeQuery = true)
-    BigDecimal getTotalTreesTransactedForExposureTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    BigDecimal getTotalTreesTransactedForExposureTickets(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
+
+    @Query(value = "" +
+            " SELECT COALESCE(SUM(vpp.trees_consumed), 0) " +
+            " FROM video_package_purchase vpp " +
+            " LEFT JOIN users u ON vpp.user_id = u.id " +
+            " WHERE (:startDate IS NULL OR vpp.purchase_date >= :startDate) " +
+            " AND (:endDate IS NULL OR vpp.purchase_date <= :endDate) AND vpp.is_refunded = false " +
+            " AND (:searchString IS NULL OR :searchString = '' OR u.email like concat(:searchString, '%') " +
+            " OR u.nickname like concat(:searchString, '%') " +
+            " OR u.id like concat(:searchString, '%'))",
+            nativeQuery = true)
+    BigDecimal getTotalTreesTransactedForVideoPackages(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("searchString") String searchString);
 
 }

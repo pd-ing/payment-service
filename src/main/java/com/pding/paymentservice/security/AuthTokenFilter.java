@@ -1,5 +1,6 @@
 package com.pding.paymentservice.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -21,13 +22,18 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     List<String> permitAllEndpoints = Arrays.asList(
             "/api/payment/webhook",
@@ -83,6 +89,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String email = null;
             Boolean emailVerified = null;
             Boolean isAdmin = false;
+            Boolean isBanned = false;
             if (serverToken != null && !serverToken.isEmpty()) {
                 userId = getUidFromServerToken(serverToken);
             } else if (idToken != null && !idToken.isEmpty()) {
@@ -91,6 +98,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 email = firebaseToken.getEmail();
                 emailVerified = firebaseToken.isEmailVerified();
                 isAdmin = Boolean.TRUE.equals(firebaseToken.getClaims().get("admin"));
+                isBanned = Boolean.TRUE.equals(firebaseToken.getClaims().get("isBanned"));
+
+                if(isBanned) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    Map<String, Object> result = new LinkedHashMap<>();
+                    result.put("message", "Account is banned");
+                    response.getWriter().write(objectMapper.writeValueAsString(result));
+                    return;
+                }
             } else {
                 userId = null;
             }

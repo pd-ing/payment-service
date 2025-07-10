@@ -362,7 +362,9 @@ public class AdminDashboardUserPaymentStatsController {
 
     @GetMapping(value = "/realTimeTreeUsageTotals")
     public ResponseEntity<?> getRealTimeTreeUsageTotalsDetailsController(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                                                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+                                                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                                                                         @RequestParam(required = false) String searchString
+                                                                         ) {
         TotalTreeUsageSummary totalTreeUsageSummary = null;
         try {
             if ((startDate == null && endDate != null) || (startDate != null && endDate == null)) {
@@ -372,7 +374,7 @@ public class AdminDashboardUserPaymentStatsController {
             if (endDate != null) {
                 endDate = endDate.plusDays(1L);
             }
-            totalTreeUsageSummary = adminDashboardUserPaymentStatsService.getTotalTreeUsageSummary(startDate, endDate);
+            totalTreeUsageSummary = adminDashboardUserPaymentStatsService.getTotalTreeUsageSummary(startDate, endDate, searchString);
             return ResponseEntity.ok(new AdminDashboardUserPaymentStats(null, totalTreeUsageSummary));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AdminDashboardUserPaymentStats(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()), totalTreeUsageSummary));

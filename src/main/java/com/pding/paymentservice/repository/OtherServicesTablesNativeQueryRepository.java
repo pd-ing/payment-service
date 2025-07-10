@@ -298,7 +298,7 @@ public interface OtherServicesTablesNativeQueryRepository extends JpaRepository<
     Optional<String> getNicknameByUserId(@Param("userId") String userId);
 
 
-    @Query(value = "SELECT video_id as videoId, user_id as userId, drm_enable as drmEnable, video_library_id as videoLibraryId FROM videos WHERE video_id = :videoId", nativeQuery = true)
+    @Query(value = "SELECT video_id as videoId, user_id as userId, drm_enable as drmEnable, video_library_id as videoLibraryId, advanced_encoding_enable as advancedEncodingEnable FROM videos WHERE video_id = :videoId", nativeQuery = true)
     Optional<VideoProjection> findUserIdByVideoId(@Param("videoId") String videoId);
 
     @Query(value = "select video_id, duration, trees, enabled from video_duration_price where video_id = :videoId", nativeQuery = true)

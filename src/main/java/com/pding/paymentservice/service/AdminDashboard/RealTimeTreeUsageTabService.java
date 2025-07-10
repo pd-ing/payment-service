@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class RealTimeTreeUsageTabService {
@@ -39,17 +40,36 @@ public class RealTimeTreeUsageTabService {
         return result;
     }
 
-    public TotalTreeUsageSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate) {
+    public TotalTreeUsageSummary getTreesSummaryTotals(LocalDate startDate, LocalDate endDate, String searchString) {
         TotalTreeUsageSummary treeSummary = new TotalTreeUsageSummary();
         BigDecimal totalTreesTransacted = new BigDecimal(0.00);
-        BigDecimal totalTreesVideoTransaction = realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideos(startDate, endDate);
-        BigDecimal totalTreesDonated = realTimeTreeUsageTabRepository.getTotalTreesDonated(startDate, endDate);
-        BigDecimal totalTreesTransactedForExposureTickets = realTimeTreeUsageTabRepository.getTotalTreesTransactedForExposureTickets(startDate, endDate);
-        totalTreesTransacted = totalTreesVideoTransaction.add(totalTreesDonated).add(totalTreesTransactedForExposureTickets);
+        CompletableFuture<BigDecimal> videoTransactionFuture = CompletableFuture.supplyAsync(
+            () -> realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideos(startDate, endDate, searchString));
+
+        CompletableFuture<BigDecimal> donatedFuture = CompletableFuture.supplyAsync(
+            () -> realTimeTreeUsageTabRepository.getTotalTreesDonated(startDate, endDate, searchString));
+
+        CompletableFuture<BigDecimal> exposureTicketsFuture = CompletableFuture.supplyAsync(
+            () -> realTimeTreeUsageTabRepository.getTotalTreesTransactedForExposureTickets(startDate, endDate, searchString));
+
+        CompletableFuture<BigDecimal> videoPackagesFuture = CompletableFuture.supplyAsync(
+            () -> realTimeTreeUsageTabRepository.getTotalTreesTransactedForVideoPackages(startDate, endDate, searchString));
+
+        CompletableFuture.allOf(videoTransactionFuture, donatedFuture, exposureTicketsFuture, videoPackagesFuture).join();
+
+        BigDecimal totalTreesVideoTransaction = videoTransactionFuture.join();
+        BigDecimal totalTreesDonated = donatedFuture.join();
+        BigDecimal totalTreesTransactedForExposureTickets = exposureTicketsFuture.join();
+        BigDecimal totalTreesTransactedForVideoPackages = videoPackagesFuture.join();
+
+
+
+        totalTreesTransacted = totalTreesVideoTransaction.add(totalTreesDonated).add(totalTreesTransactedForExposureTickets).add(totalTreesTransactedForVideoPackages);
         treeSummary.setTotalTreesTransacted(totalTreesTransacted);
         treeSummary.setTotalTreesVideoTransaction(totalTreesVideoTransaction);
         treeSummary.setTotalTreesDonated(totalTreesDonated);
         treeSummary.setTotalTreesTransactedForExposureTickets(totalTreesTransactedForExposureTickets);
+        treeSummary.setTotalTreesTransactedForVideoPackages(totalTreesTransactedForVideoPackages);
         return treeSummary;
     }
 
