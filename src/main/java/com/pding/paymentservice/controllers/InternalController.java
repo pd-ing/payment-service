@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -136,6 +137,7 @@ public class InternalController {
     }
 
     @PostMapping("/deduct-premium-encoding-fee")
+    @Transactional
     public ResponseEntity<PremiumEncodingFeeResponse> deductPremiumEncodingFee(@RequestBody PremiumEncodingFeeRequest request) {
         log.info("Deducting premium encoding fee for userId: {}, videoId: {}, fee: {}",
             request.getUserId(), request.getVideoId(), request.getFee());
@@ -179,19 +181,17 @@ public class InternalController {
 
         } catch (Exception e) {
             log.error("Error deducting premium encoding fee", e);
-            pdLogger.logException(e);
-
-            try {
-                premiumEncodingTransactionService.createTransaction(
-                    request.getUserId(),
-                    request.getVideoId(),
-                    request.getFee(),
-                    "FAILED",
-                    "Error: " + e.getMessage()
-                );
-            } catch (Exception ex) {
-                log.error("Error saving failed transaction record", ex);
-            }
+//            try {
+//                premiumEncodingTransactionService.createTransaction(
+//                    request.getUserId(),
+//                    request.getVideoId(),
+//                    request.getFee(),
+//                    "FAILED",
+//                    "Error: " + e.getMessage()
+//                );
+//            } catch (Exception ex) {
+//                log.error("Error saving failed transaction record", ex);
+//            }
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PremiumEncodingFeeResponse(
                 new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()),
