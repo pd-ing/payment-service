@@ -26,7 +26,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
         "  FROM video_purchase vp" +
         "           LEFT JOIN users u ON vp.user_id = u.id" +
         "           LEFT JOIN users pd ON vp.video_owner_user_id = pd.id" +
-        "  WHERE vp.package_id is null and (:startDate IS NULL OR vp.last_update_date >= :startDate)" +
+        "  WHERE vp.package_purchase_id is null and (:startDate IS NULL OR vp.last_update_date >= :startDate)" +
         "    AND (:endDate IS NULL OR vp.last_update_date <= :endDate)" +
         "    AND ((:searchString IS NULL) OR" +
         "         (u.email LIKE concat(:searchString, '%') OR pd.nickname LIKE concat(:searchString, '%')))" +
@@ -129,7 +129,7 @@ public interface RealTimeTreeUsageTabRepository extends JpaRepository<VideoPurch
                 "       FROM video_purchase vp " +
                 "                LEFT JOIN users u ON vp.user_id = u.id " +
                 "                LEFT JOIN users pd ON vp.video_owner_user_id = pd.id " +
-                "       WHERE (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
+                "       WHERE vp.package_purchase_id is null and (:startDate IS NULL OR vp.last_update_date >= :startDate) " +
                 "         AND (:endDate IS NULL OR vp.last_update_date <= :endDate) " +
                 "         AND ((:searchString IS NULL) OR " +
                 "              (u.email LIKE concat(:searchString, '%') OR pd.nickname LIKE concat(:searchString, '%')))" +
