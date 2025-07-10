@@ -306,21 +306,20 @@ public class VideoPackagePurchaseService {
         videoPackagePurchaseRepository.save(videoPackagePurchaseToRefund);
 
         List<VideoPurchase> videoPurchasesToRefund = videoPurchaseRepository.findByPackagePurchaseId(videoPackagePurchaseToRefund.getId());
-        BigDecimal treeToRefund = BigDecimal.ZERO;
-        BigDecimal drmFee = BigDecimal.ZERO;
         for (VideoPurchase videoPurchase : videoPurchasesToRefund) {
             if(videoPurchase.getIsRefunded() != null && videoPurchase.getIsRefunded()) {
                 continue;
             }
-            drmFee = drmFee.add(videoPurchase.getDrmFee());
             videoPurchase.setIsRefunded(true);
-            treeToRefund = treeToRefund.add(videoPurchase.getTreesConsumed());
         }
         videoPurchaseRepository.saveAll(videoPurchasesToRefund);
 
         String buyerId = videoPackagePurchaseToRefund.getUserId();
         String sellerId = videoPackagePurchaseToRefund.getSellerId();
         String packagePurchaseId = videoPackagePurchaseToRefund.getId();
+        BigDecimal treeToRefund = videoPackagePurchaseToRefund.getTreesConsumed();
+        BigDecimal drmFee = videoPackagePurchaseToRefund.getDrmFee();
+
         walletService.addToWallet(buyerId, treeToRefund, BigDecimal.ZERO, LocalDateTime.now());
         earningService.deductTreesFromEarning(sellerId, treeToRefund.subtract(drmFee));
         ledgerService.saveToLedger(packagePurchaseId, treeToRefund, BigDecimal.ZERO, TransactionType.REFUND_PACKAGE_PURCHASE, buyerId);
