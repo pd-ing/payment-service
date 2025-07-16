@@ -270,11 +270,11 @@ public class ExposureTicketPurchaseService {
     }
 
     public List<ExposureTicketPurchase> giveTicket(String userId, ExposureTicketType type, Integer numberOfTicket) throws Exception {
-        String loginUser = authHelper.getUserId();
+//        String loginUser = authHelper.getUserId();
 
-        if (!userServiceNetworkManager.isUserAdmin(loginUser).blockLast()) {
-            throw new IllegalArgumentException("Only admin can issue ticket");
-        }
+//        if (!userServiceNetworkManager.isUserAdmin(loginUser).blockLast()) {
+//            throw new IllegalArgumentException("Only admin can issue ticket");
+//        }
 
 //        MExposureTicket ticket = exposureTicketRepository.findById(type).orElseThrow(() -> new IllegalArgumentException("Invalid ticket type"));
         BigDecimal ticketPrice = BigDecimal.ZERO;

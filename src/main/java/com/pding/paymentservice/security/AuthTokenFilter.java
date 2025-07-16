@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -90,6 +91,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             Boolean emailVerified = null;
             Boolean isAdmin = false;
             Boolean isBanned = false;
+            Boolean isSalesTeam = false;
             if (serverToken != null && !serverToken.isEmpty()) {
                 userId = getUidFromServerToken(serverToken);
             } else if (idToken != null && !idToken.isEmpty()) {
@@ -99,6 +101,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 emailVerified = firebaseToken.isEmailVerified();
                 isAdmin = Boolean.TRUE.equals(firebaseToken.getClaims().get("admin"));
                 isBanned = Boolean.TRUE.equals(firebaseToken.getClaims().get("isBanned"));
+                isSalesTeam = Boolean.TRUE.equals(firebaseToken.getClaims().get("isSalesTeam"));
 
                 if(isBanned) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -119,9 +122,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     .request(request)
                     .build();
 
-            List<SimpleGrantedAuthority> authorities = isAdmin ?
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")) :
-                Collections.emptyList();
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+            if(isAdmin) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
+
+            if(isSalesTeam) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_SALES_TEAM"));
+            }
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
