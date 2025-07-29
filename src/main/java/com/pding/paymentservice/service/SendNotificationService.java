@@ -12,7 +12,8 @@ import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
+import com.pding.paymentservice.aws.DonationEventSnsPublisher;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +37,9 @@ public class SendNotificationService {
 
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
+    @Autowired
+    DonationEventSnsPublisher donationEventSnsPublisher;
 
     public void sendBuyVideoNotification(VideoPurchase videoPurchase, String videoLibraryId) {
         try {
@@ -72,7 +76,15 @@ public class SendNotificationService {
     public void sendDonateTreesNotification(Donation donation) {
         try {
             String donorUserEmail = notificationRepository.findEmailByUserId(donation.getDonorUserId());
-            sendNotificationSqsMessage.sendDonationNotification(donation.getPdUserId(), donation.getDonorUserId(), donorUserEmail, donation.getPdUserId(), donation.getDonatedTrees(), donation.getDonatedLeafs());
+            // sendNotificationSqsMessage.sendDonationNotification(donation.getPdUserId(), donation.getDonorUserId(), donorUserEmail, donation.getPdUserId(), donation.getDonatedTrees(), donation.getDonatedLeafs());
+            // send notifications to sns to fanout messages to multiple services in stead of just one
+            donationEventSnsPublisher.publishDonationEvent(
+                donation.getDonorUserId(),
+                donation.getPdUserId(),
+                donorUserEmail,
+                donation.getDonatedTrees(),
+                donation.getDonatedLeafs()
+            );    
 
             //push FCM
             Map<String, String> data = new HashMap<>();
