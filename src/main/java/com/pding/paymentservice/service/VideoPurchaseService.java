@@ -500,10 +500,16 @@ public class VideoPurchaseService {
                 return userLite;
             }).toList();
 
-            Page<UserLite> resData = new PageImpl<>(results, pageable, userPage.getTotalElements());
+            PaginationInfoWithGenericList<UserLite> response = new PaginationInfoWithGenericList<>(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                results,
+                userPage.hasNext()
+            );
 
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
-
+            return ResponseEntity.ok().body(response);
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
@@ -536,10 +542,16 @@ public class VideoPurchaseService {
                 return userLite;
             }).toList();
 
-            Page<UserLite> resData = new PageImpl<>(users, pageable, userPage.getTotalElements());
+            PaginationInfoWithGenericList<UserLite> response = new PaginationInfoWithGenericList<>(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                users,
+                userPage.hasNext()
+            );
 
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
-
+            return ResponseEntity.ok().body(response);
         } catch (Exception ex) {
             pdLogger.logException(ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage()));
