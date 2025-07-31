@@ -61,6 +61,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -70,15 +71,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -485,6 +478,27 @@ public class VideoPurchaseService {
             Pageable pageable = PageRequest.of(page, size);
             Page<UserProjection> userPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosArePurchasedByUserWithSearch(userId, searchString, pageable);
             List<UserProjection> users = userPage.getContent();
+            
+            // Extract all PD user IDs
+            List<String> pdUserIds = users.stream()
+                .map(UserProjection::getId)
+                .collect(Collectors.toList());
+                
+            // Get follower data for all PD users
+            List<PublicUserNet> publicUsersList = userServiceNetworkManager
+                .getUsersListFlux(pdUserIds)
+                .collectList()
+                .block();
+                
+            // Create a map of PD users by their ID
+            Map<String, PublicUserNet> pdUserMap = publicUsersList != null ? 
+                publicUsersList.stream()
+                    .collect(Collectors.toMap(
+                        PublicUserNet::getId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                    )) : 
+                new HashMap<>();
 
             List<UserLite> results = users.stream().map(userObj -> {
                 UserLite userLite = new UserLite();
@@ -494,12 +508,26 @@ public class VideoPurchaseService {
                 userLite.setProfilePicture(tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(userObj.getProfilePicture())));
                 userLite.setProfileId(userObj.getProfileId());
                 userLite.setPdCategory(userObj.getPdCategory());
+                userLite.setLanguage(userObj.getLanguage());
+                userLite.setIsRecommendedPd(false);
+                
+                // Look up the corresponding PD user in the map and set the follower count
+                PublicUserNet pdUser = pdUserMap.get(userObj.getId());
+                userLite.setFollower(pdUser != null ? pdUser.getFollower() : null);
+                
                 return userLite;
             }).toList();
 
-            Page<UserLite> resData = new PageImpl<>(results, pageable, userPage.getTotalElements());
+            PaginationInfoWithGenericList<UserLite> response = new PaginationInfoWithGenericList<>(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                results,
+                userPage.hasNext()
+            );
 
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+            return ResponseEntity.ok().body(response);
 
         } catch (Exception ex) {
             pdLogger.logException(ex);
@@ -518,8 +546,30 @@ public class VideoPurchaseService {
             }
             Pageable pageable = PageRequest.of(page, size);
             Page<UserProjection> userPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosAreExpiredByUserWithSearch(userId, searchString , pageable);
+            List<UserProjection> userProjections = userPage.getContent();
+            
+            // Extract all PD user IDs
+            List<String> pdUserIds = userProjections.stream()
+                .map(UserProjection::getId)
+                .collect(Collectors.toList());
+                
+            // Get follower data for all PD users
+            List<PublicUserNet> publicUsersList = userServiceNetworkManager
+                .getUsersListFlux(pdUserIds)
+                .collectList()
+                .block();
+                
+            // Create a map of PD users by their ID
+            Map<String, PublicUserNet> pdUserMap = publicUsersList != null ? 
+                publicUsersList.stream()
+                    .collect(Collectors.toMap(
+                        PublicUserNet::getId,
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                    )) : 
+                new HashMap<>();
 
-            List<UserLite> users = userPage.getContent().stream().map(userObj -> {
+            List<UserLite> users = userProjections.stream().map(userObj -> {
                 UserLite userLite = new UserLite();
                 userLite.setId(userObj.getId());
                 userLite.setDisplayName(userObj.getDisplayName());
@@ -527,12 +577,26 @@ public class VideoPurchaseService {
                 userLite.setProfilePicture(tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(userObj.getProfilePicture())));
                 userLite.setProfileId(userObj.getProfileId());
                 userLite.setPdCategory(userObj.getPdCategory());
+                userLite.setLanguage(userObj.getLanguage());
+                userLite.setIsRecommendedPd(false);
+                
+                // Look up the corresponding PD user in the map and set the follower count
+                PublicUserNet pdUser = pdUserMap.get(userObj.getId());
+                userLite.setFollower(pdUser != null ? pdUser.getFollower() : null);
+                
                 return userLite;
             }).toList();
 
-            Page<UserLite> resData = new PageImpl<>(users, pageable, userPage.getTotalElements());
+            PaginationInfoWithGenericList<UserLite> response = new PaginationInfoWithGenericList<>(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                users,
+                userPage.hasNext()
+            );
 
-            return ResponseEntity.ok().body(new GenericPageResponse<>(null, resData));
+            return ResponseEntity.ok().body(response);
 
         } catch (Exception ex) {
             pdLogger.logException(ex);
