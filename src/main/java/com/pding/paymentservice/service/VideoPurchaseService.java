@@ -494,6 +494,9 @@ public class VideoPurchaseService {
                 userLite.setProfilePicture(tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(userObj.getProfilePicture())));
                 userLite.setProfileId(userObj.getProfileId());
                 userLite.setPdCategory(userObj.getPdCategory());
+                userLite.setLanguage(userObj.getLanguage());
+                userLite.setIsRecommendedPd(false);
+                userLite.setFollower(userLite.getFollower() == null ? 0 : userLite.getFollower());
                 return userLite;
             }).toList();
 
@@ -526,7 +529,10 @@ public class VideoPurchaseService {
                 userLite.setDescription(userObj.getDescription());
                 userLite.setProfilePicture(tokenSigner.generateUnsignedImageUrl(tokenSigner.composeImagesPath(userObj.getProfilePicture())));
                 userLite.setProfileId(userObj.getProfileId());
+                userLite.setLanguage(userObj.getLanguage());
+                userLite.setIsRecommendedPd(false);
                 userLite.setPdCategory(userObj.getPdCategory());
+                userLite.setFollower(userLite.getFollower() == null ? 0 : userLite.getFollower());
                 return userLite;
             }).toList();
 

@@ -23,7 +23,21 @@ public class UserLite {
 
     String pdCategory;
 
+    String language;
+
+    Boolean isRecommendedPd;
+
     Long follower;
+
+    public UserLite(String id, String displayName, String description, String profilePicture, String profileId, String pdCategory, Long follower) {
+        this.id = id;
+        this.displayName = displayName;
+        this.description = description;
+        this.profilePicture = profilePicture;
+        this.profileId = profileId;
+        this.pdCategory = pdCategory;
+        this.follower = follower;
+    }
 
     public static UserLite fromPublicUserNet(PublicUserNet src, TokenSigner tokenSigner) {
         String displayName = src.getId();
