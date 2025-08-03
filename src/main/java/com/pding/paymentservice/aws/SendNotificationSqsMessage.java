@@ -37,7 +37,7 @@ public class SendNotificationSqsMessage extends BaseService {
             BigDecimal tree,
             BigDecimal drmFee
     ) throws Exception {
-        if (isNotValid(sendToUserId) || isNotValid(videoBuyerUserId) || isNotValid(videoBuyerUserEmail) || isNotValid(videoOwnerUserId) ||
+        if (isNotValid(sendToUserId) || isNotValid(videoBuyerUserId) || isNotValid(videoOwnerUserId) ||
                 isNotValid(videoId) || isNotValid(videoTitle) || isNotValid(videoUrl)) {
             throw new Exception("Invalid params for sendVideoBoughtNotification");
         }
@@ -47,7 +47,7 @@ public class SendNotificationSqsMessage extends BaseService {
         map.put("userId", sendToUserId);
         map.put("time", new Date());
         map.put("videoBuyerUserId", videoBuyerUserId);
-        map.put("videoBuyerUserEmail", videoBuyerUserEmail);
+        map.put("videoBuyerUserEmail", videoBuyerUserEmail != null ? videoBuyerUserEmail : videoBuyerUserId);
         map.put("videoOwnerUserId", videoOwnerUserId);
         map.put("videoId", videoId);
         map.put("videoTitle", videoTitle);
@@ -67,7 +67,7 @@ public class SendNotificationSqsMessage extends BaseService {
             BigDecimal donatedTrees,
             BigDecimal donatedLeafs
     ) throws Exception {
-        if (isNotValid(sendToUserId) || isNotValid(donnerUserId) || isNotValid(donnerUserEmail) || isNotValid(donatedToUserId)) {
+        if (isNotValid(sendToUserId) || isNotValid(donnerUserId) || isNotValid(donatedToUserId)) {
             throw new Exception("Invalid params for sendDonationNotification");
         }
 
@@ -86,7 +86,9 @@ public class SendNotificationSqsMessage extends BaseService {
 
     public void sendCurrencyExchangeProcessNotification(
             String sendToUserId,
-            String currencyExchangeProgress // started | finished
+            String currencyExchangeProgress, // started | finished
+            BigDecimal trees,
+            BigDecimal leafs
     ) throws Exception {
         if (isNotValid(sendToUserId) || isNotValid(currencyExchangeProgress)) {
             throw new Exception("Invalid params for sendCurrencyExchangeProcessNotification");
@@ -96,6 +98,8 @@ public class SendNotificationSqsMessage extends BaseService {
         map.put("type", "CURRENCY_EXCHANGE");
         map.put("userId", sendToUserId);
         map.put("time", new Date());
+        map.put("trees", trees);
+        map.put("leafs", leafs);
         map.put("currencyExchangeProgress", currencyExchangeProgress);
 
         sendNotification(map);
