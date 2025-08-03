@@ -3,6 +3,7 @@ package com.pding.paymentservice.service;
 import com.pding.paymentservice.PdLogger;
 import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.Donation;
+import com.pding.paymentservice.models.PhotoPurchase;
 import com.pding.paymentservice.models.VideoPurchase;
 import com.pding.paymentservice.models.Withdrawal;
 import com.pding.paymentservice.models.enums.NotificaitonDataType;
@@ -67,6 +68,25 @@ public class SendNotificationService {
             data.put("videoUrl", videoUrl);
             data.put("videoTitle", videoTitle);
             fcmService.sendAsyncNotification(videoPurchase.getVideoOwnerUserId(), data);
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.Priority.p0, e);
+        }
+    }
+
+
+    public void sendBuyPhotoNotification(PhotoPurchase photoPurchase, String postTitle) {
+        try {
+            String buyerNickname = notificationRepository.findNicknameByUserId(photoPurchase.getUserId());
+            sendNotificationSqsMessage.sendPhotoBoughtNotification(
+                photoPurchase.getPostOwnerUserId(),
+                photoPurchase.getUserId(),
+                buyerNickname,
+                photoPurchase.getPostOwnerUserId(),
+                photoPurchase.getPostId(),
+                postTitle,
+                photoPurchase.getTreesConsumed()
+            );
+
         } catch (Exception e) {
             pdLogger.logException(PdLogger.Priority.p0, e);
         }

@@ -1,5 +1,6 @@
 package com.pding.paymentservice.service;
 
+import com.pding.paymentservice.listener.event.PhotoPurchaseEvent;
 import com.pding.paymentservice.models.PhotoPurchase;
 import com.pding.paymentservice.models.enums.TransactionType;
 import com.pding.paymentservice.models.enums.VideoPurchaseDuration;
@@ -20,6 +21,7 @@ import com.pding.paymentservice.util.LogSanitizer;
 import com.pding.paymentservice.util.TokenSigner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +63,7 @@ public class PhotoPurchaseService {
     private final UserServiceNetworkManager userServiceNetworkManager;
     private final ContentNetworkService contentNetworkService;
     private final TokenSigner tokenSigner;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public ResponseEntity<?> loadPurchaseListOfSellerResponse(String photoId, int page, int size) {
         try {
@@ -251,7 +254,9 @@ public class PhotoPurchaseService {
 
         Instant expiryDate = VideoPurchaseDuration.valueOf(duration).getExpiryDateInstant();
 
-        return createPhotoPostTransaction(userId, postId, treesConsumed, postOwnerUserId, duration, expiryDate);
+        PhotoPurchase photoPurchase = createPhotoPostTransaction(userId, postId, treesConsumed, postOwnerUserId, duration, expiryDate);
+        applicationEventPublisher.publishEvent(new PhotoPurchaseEvent(this, photoPurchase, photoPost));
+        return photoPurchase;
     }
 
     /**
