@@ -1,14 +1,11 @@
 package com.pding.paymentservice.aws;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pding.paymentservice.BaseService;
-import io.awspring.cloud.sqs.operations.SendResult;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -55,6 +52,36 @@ public class SendNotificationSqsMessage extends BaseService {
         map.put("photoUrl", photoUrl);
         map.put("tree", tree);
         map.put("drmFee", drmFee);
+
+        sendNotification(map);
+    }
+
+
+    public void sendPhotoBoughtNotification(
+            String sendToUserId,
+            String photoBuyerUserId,
+            String buyerNickname,
+            String photoOwnerUserId,
+            String postId,
+            String postTitle,
+            BigDecimal tree
+    ) throws Exception {
+        if (isNotValid(sendToUserId) || isNotValid(photoBuyerUserId) ||
+                isNotValid(postId) || isNotValid(postTitle)) {
+            throw new Exception("Invalid params for sendPhotoBoughtNotification");
+        }
+
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("type", "BUY_PHOTO");
+        map.put("userId", sendToUserId);
+        map.put("time", new Date());
+        map.put("photoOwnerUserId", photoOwnerUserId);
+        map.put("photoBuyerUserId", photoBuyerUserId);
+        map.put("buyerNickname", buyerNickname != null ? buyerNickname : photoBuyerUserId);
+        map.put("postId", postId);
+        map.put("postTitle", postTitle);
+        map.put("postUrl", "");
+        map.put("tree", tree);
 
         sendNotification(map);
     }
