@@ -92,6 +92,22 @@ public class SendNotificationService {
         }
     }
 
+    public void sendBuyPackageNotification(String buyerId, String packageId, String sellerId, String packageTitle, BigDecimal treesConsumed) {
+        try {
+            String buyerNickname = notificationRepository.findNicknameByUserId(buyerId);
+            sendNotificationSqsMessage.sendPackageBoughtNotification(
+                sellerId,
+                buyerNickname,
+                packageTitle,
+                treesConsumed,
+                buyerId
+            );
+
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.Priority.p0, e);
+        }
+    }
+
     public void sendDonateTreesNotification(Donation donation) {
         try {
             String donorUserEmail = notificationRepository.findNicknameByUserId(donation.getDonorUserId());
