@@ -13,6 +13,7 @@ import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -81,6 +82,22 @@ public class SendNotificationService {
                 photoPurchase.getPostId(),
                 postTitle,
                 photoPurchase.getTreesConsumed()
+            );
+
+        } catch (Exception e) {
+            pdLogger.logException(PdLogger.Priority.p0, e);
+        }
+    }
+
+    public void sendBuyPackageNotification(String buyerId, String packageId, String sellerId, String packageTitle, BigDecimal treesConsumed) {
+        try {
+            String buyerNickname = notificationRepository.findNicknameByUserId(buyerId);
+            sendNotificationSqsMessage.sendPackageBoughtNotification(
+                sellerId,
+                buyerNickname,
+                packageTitle,
+                treesConsumed,
+                buyerId
             );
 
         } catch (Exception e) {

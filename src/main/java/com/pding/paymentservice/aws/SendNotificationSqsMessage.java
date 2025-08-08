@@ -86,6 +86,29 @@ public class SendNotificationSqsMessage extends BaseService {
         sendNotification(map);
     }
 
+
+    public void sendPackageBoughtNotification(
+            String sendToUserId,
+            String buyerNickname,
+            String packageTitle,
+            BigDecimal tree,
+            String buyerId
+    ) throws Exception {
+        if (isNotValid(sendToUserId)) {
+            throw new Exception("Invalid params for sendPhotoBoughtNotification");
+        }
+
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("type", "BUY_PACKAGE");
+        map.put("userId", sendToUserId);
+        map.put("time", new Date());
+        map.put("buyerNickname", buyerNickname != null ? buyerNickname : buyerId);
+        map.put("packageTitle", packageTitle);
+        map.put("tree", tree);
+
+        sendNotification(map);
+    }
+
     public void sendDonationNotification(
             String sendToUserId,
             String donnerUserId,
