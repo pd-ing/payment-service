@@ -4,6 +4,7 @@ import com.pding.paymentservice.listener.event.VideoPackagePurchaseUpdatedEvent;
 import com.pding.paymentservice.models.VideoPackagePurchase;
 import com.pding.paymentservice.network.ContentNetworkService;
 import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
+import com.pding.paymentservice.service.SendNotificationService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -21,6 +22,7 @@ import java.util.List;
 public class VideoPackagePurchaseListener {
     private final VideoPackagePurchaseRepository videoPackagePurchaseRepository;
     private final ContentNetworkService contentNetworkService;
+    private final SendNotificationService sendNotificationService;
 
     @TransactionalEventListener
     @Async
@@ -41,5 +43,15 @@ public class VideoPackagePurchaseListener {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         contentNetworkService.saveVideoPackageSalesStats(event.getPackageId(), quantitySold, totalTreesEarned.subtract(totalDrmFee));
+
+        if("BUY_PACKAGE".equalsIgnoreCase(event.getType())) {
+            sendNotificationService.sendBuyPackageNotification(
+                    event.getBuyerId(),
+                    event.getPackageId(),
+                    event.getSellerId(),
+                    event.getPackageTitle(),
+                    event.getTree()
+            );
+        }
     }
 }
