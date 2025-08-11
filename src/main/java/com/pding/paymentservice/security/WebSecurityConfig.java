@@ -119,6 +119,7 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/v2/donate").authenticated()
                                 .requestMatchers("/api/payment/donateLeafs").authenticated()
                                 .requestMatchers("/api/payment/startPaymentToBuyTrees").authenticated()
+                                .requestMatchers("/api/payment/create-stripe-intent").authenticated()
                                 .requestMatchers("/api/payment/clearPendingAndStalePayments/**").authenticated()
                                 .requestMatchers("/api/payment/paymentsFailedInitiallyButSucceededLater").authenticated()
                                 .requestMatchers("/api/payment/buyLeafs").authenticated()
