@@ -11,6 +11,7 @@ import com.stripe.model.Product;
 import com.stripe.model.ProductCollection;
 import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PriceListParams;
 import com.stripe.param.ProductListParams;
 import com.stripe.param.TransferCreateParams;
@@ -23,6 +24,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,6 +87,22 @@ public class StripeClient {
     private Product getProduct(String productId) throws StripeException {
         return Product.retrieve(productId);
     }
+
+    public Map<String, String> createPaymentIntent(String priceId) throws StripeException {
+        Price price = getPrice(priceId);
+
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+            .setAmount(price.getUnitAmount()) // Amount in cents
+            .setCurrency(price.getCurrency())
+            .setAutomaticPaymentMethods(PaymentIntentCreateParams.AutomaticPaymentMethods.builder().setEnabled(true).build())
+            .build();
+
+        PaymentIntent paymentIntent = PaymentIntent.create(params);
+        Map<String, String> response = new HashMap<>();
+        response.put("clientSecret", paymentIntent.getClientSecret());
+        return response;
+    }
+
 
     public Price getPrice(String priceId) throws StripeException {
         return Price.retrieve(priceId);
