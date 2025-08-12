@@ -1,5 +1,8 @@
 package com.pding.paymentservice.paymentclients.stripe;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pding.paymentservice.repository.WalletRepository;
 import com.pding.paymentservice.security.AuthHelper;
 import com.stripe.Stripe;
@@ -88,13 +91,22 @@ public class StripeClient {
         return Product.retrieve(productId);
     }
 
-    public Map<String, String> createPaymentIntent(String priceId) throws StripeException {
+    public Map<String, String> createPaymentIntent(String priceId) throws StripeException, JsonProcessingException {
         Price price = getPrice(priceId);
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, String> map = mapper.readValue(price.getNickname(), new TypeReference<Map<String, String>>(){});
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("priceId", price.getId());
+        metadata.put("productId", price.getProduct());
+        metadata.put("currency", price.getCurrency());
+        metadata.put("tree", map.get("trees"));
 
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-            .setAmount(price.getUnitAmount()) // Amount in cents
+            .setAmount(price.getUnitAmount())
             .setCurrency(price.getCurrency())
             .setAutomaticPaymentMethods(PaymentIntentCreateParams.AutomaticPaymentMethods.builder().setEnabled(true).build())
+            .putAllMetadata(metadata)
             .build();
 
         PaymentIntent paymentIntent = PaymentIntent.create(params);
