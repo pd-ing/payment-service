@@ -10,7 +10,6 @@ import com.pding.paymentservice.repository.NotificationRepository;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
 import com.pding.paymentservice.util.TokenSigner;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.pding.paymentservice.aws.DonationEventSnsPublisher;
 import java.math.BigDecimal;
@@ -43,12 +42,12 @@ public class SendNotificationService {
 
     public void sendBuyVideoNotification(VideoPurchase videoPurchase, String videoLibraryId) {
         try {
-            String email = notificationRepository.findEmailByUserId(videoPurchase.getUserId());
+            String buyerNickname = notificationRepository.findNicknameByUserId(videoPurchase.getUserId());
             String videoTitle = notificationRepository.findTitleByVideoId(videoPurchase.getVideoId());
             String videoUrl = tokenSigner.signPlaybackUrl(videoLibraryId, videoPurchase.getVideoId(), 2);
             sendNotificationSqsMessage.sendVideoBoughtNotification(videoPurchase.getVideoOwnerUserId(),
                 videoPurchase.getUserId(),
-                email,
+                buyerNickname,
                 videoPurchase.getVideoOwnerUserId(),
                 videoPurchase.getVideoId(),
                 videoTitle,
@@ -61,7 +60,7 @@ public class SendNotificationService {
             //push FCM
             Map<String, String> data = new HashMap<>();
             data.put("NotificationType", NotificaitonDataType.PURCHASE_PAID_POST.getDisplayName());
-            data.put("nickname", otherServicesTablesNativeQueryRepository.getNicknameByUserId(videoPurchase.getUserId()).orElse("User"));
+            data.put("nickname", buyerNickname);
             data.put("numberOfTree", String.valueOf(videoPurchase.getTreesConsumed()));
             data.put("videoId", String.valueOf(videoPurchase.getVideoId()));
             data.put("postId", String.valueOf(videoPurchase.getVideoId()));
@@ -75,13 +74,14 @@ public class SendNotificationService {
 
     public void sendDonateTreesNotification(Donation donation) {
         try {
-            String donorUserEmail = notificationRepository.findEmailByUserId(donation.getDonorUserId());
+            String donorUserEmail = notificationRepository.findNicknameByUserId(donation.getDonorUserId());
             // sendNotificationSqsMessage.sendDonationNotification(donation.getPdUserId(), donation.getDonorUserId(), donorUserEmail, donation.getPdUserId(), donation.getDonatedTrees(), donation.getDonatedLeafs());
             // send notifications to sns to fanout messages to multiple services in stead of just one
             donationEventSnsPublisher.publishDonationEvent(
-                donation.getDonorUserId(),
                 donation.getPdUserId(),
+                donation.getDonorUserId(),
                 donorUserEmail,
+                donation.getPdUserId(),
                 donation.getDonatedTrees(),
                 donation.getDonatedLeafs()
             );    
@@ -100,7 +100,7 @@ public class SendNotificationService {
 
     public void sendWithDrawNotification(Withdrawal withdrawal) {
         try {
-            sendNotificationSqsMessage.sendCurrencyExchangeProcessNotification(withdrawal.getPdUserId(), withdrawal.getStatus().getDisplayName());
+            sendNotificationSqsMessage.sendCurrencyExchangeProcessNotification(withdrawal.getPdUserId(), withdrawal.getStatus().getDisplayName(), withdrawal.getTrees(), withdrawal.getLeafs());
         } catch (Exception e) {
             pdLogger.logException(PdLogger.Priority.p0, e);
         }
