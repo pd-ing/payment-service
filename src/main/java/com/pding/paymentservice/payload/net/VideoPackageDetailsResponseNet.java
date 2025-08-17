@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,8 @@ public class VideoPackageDetailsResponseNet {
     private String title; // Package title
     private String description; // Package description
     private Integer discountPercentage; // Discount percentage
-    private LocalDateTime startDate; // Sale start date
-    private LocalDateTime endDate; // Sale end date
+    private Instant startDate; // Sale start date
+    private Instant endDate; // Sale end date
     private Boolean isActive; // Whether the package is active
     private BigDecimal basePrice; // Original price before discount
     private BigDecimal discountedPrice; // Price after discount
