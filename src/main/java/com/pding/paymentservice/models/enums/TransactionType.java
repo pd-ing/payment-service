@@ -10,6 +10,7 @@ public enum TransactionType {
     TREES_REVERTED("trees_reverted"),
     LEAFS_REVERTED("leafs_reverted"),
     VIDEO_PURCHASE("videoPurchase"),
+    LIVESTREAM_PURCHASE("livestreamPurchase"),
     REFUND_VIDEO_PURCHASE("refundVideoPurchase"),
     IMAGE_PURCHASE("imagePurchase"),
     AUDIO_CALL("audioCall"),
