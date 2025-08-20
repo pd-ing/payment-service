@@ -1,6 +1,7 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.PdLogger;
+import com.pding.paymentservice.aws.DonationEventSnsPublisher;
 import com.pding.paymentservice.aws.SendNotificationSqsMessage;
 import com.pding.paymentservice.models.Donation;
 import com.pding.paymentservice.models.PhotoPurchase;
@@ -37,6 +38,9 @@ public class SendNotificationService {
 
     @Autowired
     OtherServicesTablesNativeQueryRepository otherServicesTablesNativeQueryRepository;
+
+    @Autowired
+    DonationEventSnsPublisher donationEventSnsPublisher;
 
     public void sendBuyVideoNotification(VideoPurchase videoPurchase, String videoLibraryId) {
         try {
@@ -108,7 +112,14 @@ public class SendNotificationService {
     public void sendDonateTreesNotification(Donation donation) {
         try {
             String donorUserEmail = notificationRepository.findNicknameByUserId(donation.getDonorUserId());
-            sendNotificationSqsMessage.sendDonationNotification(donation.getPdUserId(), donation.getDonorUserId(), donorUserEmail, donation.getPdUserId(), donation.getDonatedTrees(), donation.getDonatedLeafs());
+            // send notifications to sns to fanout messages to multiple services instead of just one
+            donationEventSnsPublisher.publishDonationEvent(
+                donation.getDonorUserId(),
+                donation.getPdUserId(),
+                donorUserEmail,
+                donation.getDonatedTrees(),
+                donation.getDonatedLeafs()
+            );    
 
             //push FCM
             Map<String, String> data = new HashMap<>();
