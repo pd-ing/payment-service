@@ -106,7 +106,23 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                 "                  LEFT JOIN video_packages vp ON vpp.package_id = vp.id" +
                 "                  LEFT JOIN users buyer ON vpp.user_id = buyer.id" +
                 "         WHERE vp.seller_id = :userId" +
-                "           AND vpp.is_refunded = false) combined_purchases" +
+                "           AND vpp.is_refunded = false" +
+                "         UNION ALL" +
+                "         SELECT pp.last_update_date as purchase_date," +
+                "                p.title," +
+                "                pp.trees_consumed," +
+                "                buyer.email," +
+                "                pp.duration," +
+                "                pp.expiry_date," +
+                "                'PHOTO'            as type," +
+                "                1                   as number_of_videos," +
+                "                0 as discount_percentage" +
+                "         FROM photo_purchase pp" +
+                "                  LEFT JOIN photo_posts p ON pp.post_id = p.id" +
+                "                  LEFT JOIN users buyer ON pp.user_id = buyer.id" +
+                "         WHERE pp.post_owner_user_id = :userId" +
+                "           AND pp.is_refunded = false" +
+                " ) combined_purchases" +
                 " WHERE (:searchString IS NULL" +
                 "    OR email LIKE CONCAT(:searchString, '%')" +
                 "    OR title LIKE CONCAT(:searchString, '%')" +
@@ -142,7 +158,22 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                 "                  LEFT JOIN video_packages vp ON vpp.package_id = vp.id" +
                 "                  LEFT JOIN users buyer ON vpp.user_id = buyer.id" +
                 "         WHERE vp.seller_id = :userId" +
-                "           AND vpp.is_refunded = false) combined_purchases" +
+                "           AND vpp.is_refunded = false" +
+                "         UNION ALL" +
+                "         SELECT pp.last_update_date as purchase_date," +
+                "                p.title," +
+                "                pp.trees_consumed," +
+                "                buyer.email," +
+                "                pp.duration," +
+                "                pp.expiry_date," +
+                "                'PHOTO'            as type," +
+                "                1                   as number_of_videos" +
+                "         FROM photo_purchase pp" +
+                "                  LEFT JOIN photo_posts p ON pp.post_id = p.id" +
+                "                  LEFT JOIN users buyer ON pp.user_id = buyer.id" +
+                "         WHERE pp.post_owner_user_id = :userId" +
+                "           AND pp.is_refunded = false" +
+                " ) combined_purchases" +
                 " WHERE (:searchString IS NULL" +
                 "    OR email LIKE CONCAT(:searchString, '%')" +
                 "    OR title LIKE CONCAT(:searchString, '%')" +
@@ -207,7 +238,21 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "                  LEFT JOIN video_packages vp ON vpp.package_id = vp.id" +
             "                  LEFT JOIN users buyer ON vpp.user_id = buyer.id" +
             "         WHERE vp.seller_id = :userId" +
-            "           AND vpp.is_refunded = false) combined_purchases" +
+            "           AND vpp.is_refunded = false" +
+            "         UNION ALL" +
+            "         SELECT pp.last_update_date as purchase_date," +
+            "                p.title," +
+            "                pp.trees_consumed," +
+            "                buyer.email," +
+            "                pp.duration," +
+            "                'PHOTO'            as type," +
+            "                1                   as number_of_videos," +
+            "                0 as discount_percentage" +
+            "         FROM photo_purchase pp" +
+            "                  LEFT JOIN photo_posts p ON pp.post_id = p.id" +
+            "                  LEFT JOIN users buyer ON pp.user_id = buyer.id" +
+            "         WHERE pp.post_owner_user_id = :userId" +
+            "           AND pp.is_refunded = false) combined_purchases" +
             " WHERE (:searchString IS NULL" +
             "    OR email LIKE CONCAT(:searchString, '%')" +
             "    OR title LIKE CONCAT(:searchString, '%')" +

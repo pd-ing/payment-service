@@ -19,7 +19,8 @@ public class StringUtil {
     private static final Map<String, String> PACKAGE_TYPE_MAP = Map.of(
             "FREE_CHOICE_PACKAGE", "Free choice",
             "THEME_PACKAGE", "Theme",
-            "SINGLE", "Single"
+            "SINGLE", "Single",
+            "PHOTO", "Photo"
     );
     public static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {
