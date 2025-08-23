@@ -1,11 +1,14 @@
 package com.pding.paymentservice.payload.request;
 
-import lombok.Data;
+
 import java.math.BigDecimal;
+import lombok.Data;
 
 @Data
-public class BuyLiveStreamRequest {
+public class BuyMissionRequest {
+    private String buyerId;
     private String pdUserId;
-    private String livestreamId;
+    private String missionId;
     private BigDecimal treesOffered;
+    private String streamId;
 }

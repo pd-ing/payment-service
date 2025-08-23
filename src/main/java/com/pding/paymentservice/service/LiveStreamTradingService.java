@@ -1,11 +1,11 @@
 package com.pding.paymentservice.service;
 
 import com.pding.paymentservice.models.LiveStreamPurchase;
-import com.pding.paymentservice.payload.request.BuyLivestreamRequest;
-import com.pding.paymentservice.payload.response.BuyLivestreamResponse;
-import com.pding.paymentservice.repository.LivestreamPurchaseRepository;
+import com.pding.paymentservice.payload.request.BuyLiveStreamRequest;
+import com.pding.paymentservice.payload.response.BuyLiveStreamResponse;
+import com.pding.paymentservice.repository.LiveStreamPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
-
+import com.pding.paymentservice.models.enums.TransactionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
@@ -18,27 +18,28 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class LiveStreamTradingService {
 
-    private final LivestreamPurchaseRepository livestreamPurchaseRepository;
+    private final LiveStreamPurchaseRepository livestreamPurchaseRepository;
     private final EarningService earningService;
     private final LedgerService ledgerService;
     private final WalletService walletService;
     private final AuthHelper authHelper;
 
     @Transactional
-    public LiveStreamPurchase processLivestreamPurchase(BuyLivestreamRequest request) {
+    public LiveStreamPurchase processLivestreamPurchase(BuyLiveStreamRequest request) {
         String buyer = authHelper.getUserId();
         walletService.deductTreesFromWallet(buyer, request.getTreesOffered());
         earningService.addTreesToEarning(request.getPdUserId(), request.getTreesOffered());
         LiveStreamPurchase purchase = LiveStreamPurchase.builder()
-                .buyer(buyer)
+                .buyerUserId(buyer)
                 .pdUserId(request.getPdUserId())
                 .treesOffered(request.getTreesOffered())
-                .timestamp(LocalDateTime.now())
+                .livestreamId(request.getLivestreamId())
+                .purchaseDate(LocalDateTime.now())
                 .build();
 
         LiveStreamPurchase savedPurchase = livestreamPurchaseRepository.save(purchase);
 
-        ledgerService.saveToLedger(savedPurchase.getId(), request.getTreesOffered(), BigDecimal.ZERO, TransactionType.LIVESTREAM_PURCHASE, buyer);
+        ledgerService.saveToLedger(request.getLivestreamId(), request.getTreesOffered(), BigDecimal.ZERO, TransactionType.LIVE_STREAM, buyer);
         return savedPurchase;
     }
 }

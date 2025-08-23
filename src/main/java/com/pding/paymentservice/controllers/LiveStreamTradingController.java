@@ -1,11 +1,18 @@
 package com.pding.paymentservice.controllers;
 
 import com.pding.paymentservice.exception.InsufficientTreesException;
-import com.pding.paymentservice.models.LivestreamPurchase;
-import com.pding.paymentservice.payload.request.BuyLivestreamRequest;
-import com.pding.paymentservice.payload.response.BuyLivestreamResponse;
+import com.pding.paymentservice.models.LiveStreamPurchase;
+import com.pding.paymentservice.payload.request.BuyLiveStreamRequest;
+import com.pding.paymentservice.payload.response.BuyLiveStreamResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
-import com.pding.paymentservice.service.LivestreamTradingService;
+import com.pding.paymentservice.service.LiveStreamTradingService;
+import com.pding.paymentservice.service.MissionTradingService;
+import com.pding.paymentservice.payload.request.BuyMissionRequest;
+import com.pding.paymentservice.payload.response.BuyMissionResponse;
+import com.pding.paymentservice.models.MissionExecution;
+import com.pding.paymentservice.models.enums.TransactionType;
+
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,24 +22,41 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/payment/livestream")
+@RequestMapping("/api/payment/live")
 @RequiredArgsConstructor
-public class LivestreamTradingController {
+@Slf4j
+public class LiveStreamTradingController {
 
-    private final LivestreamTradingService livestreamTradingService;
+    private final LiveStreamTradingService livestreamTradingService;
+    private final MissionTradingService missionTradingService; 
 
     @PostMapping("/buy-access")
-    public ResponseEntity<?> buyLivestreamAccess(@RequestBody BuyLivestreamRequest request) {
+    public ResponseEntity<?> buyLivestreamAccess(@RequestBody BuyLiveStreamRequest request) {
         try {
-            LivestreamPurchase purchase = livestreamTradingService.processLivestreamPurchase(request);
-            return ResponseEntity.ok(new BuyLivestreamResponse(true, "Livestream access purchased successfully.", purchase.getId()));
+            LiveStreamPurchase purchase = livestreamTradingService.processLivestreamPurchase(request);
+            return ResponseEntity.ok(new BuyLiveStreamResponse(true, "Livestream access purchased successfully.", purchase.getId()));
         } catch (InsufficientTreesException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("INSUFFICIENT_FUNDS", "You do not have enough trees to make this purchase."));
+                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage())); 
         } catch (Exception e) {
-            // Log the exception e
+            log.error("Error purchasing livestream access: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("PURCHASE_FAILED", "An unexpected error occurred. Please try again."));
+                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred.")); 
+        }
+    }
+
+    @PostMapping("/mission-execution")
+    public ResponseEntity<?> executeMission(@RequestBody BuyMissionRequest request) {
+        try {
+            MissionExecution execution = missionTradingService.executeMission(request);
+            return ResponseEntity.ok(new BuyMissionResponse(true, "Mission executed successfully.", execution.getId()));
+        } catch (InsufficientTreesException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage())); 
+        } catch (Exception e) {
+            log.error("Error executing mission: ", e); // Log the exception e
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred.")); 
         }
     }
 }
