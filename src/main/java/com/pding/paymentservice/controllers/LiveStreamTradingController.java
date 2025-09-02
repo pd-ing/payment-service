@@ -3,7 +3,9 @@ package com.pding.paymentservice.controllers;
 import com.pding.paymentservice.exception.InsufficientTreesException;
 import com.pding.paymentservice.models.LiveStreamPurchase;
 import com.pding.paymentservice.payload.request.BuyLiveStreamRequest;
+import com.pding.paymentservice.payload.request.CheckLivestreamPurchaseRequest;
 import com.pding.paymentservice.payload.response.BuyLiveStreamResponse;
+import com.pding.paymentservice.payload.response.CheckLivestreamPurchaseResponse;
 import com.pding.paymentservice.payload.response.ErrorResponse;
 import com.pding.paymentservice.service.LiveStreamTradingService;
 import com.pding.paymentservice.service.MissionTradingService;
@@ -42,6 +44,29 @@ public class LiveStreamTradingController {
             log.error("Error purchasing livestream access: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred.")); 
+        }
+    }
+
+    @PostMapping("/check-purchase")
+    public ResponseEntity<?> checkLivestreamPurchase(@RequestBody CheckLivestreamPurchaseRequest request) {
+        try {
+            boolean isPurchased = livestreamTradingService.isLivestreamPurchased(request.getBuyerUserId(), request.getLivestreamId());
+            LiveStreamPurchase purchase = null;
+            String message = isPurchased ? "Livestream access confirmed." : "Livestream not purchased.";
+            
+            if (isPurchased) {
+                purchase = livestreamTradingService.getLivestreamPurchase(request.getBuyerUserId(), request.getLivestreamId());
+            }
+            
+            return ResponseEntity.ok(new CheckLivestreamPurchaseResponse(
+                isPurchased, 
+                message, 
+                purchase != null ? purchase.getId() : null
+            ));
+        } catch (Exception e) {
+            log.error("Error checking livestream purchase status: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred."));
         }
     }
 

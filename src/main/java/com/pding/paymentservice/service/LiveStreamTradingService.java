@@ -42,4 +42,16 @@ public class LiveStreamTradingService {
         ledgerService.saveToLedger(request.getLivestreamId(), request.getTreesOffered(), BigDecimal.ZERO, TransactionType.LIVE_STREAM, buyer);
         return savedPurchase;
     }
+
+    public boolean isLivestreamPurchased(String livestreamId) {
+        String buyerUserId = authHelper.getUserId();
+        Optional<LiveStreamPurchase> purchase = livestreamPurchaseRepository.findByBuyerUserIdAndLivestreamId(buyerUserId, livestreamId);
+        return purchase.isPresent();
+    }
+
+    public LiveStreamPurchase getLivestreamPurchase(String livestreamId) {
+        String buyerUserId = authHelper.getUserId();
+        return livestreamPurchaseRepository.findByBuyerUserIdAndLivestreamId(buyerUserId, livestreamId)
+                .orElse(null);
+    }
 }
