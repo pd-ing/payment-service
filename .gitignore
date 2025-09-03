@@ -45,3 +45,4 @@ secrets.yml
 service_account.json
 src/main/resources/service_account.json
 /target/
+.idea/

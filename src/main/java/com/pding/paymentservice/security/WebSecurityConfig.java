@@ -172,6 +172,9 @@ public class WebSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurity
                                 .requestMatchers("/api/payment/isPhotoPostPurchased").authenticated()
                                 .requestMatchers("/api/payment/getPurchasedPhotoPosts").authenticated()
                                 .requestMatchers("/api/payment/allPdWhosePhotoPostsArePurchasedByUser").authenticated()
+                                .requestMatchers("/api/payment/live/buy-access").authenticated()
+                                .requestMatchers("/api/payment/live/mission-execution").authenticated()
+                                .requestMatchers("/api/payment/live/check-purchase").authenticated()
                 );
 
 

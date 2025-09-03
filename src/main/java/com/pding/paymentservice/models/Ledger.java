@@ -34,6 +34,10 @@ public class Ledger {
 
     private String withdrawId;
 
+    private String livestreamId;
+
+    private String ls_missionId;
+
     private String donationId;
 
     private String callId;
@@ -63,6 +67,10 @@ public class Ledger {
         } else if (transactionType.equals(TransactionType.WITHDRAWAL_STARTED) || transactionType.equals(TransactionType.WITHDRAWAL_FAILED) ||
                 transactionType.equals(TransactionType.WITHDRAWAL_COMPLETED) || transactionType.equals(TransactionType.TREES_REVERTED)) {
             this.withdrawId = referenceId;
+        } else if (transactionType.equals(TransactionType.LIVE_STREAM)) {
+            this.livestreamId = referenceId;
+        } else if (transactionType.equals(TransactionType.LS_MISSION)) {
+            this.ls_missionId = referenceId;
         } else if (transactionType.equals(TransactionType.DONATION)) {
             this.donationId = referenceId;
         } else if (transactionType.equals(TransactionType.AUDIO_CALL) || transactionType.equals(TransactionType.VIDEO_CALL) || transactionType.equals(TransactionType.TEXT_MESSAGE)) {
