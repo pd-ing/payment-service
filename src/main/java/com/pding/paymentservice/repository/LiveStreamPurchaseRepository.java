@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface LiveStreamPurchaseRepository extends JpaRepository<LiveStreamPurchase, String> {
-    List<LiveStreamPurchase> findByBuyerUserIdAndLivestreamId(String buyerUserId, String livestreamId);
+    Optional<LiveStreamPurchase> findByBuyerUserIdAndLivestreamId(String buyerUserId, String livestreamId);
 }

@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LiveStreamTradingController {
 
     private final LiveStreamTradingService livestreamTradingService;
-    private final MissionTradingService missionTradingService; 
+    private final MissionTradingService missionTradingService;
 
     @PostMapping("/buy-access")
     public ResponseEntity<?> buyLivestreamAccess(@RequestBody BuyLiveStreamRequest request) {
@@ -39,28 +39,28 @@ public class LiveStreamTradingController {
             return ResponseEntity.ok(new BuyLiveStreamResponse(true, "Livestream access purchased successfully.", purchase.getId()));
         } catch (InsufficientTreesException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage())); 
+                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         } catch (Exception e) {
             log.error("Error purchasing livestream access: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred.")); 
+                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred."));
         }
     }
 
     @PostMapping("/check-purchase")
     public ResponseEntity<?> checkLivestreamPurchase(@RequestBody CheckLivestreamPurchaseRequest request) {
         try {
-            boolean isPurchased = livestreamTradingService.isLivestreamPurchased(request.getBuyerUserId(), request.getLivestreamId());
+            boolean isPurchased = livestreamTradingService.isLivestreamPurchased(request.getLivestreamId());
             LiveStreamPurchase purchase = null;
             String message = isPurchased ? "Livestream access confirmed." : "Livestream not purchased.";
-            
+
             if (isPurchased) {
-                purchase = livestreamTradingService.getLivestreamPurchase(request.getBuyerUserId(), request.getLivestreamId());
+                purchase = livestreamTradingService.getLivestreamPurchase(request.getLivestreamId());
             }
-            
+
             return ResponseEntity.ok(new CheckLivestreamPurchaseResponse(
-                isPurchased, 
-                message, 
+                isPurchased,
+                message,
                 purchase != null ? purchase.getId() : null
             ));
         } catch (Exception e) {
@@ -77,11 +77,11 @@ public class LiveStreamTradingController {
             return ResponseEntity.ok(new BuyMissionResponse(true, "Mission executed successfully.", execution.getId()));
         } catch (InsufficientTreesException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage())); 
+                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         } catch (Exception e) {
             log.error("Error executing mission: ", e); // Log the exception e
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred.")); 
+                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred."));
         }
     }
 }
