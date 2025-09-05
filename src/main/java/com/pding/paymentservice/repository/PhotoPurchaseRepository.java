@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,14 @@ public interface PhotoPurchaseRepository extends JpaRepository<PhotoPurchase, St
 
     @Query("SELECT pp.postId, COALESCE(SUM(pp.treesConsumed), 0), COUNT(pp) FROM PhotoPurchase pp WHERE pp.postId IN :postIds and pp.isRefunded = false GROUP BY pp.postId")
     List<Object[]> getTotalTreesEarnedAndSalesCountForPostIds(@Param("postIds") List<String> postIds);
+
+    @Query(value = "SELECT COALESCE(SUM(pp.trees_consumed), 0)\n" +
+            "FROM photo_purchase pp \n" +
+            "WHERE pp.post_owner_user_id = :userId and pp.is_refunded = false \n" +
+            "AND (:startDate IS NULL OR pp.last_update_date >= :startDate) \n" +
+            "AND (:endDate IS NULL OR pp.last_update_date < :endDate)",
+        nativeQuery = true)
+    Long getTotalTreesEarnedFromPhotoSales(@Param("userId") String userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     default Map<String, PhotoEarningsAndSales> getTotalTreesEarnedAndSalesCountMapForPostIds(List<String> postIds) {
         List<Object[]> results = getTotalTreesEarnedAndSalesCountForPostIds(postIds);

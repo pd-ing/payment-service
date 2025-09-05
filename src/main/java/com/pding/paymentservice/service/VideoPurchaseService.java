@@ -39,6 +39,7 @@ import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResp
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryResponse;
 import com.pding.paymentservice.repository.OtherServicesTablesNativeQueryRepository;
+import com.pding.paymentservice.repository.PhotoPurchaseRepository;
 import com.pding.paymentservice.repository.VideoPackagePurchaseRepository;
 import com.pding.paymentservice.repository.VideoPurchaseRepository;
 import com.pding.paymentservice.security.AuthHelper;
@@ -128,6 +129,9 @@ public class VideoPurchaseService {
     ApplicationEventPublisher applicationEventPublisher;
     @Autowired
     private VideoPackagePurchaseRepository videoPackagePurchaseRepository;
+
+    @Autowired
+    private PhotoPurchaseRepository photoPurchaseRepository;
 
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
@@ -420,7 +424,9 @@ public class VideoPurchaseService {
                 } else {
                     shPage = videoPurchaseRepository.getSalesHistoryByUserIdAndDates(searchString, userId, startDate, endDate, pageable);
                     shList = createSalesHistoryList(shPage.getContent());
-                    totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate) + videoPackagePurchaseRepository.getTotalTreesEarnedFromPackageSales(userId, startDate, endDate);
+                    totalTreesEarned = videoPurchaseRepository.getTotalTreesEarned(userId, startDate, endDate)
+                        + videoPackagePurchaseRepository.getTotalTreesEarnedFromPackageSales(userId, startDate, endDate)
+                        + photoPurchaseRepository.getTotalTreesEarnedFromPhotoSales(userId, startDate, endDate);
                 }
             }
             return ResponseEntity.ok().body(new VideoSalesHistoryResponse(null, totalTreesEarned, new PageImpl<>(shList, pageable, shPage.getTotalElements())));
@@ -478,26 +484,26 @@ public class VideoPurchaseService {
             Pageable pageable = PageRequest.of(page, size);
             Page<UserProjection> userPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosArePurchasedByUserWithSearch(userId, searchString, pageable);
             List<UserProjection> users = userPage.getContent();
-            
+
             // Extract all PD user IDs
             List<String> pdUserIds = users.stream()
                 .map(UserProjection::getId)
                 .collect(Collectors.toList());
-                
+
             // Get follower data for all PD users
             List<PublicUserNet> publicUsersList = userServiceNetworkManager
                 .getUsersListFlux(pdUserIds)
                 .collectList()
                 .block();
-                
+
             // Create a map of PD users by their ID
-            Map<String, PublicUserNet> pdUserMap = publicUsersList != null ? 
+            Map<String, PublicUserNet> pdUserMap = publicUsersList != null ?
                 publicUsersList.stream()
                     .collect(Collectors.toMap(
                         PublicUserNet::getId,
                         Function.identity(),
                         (existing, replacement) -> existing
-                    )) : 
+                    )) :
                 new HashMap<>();
 
             List<UserLite> results = users.stream().map(userObj -> {
@@ -510,11 +516,11 @@ public class VideoPurchaseService {
                 userLite.setPdCategory(userObj.getPdCategory());
                 userLite.setLanguage(userObj.getLanguage());
                 userLite.setIsRecommendedPd(false);
-                
+
                 // Look up the corresponding PD user in the map and set the follower count
                 PublicUserNet pdUser = pdUserMap.get(userObj.getId());
                 userLite.setFollower(pdUser != null ? pdUser.getFollower() : null);
-                
+
                 return userLite;
             }).toList();
 
@@ -547,26 +553,26 @@ public class VideoPurchaseService {
             Pageable pageable = PageRequest.of(page, size);
             Page<UserProjection> userPage = videoPurchaseRepository.getAllPdUserIdWhoseVideosAreExpiredByUserWithSearch(userId, searchString , pageable);
             List<UserProjection> userProjections = userPage.getContent();
-            
+
             // Extract all PD user IDs
             List<String> pdUserIds = userProjections.stream()
                 .map(UserProjection::getId)
                 .collect(Collectors.toList());
-                
+
             // Get follower data for all PD users
             List<PublicUserNet> publicUsersList = userServiceNetworkManager
                 .getUsersListFlux(pdUserIds)
                 .collectList()
                 .block();
-                
+
             // Create a map of PD users by their ID
-            Map<String, PublicUserNet> pdUserMap = publicUsersList != null ? 
+            Map<String, PublicUserNet> pdUserMap = publicUsersList != null ?
                 publicUsersList.stream()
                     .collect(Collectors.toMap(
                         PublicUserNet::getId,
                         Function.identity(),
                         (existing, replacement) -> existing
-                    )) : 
+                    )) :
                 new HashMap<>();
 
             List<UserLite> users = userProjections.stream().map(userObj -> {
@@ -579,11 +585,11 @@ public class VideoPurchaseService {
                 userLite.setPdCategory(userObj.getPdCategory());
                 userLite.setLanguage(userObj.getLanguage());
                 userLite.setIsRecommendedPd(false);
-                
+
                 // Look up the corresponding PD user in the map and set the follower count
                 PublicUserNet pdUser = pdUserMap.get(userObj.getId());
                 userLite.setFollower(pdUser != null ? pdUser.getFollower() : null);
-                
+
                 return userLite;
             }).toList();
 
