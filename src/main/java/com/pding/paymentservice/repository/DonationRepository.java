@@ -76,7 +76,7 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
 
     @Query(value =
             " select userId," +
-            "        sum(totalPurchasedVideoTree) as totalVideoPurchase," +
+            "        sum(totalPurchasedContentTree) as totalVideoPurchase," +
             "        max(lastPurchaseDate)," +
             "        sum(totalTreeDonation)       as totalDonation," +
             "        max(lastDonationDate)," +
@@ -85,7 +85,7 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             "        COALESCE(u.nickname, '')," +
             "        u.is_creator" +
             " from (SELECT vp.user_id             AS userId," +
-            "              SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
+            "              SUM(vp.trees_consumed) AS totalPurchasedContentTree," +
             "              MAX(last_update_date)  AS lastPurchaseDate," +
             "              0                      as totalTreeDonation," +
             "              null                   as lastDonationDate" +
@@ -94,8 +94,18 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
             "         AND vp.is_refunded IS NOT TRUE" +
             "       GROUP BY vp.user_id" +
             "       union all" +
+            "       SELECT pp.user_id            AS userId," +
+            "              SUM(pp.trees_consumed) AS totalPurchasedContentTree," +
+            "              MAX(pp.last_update_date)  AS lastPurchaseDate," +
+            "              0                      as totalTreeDonation," +
+            "              null                   as lastDonationDate" +
+            "       FROM photo_purchase pp" +
+            "       WHERE pp.post_owner_user_id = :pdUserId" +
+            "         AND pp.is_refunded IS NOT TRUE" +
+            "       GROUP BY pp.user_id" +
+            "       union all" +
             "       SELECT donor_user_id         AS userId," +
-            "              0                     as totalPurchasedVideoTree," +
+            "              0                     as totalPurchasedContentTree," +
             "              null                  as lastPurchaseDate," +
             "              SUM(donated_trees)    AS totalTreeDonation," +
             "              MAX(last_update_date) AS lastDonationDate" +
@@ -111,7 +121,7 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
                     " select count(*)" +
                     " from (select *" +
                     "       from (SELECT vp.user_id             AS userId," +
-                    "                    SUM(vp.trees_consumed) AS totalPurchasedVideoTree," +
+                    "                    SUM(vp.trees_consumed) AS totalPurchasedContentTree," +
                     "                    MAX(last_update_date)  AS lastPurchaseDate," +
                     "                    0                      as totalTreeDonation," +
                     "                    null                   as lastDonationDate" +
@@ -120,8 +130,18 @@ public interface DonationRepository extends JpaRepository<Donation, String> {
                     "               AND vp.is_refunded IS NOT TRUE" +
                     "             GROUP BY vp.user_id" +
                     "             union all" +
+                    "             SELECT pp.user_id            AS userId," +
+                    "                    SUM(pp.trees_consumed) AS totalPurchasedContentTree," +
+                    "                    MAX(pp.last_update_date)  AS lastPurchaseDate," +
+                    "                    0                      as totalTreeDonation," +
+                    "                    null                   as lastDonationDate" +
+                    "             FROM photo_purchase pp" +
+                    "             WHERE pp.post_owner_user_id = :pdUserId" +
+                    "               AND pp.is_refunded IS NOT TRUE" +
+                    "             GROUP BY pp.user_id" +
+                    "             union all" +
                     "             SELECT donor_user_id         AS userId," +
-                    "                    0                     as totalPurchasedVideoTree," +
+                    "                    0                     as totalPurchasedContentTree," +
                     "                    null                  as lastPurchaseDate," +
                     "                    SUM(donated_trees)    AS totalTreeDonation," +
                     "                    MAX(last_update_date) AS lastDonationDate" +
