@@ -176,7 +176,7 @@ public class DonationService {
             Object[] giftDonationHistory = (Object[]) innerObject;
 
             DonationHistoryWithVideoStatsResponse donation = new DonationHistoryWithVideoStatsResponse();
-            donation.setUserEmailId(giftDonationHistory[0].toString());
+            donation.setUserEmailId(StringUtil.maskEmail(giftDonationHistory[0].toString()));
             donation.setDonatedTrees(giftDonationHistory[1].toString());
             donation.setLastUpdateDate(giftDonationHistory[2].toString());
             donation.setTotalVideosWatchedByUser(giftDonationHistory[3].toString());
@@ -185,6 +185,7 @@ public class DonationService {
             donation.setUserId(giftDonationHistory[5].toString());
             PublicUserNet user = publicUsers.stream().filter(u -> u.getId().equals(donation.getUserId())).findFirst().orElse(null);
             donation.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath(user.getProfilePicture()), 8));
+            donation.setNickname(user.getNickname());
             donationList.add(donation);
         }
         return new PageImpl<>(donationList, pageable, donationPage.getTotalElements());
@@ -301,7 +302,7 @@ public class DonationService {
 //            donorData.setNickname(publicUserMap.get(donorData.getDonorUserId()).getNickname());
 //            donorData.setIsCreator(publicUserMap.get(donorData.getDonorUserId()).getIsCreator());
 
-            donorData.setEmail((String) objects[5]);
+            donorData.setEmail(com.pding.paymentservice.util.StringUtil.maskEmail((String) objects[5]));
             donorData.setProfilePicture(tokenSigner.signImageUrl(tokenSigner.composeImagesPath((String) objects[6]), 8));
             donorData.setNickname((String) objects[7]);
             donorData.setIsCreator(objects[8] != null ? (Boolean) objects[8]: false);

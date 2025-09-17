@@ -33,7 +33,6 @@ import com.pding.paymentservice.payload.response.custompagination.PaginationInfo
 import com.pding.paymentservice.payload.response.custompagination.PaginationResponse;
 import com.pding.paymentservice.payload.response.generic.GenericClassResponse;
 import com.pding.paymentservice.payload.response.generic.GenericListDataResponse;
-import com.pding.paymentservice.payload.response.generic.GenericPageResponse;
 import com.pding.paymentservice.payload.response.generic.GenericStringResponse;
 import com.pding.paymentservice.payload.response.videoSales.DailyTreeRevenueResponse;
 import com.pding.paymentservice.payload.response.videoSales.VideoSalesHistoryRecord;
@@ -62,7 +61,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -370,7 +368,7 @@ public class VideoPurchaseService {
             PublicUserNet p = userMap.get(v.getUserId());
             if (p != null) {
                 String date = v.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
-                res.add(new VideoPurchaserInfo(p.getEmail(), v.getUserId(), null, date, v.getDuration(), v.getExpiryDate(), v.getTreesConsumed()));
+                res.add(new VideoPurchaserInfo(com.pding.paymentservice.util.StringUtil.maskEmail(p.getEmail()), v.getUserId(), null, date, v.getDuration(), v.getExpiryDate(), v.getTreesConsumed(), p.getNickname()));
             }
         });
 
@@ -441,15 +439,17 @@ public class VideoPurchaseService {
         for (Object innerObject : shPage) {
             Object[] salesHistory = (Object[]) innerObject;
             VideoSalesHistoryRecord shObj = new VideoSalesHistoryRecord();
-            shObj.setBuyerEmail(salesHistory[3].toString());
-            shObj.setVideoTitle(salesHistory[1].toString());
-            shObj.setAmount(salesHistory[2].toString());
-            shObj.setPurchaseDate(salesHistory[0].toString());
-            shObj.setDuration(salesHistory[4].toString());
-            shObj.setExpiryDate(salesHistory[5].toString());
-            shObj.setType(salesHistory[6].toString());
-            shObj.setNumberOfVideos(salesHistory[7].toString());
-            shObj.setDiscountPercentage(Integer.valueOf(salesHistory[8].toString()));
+            String email = salesHistory[3] != null ? salesHistory[3].toString() : "";
+            shObj.setBuyerEmail(com.pding.paymentservice.util.StringUtil.maskEmail(email));
+            shObj.setNickname(salesHistory[4] != null ? salesHistory[4].toString() : "");
+            shObj.setVideoTitle(salesHistory[1] != null ? salesHistory[1].toString() : "");
+            shObj.setAmount(salesHistory[2] != null ? salesHistory[2].toString() : "");
+            shObj.setPurchaseDate(salesHistory[0] != null ? salesHistory[0].toString() : "");
+            shObj.setDuration(salesHistory[5] != null ? salesHistory[5].toString() : "");
+            shObj.setExpiryDate(salesHistory[6] != null ? salesHistory[6].toString() : "");
+            shObj.setType(salesHistory[7] != null ? salesHistory[7].toString() : "");
+            shObj.setNumberOfVideos(salesHistory[8] != null ? salesHistory[8].toString() : "");
+            shObj.setDiscountPercentage(Integer.valueOf(salesHistory[9].toString()));
             shList.add(shObj);
         }
         return shList;
@@ -731,16 +731,16 @@ public class VideoPurchaseService {
         for (Object innerObject : shPage) {
             Object[] salesHistory = (Object[]) innerObject;
             VideoSalesHistoryRecord shObj = new VideoSalesHistoryRecord();
-            String email = salesHistory[2].toString();
+            String email = salesHistory[2] != null ? salesHistory[2].toString() : "";
 
             shObj.setPurchaseDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[0].toString())));
-            shObj.setAmount(salesHistory[1].toString());
+            shObj.setAmount(salesHistory[1] != null ? salesHistory[1].toString() : "");
             shObj.setBuyerEmail(StringUtil.maskEmail(email));
-            shObj.setDuration(StringUtil.convertDurationKeyToValue(salesHistory[3].toString()));
-//            shObj.setExpiryDate(DateTimeUtil.formatLocalDateTime(DateTimeUtil.convertStringToLocaltime(salesHistory[4].toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-            shObj.setType(StringUtil.convertPackageTypeKeyToValue(salesHistory[4].toString()));
-            shObj.setNumberOfVideos(salesHistory[5].toString());
-            shObj.setDiscountPercentage(Integer.valueOf(salesHistory[6].toString()));
+            shObj.setNickname(salesHistory[3] != null ? salesHistory[3].toString() : "");
+            shObj.setDuration(StringUtil.convertDurationKeyToValue(salesHistory[4] != null ? salesHistory[4].toString() : ""));
+            shObj.setType(StringUtil.convertPackageTypeKeyToValue(salesHistory[5] != null ? salesHistory[5].toString() : ""));
+            shObj.setNumberOfVideos(salesHistory[6] != null ? salesHistory[6].toString() : "");
+            shObj.setDiscountPercentage(Integer.valueOf(salesHistory[7].toString()));
             shList.add(shObj);
         }
         return shList;

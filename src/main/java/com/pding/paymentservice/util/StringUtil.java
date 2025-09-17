@@ -22,20 +22,70 @@ public class StringUtil {
             "SINGLE", "Single",
             "PHOTO", "Photo"
     );
+
+    /**
+     * Mask email to preserve the exact length of hidden parts.
+     * Rules:
+     * - Local part: keep first 2 characters; replace the remaining characters in the local part with '*'.
+     * - Domain part:
+     *   - If there is no dot: keep first 2 characters of the domain and replace the rest with '*'.
+     *   - If there are dots: keep the last label (TLD) fully visible; for the first label, keep first 2 characters and mask the remaining with '*'; for any intermediate labels, mask all characters with '*'.
+     *   - Keep the original number of dots and label lengths masked accordingly.
+     * Examples:
+     *   - ben@gmail.com -> be*@gm***.com
+     *   - a@b.co -> a*@b*.co
+     *   - john.doe@sub.mail.org -> jo******@su***.****.org
+     */
     public static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {
             return email;
         }
 
-        String[] parts = email.split("@");
-        String localPart = parts[0];
-        String domainPart = parts[1];
+        String[] parts = email.split("@", 2);
+        String localPart = parts[0] != null ? parts[0] : "";
+        String domainPart = parts.length > 1 && parts[1] != null ? parts[1] : "";
 
-        // Mask local part và domain part
-        String maskedLocalPart = localPart.substring(0, 2) + "****" + localPart.substring(localPart.length() - 1);
-        String maskedDomainPart = domainPart.substring(0, 1) + "***" + domainPart.substring(domainPart.length() - 4);
+        // Mask local part: keep first 2, mask the rest one-to-one with '*'
+        int localVisible = Math.min(2, localPart.length());
+        StringBuilder localMasked = new StringBuilder();
+        localMasked.append(localPart, 0, localVisible);
+        if (localPart.length() > localVisible) {
+            localMasked.append("*".repeat(localPart.length() - localVisible));
+        }
 
-        return maskedLocalPart + "@" + maskedDomainPart;
+        // Mask domain part
+        if (domainPart.isEmpty()) {
+            return localMasked + "@"; // nothing to show after @
+        }
+
+        String[] labels = domainPart.split("\\.");
+        if (labels.length == 1) {
+            String label = labels[0];
+            int visible = Math.min(2, label.length());
+            StringBuilder maskedLabel = new StringBuilder();
+            maskedLabel.append(label, 0, visible);
+            if (label.length() > visible) maskedLabel.append("*".repeat(label.length() - visible));
+            return localMasked + "@" + maskedLabel;
+        }
+
+        StringBuilder domainMasked = new StringBuilder();
+        for (int i = 0; i < labels.length; i++) {
+            String label = labels[i] == null ? "" : labels[i];
+            if (i == labels.length - 1) {
+                // TLD - keep fully
+                domainMasked.append(label);
+            } else if (i == 0) {
+                int visible = Math.min(2, label.length());
+                domainMasked.append(label, 0, visible);
+                if (label.length() > visible) domainMasked.append("*".repeat(label.length() - visible));
+            } else {
+                // Intermediate label - fully masked with preserving length
+                if (label.length() > 0) domainMasked.append("*".repeat(label.length()));
+            }
+            if (i < labels.length - 1) domainMasked.append('.');
+        }
+
+        return localMasked + "@" + domainMasked;
     }
 
     public static String convertDurationKeyToValue(String durationKey) {

@@ -16,4 +16,5 @@ public class DonationHistoryWithVideoStatsResponse extends DonationHistoryRespon
     String totalVideosWatchedByUser;
     String totalVideosUploadedByPD;
     String recentDonation;
+    String nickname;
 }
