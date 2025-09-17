@@ -27,4 +27,6 @@ public class VideoPurchaserInfo {
 
     private BigDecimal treesConsumed;
 
+    private String nickname;
+
 }

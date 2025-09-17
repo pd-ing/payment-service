@@ -6,14 +6,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class VideoSalesHistoryRecord {
     private String buyerEmail;
+    private String nickname;
     private String videoTitle;
     private String amount;
     private String purchaseDate;

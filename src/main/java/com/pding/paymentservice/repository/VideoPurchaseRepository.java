@@ -71,6 +71,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                 "       COALESCE(title, '')          as title," +
                 "       COALESCE(trees_consumed, '') as trees_consumed," +
                 "       COALESCE(email, '')          as email," +
+                "       COALESCE(nickname, '')       as nickname," +
                 "       COALESCE(duration, '')       as duration," +
                 "       COALESCE(expiry_date, '')    as expiry_date," +
                 "       COALESCE(type, '')    as type," +
@@ -81,6 +82,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                 "                v.title," +
                 "                vp.trees_consumed," +
                 "                buyer.email," +
+                "                buyer.nickname," +
                 "                vp.duration," +
                 "                vp.expiry_date," +
                 "                'SINGLE'            as type," +
@@ -97,6 +99,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
                 "                vp.title," +
                 "                vpp.trees_consumed," +
                 "                buyer.email," +
+                "                buyer.nickname," +
                 "                'PERMANENT'     as duration," +
                 "                NULL            as expiry_date," +
                 "                vp.package_type as type," +
@@ -172,8 +175,8 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "SELECT COALESCE(purchase_date, '')  as last_update_date," +
             "       COALESCE(trees_consumed, '') as trees_consumed," +
             "       COALESCE(email, '')          as email," +
+            "       COALESCE(nickname, '')       as nickname," +
             "       COALESCE(duration, '')       as duration," +
-//            "       COALESCE(DATE_FORMAT(expiry_date, '%Y-%m-%d %H:%i:%s'), '')," +
             "       COALESCE(type, '')    as type," +
             "       COALESCE(number_of_videos, '')    as number_of_videos," +
             "       discount_percentage" +
@@ -182,8 +185,8 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "                v.title," +
             "                vp.trees_consumed," +
             "                buyer.email," +
+            "                buyer.nickname," +
             "                vp.duration," +
-//            "                vp.expiry_date," +
             "                'SINGLE'            as type," +
             "                1                   as number_of_videos," +
             "                0 as discount_percentage" +
@@ -198,6 +201,7 @@ public interface VideoPurchaseRepository extends JpaRepository<VideoPurchase, St
             "                vp.title," +
             "                vpp.trees_consumed," +
             "                buyer.email," +
+            "                buyer.nickname," +
             "                'PERMANENT'     as duration," +
 //            "                ''            as expiry_date," +
             "                vp.package_type as type," +

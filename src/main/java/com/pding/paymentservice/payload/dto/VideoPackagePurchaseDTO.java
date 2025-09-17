@@ -14,6 +14,7 @@ public class VideoPackagePurchaseDTO {
     private String id;
     private String userId;
     private String email;
+    private String nickname;
     private String packageId;
     private String sellerId;
     private BigDecimal treesConsumed;

@@ -397,7 +397,8 @@ public class VideoPackagePurchaseService {
                             .originalPrice(videoPackagePurchase.getOriginalPrice())
                             .discountPercentage(videoPackagePurchase.getDiscountPercentage())
                             .isRefunded(videoPackagePurchase.getIsRefunded())
-                            .email(buyer != null ? buyer.getEmail() : null)
+                            .email(buyer != null ? com.pding.paymentservice.util.StringUtil.maskEmail(buyer.getEmail()) : null)
+                            .nickname(buyer != null ? buyer.getNickname() : null)
                             .includedVideos(includedVideos)
                             .excludedVideos(excludedVideos)
                             .build();

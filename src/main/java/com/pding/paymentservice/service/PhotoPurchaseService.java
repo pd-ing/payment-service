@@ -101,7 +101,7 @@ public class PhotoPurchaseService {
                 String date = p.getLastUpdateDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"));
                 LocalDateTime expiryDateTime = p.getExpiryDate() != null ?
                     LocalDateTime.ofInstant(p.getExpiryDate(), ZoneId.systemDefault()) : null;
-                res.add(new VideoPurchaserInfo(user.getEmail(), p.getUserId(), null, date, p.getDuration(), expiryDateTime, p.getTreesConsumed()));
+                res.add(new VideoPurchaserInfo(com.pding.paymentservice.util.StringUtil.maskEmail(user.getEmail()), p.getUserId(), null, date, p.getDuration(), expiryDateTime, p.getTreesConsumed(), user.getNickname()));
             }
         });
 
