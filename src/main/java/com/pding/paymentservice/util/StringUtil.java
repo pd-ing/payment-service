@@ -50,7 +50,11 @@ public class StringUtil {
         StringBuilder localMasked = new StringBuilder();
         localMasked.append(localPart, 0, localVisible);
         if (localPart.length() > localVisible) {
-            localMasked.append("*".repeat(localPart.length() - localVisible));
+            int stars = Math.min(5, localPart.length() - localVisible);
+            localMasked.append("*".repeat(stars));
+        } else if (localPart.length() <= 2) {
+            // New rule: if local part length <= 2, append one '*'
+            localMasked.append("*");
         }
 
         // Mask domain part
@@ -64,26 +68,31 @@ public class StringUtil {
             int visible = Math.min(2, label.length());
             StringBuilder maskedLabel = new StringBuilder();
             maskedLabel.append(label, 0, visible);
-            if (label.length() > visible) maskedLabel.append("*".repeat(label.length() - visible));
+            if (label.length() > visible) {
+                int stars = Math.min(5, label.length() - visible);
+                maskedLabel.append("*".repeat(stars));
+            } else if (label.length() <= 2) {
+                // If domain has no dot and its length <= 2, append one '*'
+                maskedLabel.append("*");
+            }
             return localMasked + "@" + maskedLabel;
         }
 
+        // New rule: only keep/mask the first label after @ and the TLD; ignore intermediate labels
+        String firstLabel = labels[0] == null ? "" : labels[0];
+        String tld = labels[labels.length - 1] == null ? "" : labels[labels.length - 1];
+
         StringBuilder domainMasked = new StringBuilder();
-        for (int i = 0; i < labels.length; i++) {
-            String label = labels[i] == null ? "" : labels[i];
-            if (i == labels.length - 1) {
-                // TLD - keep fully
-                domainMasked.append(label);
-            } else if (i == 0) {
-                int visible = Math.min(2, label.length());
-                domainMasked.append(label, 0, visible);
-                if (label.length() > visible) domainMasked.append("*".repeat(label.length() - visible));
-            } else {
-                // Intermediate label - fully masked with preserving length
-                if (label.length() > 0) domainMasked.append("*".repeat(label.length()));
-            }
-            if (i < labels.length - 1) domainMasked.append('.');
+        int visible = Math.min(2, firstLabel.length());
+        domainMasked.append(firstLabel, 0, visible);
+        if (firstLabel.length() > visible) {
+            int stars = Math.min(5, firstLabel.length() - visible);
+            domainMasked.append("*".repeat(stars));
+        } else if (firstLabel.length() <= 2) {
+            // New rule: if first domain label length <= 2, append one '*'
+            domainMasked.append("*");
         }
+        domainMasked.append('.').append(tld);
 
         return localMasked + "@" + domainMasked;
     }
