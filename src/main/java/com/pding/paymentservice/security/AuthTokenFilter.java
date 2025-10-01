@@ -31,6 +31,9 @@ import java.util.Map;
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Autowired
+    private org.springframework.data.redis.core.RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
     private JwtUtils jwtUtils;
 
     @Autowired
@@ -77,6 +80,19 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         String idToken = parseJwt(request);
         String serverToken = parseServerToken(request);
+
+        // If this is a Firebase token request, check if it was invalidated globally
+        String invalidKey = "um:invalid:" + idToken;
+        String val = redisTemplate.opsForValue().get(invalidKey);
+        if (val != null) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("errorCode", "ERR_SESSION_REPLACED");
+            result.put("message", "Session invalidated. This session has been replaced by another device. Please login again.");
+            response.getWriter().write(objectMapper.writeValueAsString(result));
+            return;
+        }
+
 
         // for CORS error
         if (request.getMethod().equals(HttpMethod.OPTIONS.toString())) {

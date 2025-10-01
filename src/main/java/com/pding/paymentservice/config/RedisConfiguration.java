@@ -35,6 +35,9 @@ public class RedisConfiguration {
     @Value("${redis.port}")
     private Integer redisPort;
 
+    @Value("${redis.password}")
+    private String redisPassword;
+
     @Bean
     public JedisPoolConfig jedisPoolConfig() {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
@@ -55,6 +58,10 @@ public class RedisConfiguration {
     @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
+        if (redisPassword != null && !redisPassword.isEmpty()) {
+            config.setUsername("default");
+            config.setPassword(redisPassword);
+        }
         JedisClientConfiguration.JedisClientConfigurationBuilder builder = JedisClientConfiguration.builder();
         builder.connectTimeout(Duration.ofSeconds(60));
         builder.readTimeout(Duration.ofSeconds(60));
