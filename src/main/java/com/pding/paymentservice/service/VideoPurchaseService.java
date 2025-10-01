@@ -130,6 +130,9 @@ public class VideoPurchaseService {
 
     @Autowired
     private PhotoPurchaseRepository photoPurchaseRepository;
+    
+    @Autowired
+    private XpAwardService xpAwardService;
 
 
     public List<VideoPurchase> getAllTransactionsForUser(String userID) {
@@ -207,6 +210,10 @@ public class VideoPurchaseService {
                 price.getDuration()
             );
             applicationEventPublisher.publishEvent(new VideoPurchaseEvent(this, video, videoData));
+            
+            // Award XP for tree usage
+            xpAwardService.awardXpForTreeUsage(userId, price.getTrees(), videoId, "video");
+            
             return ResponseEntity.ok().body(new BuyVideoResponse(null, video));
         } catch (WalletNotFoundException e) {
             pdLogger.logException(PdLogger.EVENT.BUY_VIDEO, e);

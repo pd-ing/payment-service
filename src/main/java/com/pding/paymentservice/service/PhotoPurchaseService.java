@@ -64,6 +64,7 @@ public class PhotoPurchaseService {
     private final ContentNetworkService contentNetworkService;
     private final TokenSigner tokenSigner;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final XpAwardService xpAwardService;
 
     public ResponseEntity<?> loadPurchaseListOfSellerResponse(String photoId, int page, int size) {
         try {
@@ -256,6 +257,10 @@ public class PhotoPurchaseService {
 
         PhotoPurchase photoPurchase = createPhotoPostTransaction(userId, postId, treesConsumed, postOwnerUserId, duration, expiryDate);
         applicationEventPublisher.publishEvent(new PhotoPurchaseEvent(this, photoPurchase, photoPost));
+        
+        // Award XP for tree usage
+        xpAwardService.awardXpForTreeUsage(userId, treesConsumed, postId, "photo");
+        
         return photoPurchase;
     }
 
