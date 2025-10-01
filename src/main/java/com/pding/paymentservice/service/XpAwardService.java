@@ -46,7 +46,7 @@ public class XpAwardService {
                     .build();
 
             webClient.post()
-                    .uri("/api/user/internal/award-xp")
+                    .uri("/api/internal/award-xp")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(request)
                     .retrieve()
