@@ -19,6 +19,7 @@ import com.pding.paymentservice.repository.GenerateReportEvent;
 import com.pding.paymentservice.security.AuthHelper;
 import com.pding.paymentservice.service.DonationService;
 import com.pding.paymentservice.service.SendNotificationService;
+import com.pding.paymentservice.service.XpAwardService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,9 @@ public class DonationServiceController {
     @Autowired
     SendNotificationService sendNotificationService;
 
+    @Autowired
+    XpAwardService xpAwardService;
+
     @PostMapping(value = "/donate")
     public ResponseEntity<?> donateTrees(@RequestParam(value = "donorUserId", required = false) String donorUserId, @RequestParam(value = "trees") BigDecimal trees, @RequestParam(value = "pdUserId") String pdUserId) {
         return donationService.donateToPd(authHelper.getUserId(), trees, pdUserId);
@@ -85,6 +89,9 @@ public class DonationServiceController {
             Donation donation = donationService.createTreesDonationTransaction(userId, trees, pdUserId);
 
             sendNotificationService.sendDonateTreesNotification(donation);
+
+            // Award XP for tree usage in donation
+            xpAwardService.awardXpForTreeUsage(userId, trees, donation.getId(), "donation");
 
             return ResponseEntity.ok().body(new DonationResponse(null, donation));
         } catch (WalletNotFoundException e) {
