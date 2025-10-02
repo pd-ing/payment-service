@@ -170,6 +170,10 @@ public class ExposureTicketPurchaseService {
 
         String userId = authHelper.getUserId();
 
+        if("b1o6NZchUyaQqHEW4U2nOEzSZMD3".equals(userId)) {
+            return new ArrayList<>();
+        }
+
         List<MExposureSlot> exposureSlots = exposureSlotRepository.findAll();
         Instant now = Instant.now();
 
