@@ -170,7 +170,7 @@ public class ExposureTicketPurchaseService {
 
         String userId = authHelper.getUserId();
 
-        if("b1o6NZchUyaQqHEW4U2nOEzSZMD3".equals(userId)) {
+        if("LwUYpu9pdJUd2nTqCG0TLBxM9Nr1".equals(userId)) {
             return new ArrayList<>();
         }
 
